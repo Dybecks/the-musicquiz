@@ -30,7 +30,7 @@ jobs:
         env:
           # The site is served from https://<owner>.github.io/<repo>/
           VITE_BASE_PATH: /${{ github.event.repository.name }}/
-          # Optional: set a repository variable SPOTIFY_CLIENT_ID to prefill the login.
+          # Optional: a repository variable SPOTIFY_CLIENT_ID overrides the built-in Client ID.
           VITE_SPOTIFY_CLIENT_ID: ${{ vars.SPOTIFY_CLIENT_ID }}
       - if: github.event_name != 'pull_request'
         uses: actions/upload-pages-artifact@v3

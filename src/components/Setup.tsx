@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { SpotifyProfile } from '../spotify/api';
-import { getClientId, redirectUri, setClientId } from '../spotify/auth';
+import { BUILT_IN_CLIENT_ID, getClientIdOverride, redirectUri, setClientId } from '../spotify/auth';
 import type { PlaybackKind } from '../spotify/playback';
 import { chooseSongs, classicSongs, type DeckChoice } from '../data/decks';
 import { loadSources } from '../spotify/listening';
@@ -54,7 +54,8 @@ export function Setup(props: Props) {
   const [players, setPlayers] = useState<string[]>(loadPlayers);
   const [target, setTarget] = useState<number>(() => Number(localStorage.getItem(TARGET_KEY)) || 10);
   const [mode, setMode] = useState<PlaybackKind>(initialMode);
-  const [clientId, setClientIdState] = useState(getClientId);
+  const [clientIdOverride, setClientIdOverride] = useState(getClientIdOverride);
+  const clientId = clientIdOverride.trim() || BUILT_IN_CLIENT_ID;
   const [error, setError] = useState<string | null>(null);
   const [deck, setDeck] = useState<DeckChoice>(loadDeckChoice);
   const [sources, setSources] = useState<ListeningSource[]>(loadSources);
@@ -74,15 +75,17 @@ export function Setup(props: Props) {
     localStorage.setItem(DECK_KEY, choice);
   };
 
-  const clientIdField = (
+  // The game ships with its own Spotify app, so the Client ID field is tucked
+  // away for hosts who want to use their own app instead.
+  const clientIdInput = (
     <>
       <label className="field">
-        <span>Spotify Client ID</span>
+        <span>Spotify Client ID{BUILT_IN_CLIENT_ID ? ' (leave empty to use the game’s own)' : ''}</span>
         <input
-          value={clientId}
+          value={clientIdOverride}
           placeholder="From developer.spotify.com/dashboard"
           onChange={(e) => {
-            setClientIdState(e.target.value);
+            setClientIdOverride(e.target.value);
             setClientId(e.target.value);
           }}
         />
@@ -91,6 +94,14 @@ export function Setup(props: Props) {
         Add <code>{redirectUri()}</code> as a Redirect URI in your Spotify app settings.
       </p>
     </>
+  );
+  const clientIdField = BUILT_IN_CLIENT_ID ? (
+    <details className="own-app" open={!!clientIdOverride}>
+      <summary>Use your own Spotify app</summary>
+      {clientIdInput}
+    </details>
+  ) : (
+    clientIdInput
   );
 
   const start = () => {

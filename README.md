@@ -60,7 +60,7 @@ On the setup screen the host chooses how the music plays:
 
 | Option | Needs | What you get |
 | --- | --- | --- |
-| Log in with Spotify | Premium account + a Spotify app Client ID | Full songs via the [Web Playback SDK](https://developer.spotify.com/documentation/web-playback-sdk), from the whole deck. The browser tab becomes a Spotify device. |
+| Log in with Spotify | Premium account | Full songs via the [Web Playback SDK](https://developer.spotify.com/documentation/web-playback-sdk), from the whole deck. The browser tab becomes a Spotify device. |
 | Hidden Spotify player, no login | Nothing | A covered-up [Spotify Embed](https://developer.spotify.com/documentation/embeds) player. Uses the songs that have a known Spotify id (65 of them). Full songs if the browser is signed in to Spotify, otherwise 30-second previews. If the host is also logged in, it can use the whole deck. |
 | No audio | Nothing | Try the rules, or play the music some other way. |
 
@@ -69,11 +69,20 @@ Other songs are looked up with the Spotify search API, which needs the login.
 
 ### Spotify setup (only for "Log in with Spotify")
 
+The game ships with its own Spotify app (Client ID `5a008c63808c47478e4edcc99db34a87` in
+`src/spotify/auth.ts`). A Client ID is public; the PKCE login uses no secret. The app's
+owner manages it in the [Spotify dashboard](https://developer.spotify.com/dashboard):
+its Redirect URIs must include `https://dybecks.github.io/the-musicquiz/` (and the
+`127.0.0.1` ones below for local development), and while it is in *Development mode*
+every account that logs in must be listed under **User Management**.
+
+To use a different Spotify app instead:
+
 1. Create an app at <https://developer.spotify.com/dashboard>, choosing **Web API** and **Web Playback SDK**.
 2. Add the redirect URIs you'll use, for example `http://127.0.0.1:5173/` (dev) and
    `http://127.0.0.1:4173/` (preview). Spotify does not accept `localhost`; use `127.0.0.1`.
    For the deployed game, add `https://dybecks.github.io/the-musicquiz/`.
-3. Copy the **Client ID** into `.env` as `VITE_SPOTIFY_CLIENT_ID`, or paste it into the setup screen.
+3. Put its **Client ID** in `.env` as `VITE_SPOTIFY_CLIENT_ID`, or paste it under "Use your own Spotify app" on the setup screen.
 4. While the app is in Spotify's *Development mode*, add the Spotify account(s)
    that will log in under **User Management** in the dashboard. This also applies to
    building a deck from your own music, which needs the same login.
@@ -87,8 +96,8 @@ Every push to `main` runs the tests, builds the app and deploys it to GitHub Pag
 run the tests and build but don't deploy.
 
 One-time setup in the repository: **Settings → Pages → Build and deployment → Source: GitHub Actions**.
-Optionally add a repository variable `SPOTIFY_CLIENT_ID` (Settings → Secrets and variables →
-Actions → Variables) so players don't have to paste the Client ID.
+To deploy with a different Spotify app, set a repository variable `SPOTIFY_CLIENT_ID`
+(Settings → Secrets and variables → Actions → Variables).
 
 ## Development
 
