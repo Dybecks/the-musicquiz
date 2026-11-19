@@ -7,7 +7,7 @@ import {
   type Playback,
   type PlaybackKind,
 } from '../spotify/playback';
-import { loadFact, type SongFact } from '../facts/wikipedia';
+import { loadFact, type SongFact } from '../facts';
 import { Timeline } from './Timeline';
 
 interface Props {
@@ -273,7 +273,7 @@ function Reveal({ correct, song }: { correct: boolean; song: GameState['deck'][n
   );
 }
 
-/** A few lines from Wikipedia about the song or its artist. Shows nothing until found, or if none is. */
+/** A fun fact about the song (written for its deck, or from Wikipedia). Shows nothing until found, or if none is. */
 function FunFact({ song }: { song: GameState['deck'][number] }) {
   const [fact, setFact] = useState<{ id: string; fact: SongFact | null } | null>(null);
   useEffect(() => {
@@ -287,11 +287,13 @@ function FunFact({ song }: { song: GameState['deck'][number] }) {
   const { text, about, title, url } = fact.fact;
   return (
     <aside className="fun-fact">
-      <p className="fun-fact-label">{about === 'song' ? 'About the song' : 'About the artist'}</p>
+      <p className="fun-fact-label">{!url ? 'Did you know?' : about === 'song' ? 'About the song' : 'About the artist'}</p>
       <p>{text}</p>
-      <a href={url} target="_blank" rel="noreferrer">
-        {title} on Wikipedia
-      </a>
+      {url && (
+        <a href={url} target="_blank" rel="noreferrer">
+          {title} on Wikipedia
+        </a>
+      )}
     </aside>
   );
 }

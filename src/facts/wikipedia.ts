@@ -12,13 +12,13 @@ import type { Song } from '../game/engine';
  */
 
 export interface SongFact {
-  /** A few sentences from the start of the article. */
+  /** One to three sentences. */
   text: string;
   /** Whether the text is about the song itself or its artist. */
   about: 'song' | 'artist';
-  /** The article's title and link, for "Read more". */
-  title: string;
-  url: string;
+  /** For a Wikipedia fact: the article's title and link, for "Read more". */
+  title?: string;
+  url?: string;
 }
 
 /** One page from the `generator=search` + `prop=extracts|pageprops` query. */
@@ -189,19 +189,4 @@ export async function findFact(song: Song, fetcher: Fetcher = (url) => fetch(url
   if (song.from) return null;
   const artistPage = pickArtistPage(await search(`${artist} musician OR band OR singer`, fetcher), song.artist);
   return artistPage ? toFact(artistPage, 'artist') : null;
-}
-
-/**
- * Cached per song for the session. Errors (offline, rate limited) are cached as
- * "no fact" too, so a failing lookup isn't retried on every render.
- */
-const cache = new Map<string, Promise<SongFact | null>>();
-
-export function loadFact(song: Song): Promise<SongFact | null> {
-  let hit = cache.get(song.id);
-  if (!hit) {
-    hit = findFact(song).catch(() => null);
-    cache.set(song.id, hit);
-  }
-  return hit;
 }
