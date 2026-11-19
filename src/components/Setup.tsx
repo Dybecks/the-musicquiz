@@ -2,11 +2,16 @@ import { useState } from 'react';
 import type { SpotifyProfile } from '../spotify/api';
 import { getClientId, redirectUri, setClientId } from '../spotify/auth';
 import type { PlaybackKind } from '../spotify/playback';
+import { chooseSongs, classicSongs, type DeckChoice } from '../data/decks';
+import { loadSources } from '../spotify/listening';
+import { personalSongs, type Contributor, type ListeningSource, type PersonalDeck } from '../spotify/personalDeck';
+import { MyMusic } from './MyMusic';
 
 export interface SetupValues {
   players: string[];
   targetCards: number;
   mode: PlaybackKind;
+  deck: DeckChoice;
 }
 
 interface Props {
@@ -15,13 +20,24 @@ interface Props {
   authMessage: string | null;
   initialMode: PlaybackKind;
   deckSize: { all: number; noLogin: number };
-  onLogin: () => void;
+  personal: PersonalDeck | null;
+  autoGather: boolean;
+  onAutoGatherHandled: () => void;
+  onLogin: (extraScopes?: string[]) => void;
   onLogout: () => void;
+  onPersonalBuilt: (contributor: Contributor) => void;
+  onPersonalForget: () => void;
   onStart: (values: SetupValues) => void;
 }
 
 const PLAYERS_KEY = 'mq.players';
 const TARGET_KEY = 'mq.target';
+const DECK_KEY = 'mq.deck';
+
+function loadDeckChoice(): DeckChoice {
+  const saved = localStorage.getItem(DECK_KEY);
+  return saved === 'mine' || saved === 'mix' ? saved : 'classic';
+}
 
 function loadPlayers(): string[] {
   try {
@@ -33,26 +49,58 @@ function loadPlayers(): string[] {
   return ['Team 1', 'Team 2'];
 }
 
-export function Setup({ authChecked, profile, authMessage, initialMode, deckSize, onLogin, onLogout, onStart }: Props) {
+export function Setup(props: Props) {
+  const { authChecked, profile, authMessage, initialMode, deckSize, personal, onLogin, onLogout, onStart } = props;
   const [players, setPlayers] = useState<string[]>(loadPlayers);
   const [target, setTarget] = useState<number>(() => Number(localStorage.getItem(TARGET_KEY)) || 10);
   const [mode, setMode] = useState<PlaybackKind>(initialMode);
   const [clientId, setClientIdState] = useState(getClientId);
   const [error, setError] = useState<string | null>(null);
+  const [deck, setDeck] = useState<DeckChoice>(loadDeckChoice);
+  const [sources, setSources] = useState<ListeningSource[]>(loadSources);
 
   const isPremium = profile?.product === 'premium';
   // Only the Premium option requires a login. The hidden player works without
   // one, using the songs that have a known Spotify id.
   const needsLogin = mode === 'premium' && !profile;
-  const songCount = mode === 'embed' && !profile ? deckSize.noLogin : deckSize.all;
+  const mySongs = personalSongs(personal).length;
+  const needsPersonal = deck !== 'classic' && mySongs === 0;
+  const songCount = needsPersonal ? 0 : chooseSongs({ choice: deck, mode, loggedIn: !!profile, personal }).length;
+  const classicCount = classicSongs(mode, !!profile).length;
   const names = players.map((p) => p.trim()).filter(Boolean);
+
+  const chooseDeck = (choice: DeckChoice) => {
+    setDeck(choice);
+    localStorage.setItem(DECK_KEY, choice);
+  };
+
+  const clientIdField = (
+    <>
+      <label className="field">
+        <span>Spotify Client ID</span>
+        <input
+          value={clientId}
+          placeholder="From developer.spotify.com/dashboard"
+          onChange={(e) => {
+            setClientIdState(e.target.value);
+            setClientId(e.target.value);
+          }}
+        />
+      </label>
+      <p className="hint">
+        Add <code>{redirectUri()}</code> as a Redirect URI in your Spotify app settings.
+      </p>
+    </>
+  );
 
   const start = () => {
     if (names.length === 0) return setError('Add at least one player or team.');
+    if (needsPersonal) return setError('Build your deck from Spotify first, or choose the classic deck.');
+    if (songCount < names.length + 1) return setError('There are too few songs for this many players.');
     if (needsLogin) return setError('Log in with Spotify first, or choose the hidden Spotify player.');
     localStorage.setItem(PLAYERS_KEY, JSON.stringify(names));
     localStorage.setItem(TARGET_KEY, String(target));
-    onStart({ players: names, targetCards: target, mode });
+    onStart({ players: names, targetCards: target, mode, deck });
   };
 
   return (
@@ -94,7 +142,53 @@ export function Setup({ authChecked, profile, authMessage, initialMode, deckSize
           <span>Cards needed to win</span>
           <input type="number" min={3} max={30} value={target} onChange={(e) => setTarget(Math.max(3, Math.min(30, Number(e.target.value) || 10)))} />
         </label>
-        <p className="hint">You'll play with {songCount} songs from the 1950s to today.</p>
+        <p className="hint">
+          {needsPersonal ? 'Build your deck from Spotify below to see how many songs you get.' : `You'll play with ${songCount} songs.`}
+        </p>
+      </section>
+
+      <section className="panel">
+        <h2>Which songs?</h2>
+        <div className="mode-options" role="radiogroup" aria-label="Which songs?">
+          <ModeOption
+            value="classic"
+            current={deck}
+            onSelect={chooseDeck}
+            title="Classic deck"
+            detail={`${classicCount} well-known songs from the 1950s to today.`}
+          />
+          <ModeOption
+            value="mine"
+            current={deck}
+            onSelect={chooseDeck}
+            title="My Spotify music"
+            detail={mySongs ? `${mySongs} songs from what you listen to.` : 'Songs you actually listen to, from your Spotify account.'}
+          />
+          <ModeOption
+            value="mix"
+            current={deck}
+            onSelect={chooseDeck}
+            title="Mix of both"
+            detail="Your songs plus the classic deck, for a wider spread of years."
+          />
+        </div>
+        {deck !== 'classic' && (
+          <MyMusic
+            authChecked={authChecked}
+            profile={profile}
+            clientIdField={clientIdField}
+            hasClientId={!!clientId.trim()}
+            personal={personal}
+            sources={sources}
+            onSourcesChange={setSources}
+            autoGather={props.autoGather}
+            onAutoGatherHandled={props.onAutoGatherHandled}
+            onLogin={(scopes) => onLogin(scopes)}
+            onBuilt={props.onPersonalBuilt}
+            onForget={props.onPersonalForget}
+          />
+        )}
+        {deck !== 'classic' && authMessage && mode !== 'premium' && <p className="warn">{authMessage}</p>}
       </section>
 
       <section className="panel">
@@ -105,14 +199,14 @@ export function Setup({ authChecked, profile, authMessage, initialMode, deckSize
             current={mode}
             onSelect={setMode}
             title="Log in with Spotify"
-            detail={`Full songs played right here, from all ${deckSize.all} songs. Needs Spotify Premium.`}
+            detail="Full songs played right here. Needs Spotify Premium."
           />
           <ModeOption
             value="embed"
             current={mode}
             onSelect={setMode}
             title="Hidden Spotify player, no login"
-            detail={`A covered-up Spotify player, ${deckSize.noLogin} songs. Full songs if this browser is signed in to Spotify, otherwise 30-second previews.`}
+            detail={`A covered-up Spotify player. Full songs if this browser is signed in to Spotify, otherwise 30-second previews.${deck === 'classic' ? ` Plays ${deckSize.noLogin} of the classic songs without a login.` : ''}`}
           />
           <ModeOption value="none" current={mode} onSelect={setMode} title="No audio" detail="Try the rules, or play the music some other way." />
         </div>
@@ -130,21 +224,8 @@ export function Setup({ authChecked, profile, authMessage, initialMode, deckSize
               </p>
             ) : (
               <>
-                <label className="field">
-                  <span>Spotify Client ID</span>
-                  <input
-                    value={clientId}
-                    placeholder="From developer.spotify.com/dashboard"
-                    onChange={(e) => {
-                      setClientIdState(e.target.value);
-                      setClientId(e.target.value);
-                    }}
-                  />
-                </label>
-                <p className="hint">
-                  Add <code>{redirectUri()}</code> as a Redirect URI in your Spotify app settings.
-                </p>
-                <button className="spotify" disabled={!clientId.trim()} onClick={onLogin}>
+                {clientIdField}
+                <button className="spotify" disabled={!clientId.trim()} onClick={() => onLogin()}>
                   Log in with Spotify
                 </button>
               </>
@@ -155,7 +236,7 @@ export function Setup({ authChecked, profile, authMessage, initialMode, deckSize
             {authMessage && <p className="warn">{authMessage}</p>}
           </div>
         )}
-        {mode === 'embed' && profile && (
+        {mode === 'embed' && profile && deck === 'classic' && (
           <p className="hint spotify-box">You're logged in, so the hidden player can use all {deckSize.all} songs.</p>
         )}
       </section>
@@ -168,7 +249,7 @@ export function Setup({ authChecked, profile, authMessage, initialMode, deckSize
   );
 }
 
-function ModeOption(props: { value: PlaybackKind; current: PlaybackKind; onSelect: (v: PlaybackKind) => void; title: string; detail: string }) {
+function ModeOption<T extends string>(props: { value: T; current: T; onSelect: (v: T) => void; title: string; detail: string }) {
   const selected = props.value === props.current;
   return (
     <button role="radio" aria-checked={selected} className={`mode ${selected ? 'selected' : ''}`} onClick={() => props.onSelect(props.value)}>

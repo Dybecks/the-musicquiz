@@ -17,12 +17,15 @@ const KEYS = {
   verifier: 'mq.spotify.verifier',
   state: 'mq.spotify.state',
   token: 'mq.spotify.token',
+  afterLogin: 'mq.spotify.afterLogin',
 };
 
 interface StoredToken {
   accessToken: string;
   refreshToken: string;
   expiresAt: number;
+  /** Space-separated scopes the user granted. Missing on tokens saved by older versions. */
+  scope?: string;
 }
 
 export function redirectUri(): string {
@@ -52,9 +55,20 @@ async function challengeFor(verifier: string): Promise<string> {
     .replace(/\//g, '_');
 }
 
-export async function login(): Promise<void> {
+export interface LoginOptions {
+  /** Extra permissions to ask for on top of the playback ones, e.g. 'user-top-read'. */
+  extraScopes?: string[];
+  /** Remembered across the redirect; read it back with takeAfterLogin(). */
+  afterLogin?: string;
+}
+
+export async function login({ extraScopes = [], afterLogin }: LoginOptions = {}): Promise<void> {
   const clientId = getClientId();
   if (!clientId) throw new Error('Add your Spotify Client ID first.');
+  // Keep what was granted before, so asking for more doesn't drop anything.
+  const scope = [...new Set([...SCOPES.split(' '), ...grantedScopes(), ...extraScopes])].join(' ');
+  if (afterLogin) sessionStorage.setItem(KEYS.afterLogin, afterLogin);
+  else sessionStorage.removeItem(KEYS.afterLogin);
   const verifier = randomString(64);
   const state = randomString(16);
   sessionStorage.setItem(KEYS.verifier, verifier);
@@ -65,7 +79,7 @@ export async function login(): Promise<void> {
     redirect_uri: redirectUri(),
     code_challenge_method: 'S256',
     code_challenge: await challengeFor(verifier),
-    scope: SCOPES,
+    scope,
     state,
   });
   window.location.assign(`https://accounts.spotify.com/authorize?${params}`);
@@ -87,6 +101,7 @@ export async function handleRedirect(): Promise<string | null> {
 
   if (error) {
     cleanUrl();
+    sessionStorage.removeItem(KEYS.afterLogin);
     return `Spotify login was cancelled (${error}).`;
   }
   const returnedState = url.searchParams.get('state');
@@ -110,17 +125,21 @@ export async function handleRedirect(): Promise<string | null> {
   });
   sessionStorage.removeItem(KEYS.verifier);
   sessionStorage.removeItem(KEYS.state);
-  if (!res.ok) return `Spotify login failed (${res.status}).`;
+  if (!res.ok) {
+    sessionStorage.removeItem(KEYS.afterLogin);
+    return `Spotify login failed (${res.status}).`;
+  }
   saveToken(await res.json());
   return null;
 }
 
-function saveToken(body: { access_token: string; refresh_token?: string; expires_in: number }): void {
+function saveToken(body: { access_token: string; refresh_token?: string; expires_in: number; scope?: string }): void {
   const previous = readToken();
   const token: StoredToken = {
     accessToken: body.access_token,
     refreshToken: body.refresh_token ?? previous?.refreshToken ?? '',
     expiresAt: Date.now() + (body.expires_in - 60) * 1000,
+    scope: body.scope ?? previous?.scope,
   };
   localStorage.setItem(KEYS.token, JSON.stringify(token));
 }
@@ -136,6 +155,25 @@ function readToken(): StoredToken | null {
 
 export function isLoggedIn(): boolean {
   return readToken() !== null;
+}
+
+/** The permissions the logged-in user granted (empty when logged out). */
+export function grantedScopes(): string[] {
+  const token = readToken();
+  if (!token) return [];
+  return (token.scope ?? SCOPES).split(/\s+/).filter(Boolean);
+}
+
+export function hasScopes(scopes: string[]): boolean {
+  const granted = new Set(grantedScopes());
+  return scopes.every((s) => granted.has(s));
+}
+
+/** Returns (once) what login() was asked to do after the redirect. */
+export function takeAfterLogin(): string | null {
+  const value = sessionStorage.getItem(KEYS.afterLogin);
+  sessionStorage.removeItem(KEYS.afterLogin);
+  return value;
 }
 
 export function logout(): void {

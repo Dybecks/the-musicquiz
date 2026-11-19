@@ -110,3 +110,20 @@ input:focus { outline: 2px solid var(--accent); border-color: transparent; }
 .finished h1 { text-align: center; margin-bottom: 18px; }
 .final-timeline { margin-bottom: 18px; }
 .game-footer { display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; }
+
+/* My Spotify music */
+.my-music .row { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; }
+.sources { border: 0; padding: 0; margin: 0 0 10px; display: grid; gap: 8px; }
+.sources legend { font-size: 0.9rem; color: var(--muted); margin-bottom: 8px; padding: 0; }
+.check { display: flex; gap: 12px; align-items: flex-start; background: var(--panel-2); border-radius: 12px; padding: 10px 12px; cursor: pointer; }
+.check input { width: 20px; height: 20px; flex: none; margin: 2px 0 0; accent-color: var(--accent); }
+.check span { display: grid; gap: 2px; }
+.check small { color: var(--muted); font-size: 0.85rem; }
+.deck-summary { margin-bottom: 14px; }
+.decades { list-style: none; padding: 0; margin: 10px 0 0; display: flex; gap: 6px; align-items: flex-end; height: 96px; }
+.decades li { flex: 1; min-width: 0; height: 100%; display: grid; grid-template-rows: 1fr auto auto; justify-items: center; align-items: end; font-size: 0.75rem; }
+.decades .bar { width: 100%; max-width: 36px; border-radius: 6px 6px 2px 2px; background: linear-gradient(180deg, var(--accent-2), var(--accent)); }
+.decades .n { font-weight: 700; }
+.decades .d { color: var(--muted); }
+.progress { display: grid; gap: 8px; color: var(--muted); }
+.progress progress { width: 100%; accent-color: var(--spotify); }
