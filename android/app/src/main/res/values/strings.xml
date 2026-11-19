@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="appName">The Music Quiz</string>
+    <string name="launcherName">Music Quiz</string>
+    <string name="hostName">dybecks.github.io</string>
+    <string name="launchUrl">https://dybecks.github.io/the-musicquiz/</string>
+    <string name="providerAuthority">io.github.dybecks.musicquiz.fileprovider</string>
+    <string name="assetStatements" translatable="false">
+        [{
+            \"relation\": [\"delegate_permission/common.handle_all_urls\"],
+            \"target\": {\"namespace\": \"web\", \"site\": \"https://dybecks.github.io\"}
+        }]
+    </string>
+</resources>
