@@ -15,6 +15,8 @@ export interface Song {
   spotifyId?: string;
   /** Genres, used to narrow down the deck. Unknown when missing. */
   genres?: Genre[];
+  /** The film, show, game or musical the song is from, shown on the card. */
+  from?: string;
 }
 
 export interface Player {

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { SpotifyProfile } from '../spotify/api';
 import { BUILT_IN_CLIENT_ID, getClientIdOverride, redirectUri, setClientId } from '../spotify/auth';
 import type { PlaybackKind } from '../spotify/playback';
-import { chooseSongs, classicSongs, type DeckChoice } from '../data/decks';
+import { DECKS, chooseSongs, deckSongs, normalizeDecks, parseSavedDecks, playableSongs, type DeckId } from '../data/decks';
 import { loadSources } from '../spotify/listening';
 import { personalSongs, type Contributor, type ListeningSource, type PersonalDeck } from '../spotify/personalDeck';
 import { MyMusic } from './MyMusic';
@@ -13,7 +13,7 @@ export interface SetupValues {
   players: string[];
   targetCards: number;
   mode: PlaybackKind;
-  deck: DeckChoice;
+  decks: DeckId[];
   filter: DeckFilter;
 }
 
@@ -37,9 +37,8 @@ const PLAYERS_KEY = 'mq.players';
 const TARGET_KEY = 'mq.target';
 const DECK_KEY = 'mq.deck';
 
-function loadDeckChoice(): DeckChoice {
-  const saved = localStorage.getItem(DECK_KEY);
-  return saved === 'mine' || saved === 'mix' ? saved : 'classic';
+function loadDecks(): DeckId[] {
+  return parseSavedDecks(localStorage.getItem(DECK_KEY));
 }
 
 function loadPlayers(): string[] {
@@ -60,7 +59,7 @@ export function Setup(props: Props) {
   const [clientIdOverride, setClientIdOverride] = useState(getClientIdOverride);
   const clientId = clientIdOverride.trim() || BUILT_IN_CLIENT_ID;
   const [error, setError] = useState<string | null>(null);
-  const [deck, setDeck] = useState<DeckChoice>(loadDeckChoice);
+  const [decks, setDecks] = useState<DeckId[]>(loadDecks);
   const [sources, setSources] = useState<ListeningSource[]>(loadSources);
   const [filter, setFilterState] = useState<DeckFilter>(loadFilter);
   const setFilter = (f: DeckFilter) => {
@@ -73,17 +72,29 @@ export function Setup(props: Props) {
   // one, using the songs that have a known Spotify id.
   const needsLogin = mode === 'premium' && !profile;
   const mySongs = personalSongs(personal).length;
-  const needsPersonal = deck !== 'classic' && mySongs === 0;
-  const deckOptions = { choice: deck, mode, loggedIn: !!profile, personal };
-  const unfilteredCount = needsPersonal ? 0 : chooseSongs(deckOptions).length;
-  const songCount = needsPersonal ? 0 : chooseSongs({ ...deckOptions, filter }).length;
+  const wantsMine = decks.includes('mine');
+  const needsPersonal = wantsMine && mySongs === 0;
+  const deckOptions = { decks, mode, loggedIn: !!profile, personal };
+  const unfilteredCount = chooseSongs(deckOptions).length;
+  const songCount = chooseSongs({ ...deckOptions, filter }).length;
   const myPresets = personalPresets(personalSongs(personal));
-  const classicCount = classicSongs(mode, !!profile).length;
+  const soundtrackWithGenres = filter.genres.length > 0 && decks.some((d) => d !== 'classic' && d !== 'mine');
   const names = players.map((p) => p.trim()).filter(Boolean);
 
-  const chooseDeck = (choice: DeckChoice) => {
-    setDeck(choice);
-    localStorage.setItem(DECK_KEY, choice);
+  const toggleDeck = (id: DeckId) => {
+    const next = decks.includes(id) ? decks.filter((d) => d !== id) : normalizeDecks([...decks, id]);
+    if (next.length === 0) return; // keep at least one deck
+    setDecks(next);
+    localStorage.setItem(DECK_KEY, JSON.stringify(next));
+  };
+
+  const deckDetail = (id: DeckId, detail: string) => {
+    const all = deckSongs(id, personal).length;
+    if (id === 'mine') return mySongs ? `${mySongs} songs from what you listen to.` : detail;
+    const playable = playableSongs(deckSongs(id, personal), mode, !!profile).length;
+    if (playable === all) return `${all} songs. ${detail}`;
+    if (playable === 0) return `${all} songs. ${detail} Needs a Spotify login to play.`;
+    return `${playable} of ${all} songs play without a login. ${detail}`;
   };
 
   // The game ships with its own Spotify app, so the Client ID field is tucked
@@ -117,12 +128,14 @@ export function Setup(props: Props) {
 
   const start = () => {
     if (names.length === 0) return setError('Add at least one player or team.');
-    if (needsPersonal) return setError('Build your deck from Spotify first, or choose the classic deck.');
-    if (songCount < names.length + 1) return setError('Too few songs match. Widen the genres or years, or use fewer players.');
+    if (needsPersonal) return setError('Build your deck from Spotify first, or untick My Spotify music.');
+    if (unfilteredCount === 0) return setError('These songs need a Spotify login to play. Log in, or choose other decks.');
+    if (unfilteredCount > 0 && songCount < names.length + 1) return setError('Too few songs match. Widen the genres or years, or use fewer players.');
+    if (songCount < names.length + 1) return setError('There are too few songs for this many players.');
     if (needsLogin) return setError('Log in with Spotify first, or choose the hidden Spotify player.');
     localStorage.setItem(PLAYERS_KEY, JSON.stringify(names));
     localStorage.setItem(TARGET_KEY, String(target));
-    onStart({ players: names, targetCards: target, mode, deck, filter });
+    onStart({ players: names, targetCards: target, mode, decks, filter });
   };
 
   return (
@@ -165,36 +178,21 @@ export function Setup(props: Props) {
           <input type="number" min={3} max={30} value={target} onChange={(e) => setTarget(Math.max(3, Math.min(30, Number(e.target.value) || 10)))} />
         </label>
         <p className="hint">
-          {needsPersonal ? 'Build your deck from Spotify below to see how many songs you get.' : `You'll play with ${songCount} songs.`}
+          {needsPersonal
+            ? 'Build your deck from Spotify below to see how many songs you get.'
+            : `You'll play with ${songCount} songs.`}
         </p>
       </section>
 
       <section className="panel">
         <h2>Which songs?</h2>
-        <div className="mode-options" role="radiogroup" aria-label="Which songs?">
-          <ModeOption
-            value="classic"
-            current={deck}
-            onSelect={chooseDeck}
-            title="Classic deck"
-            detail={`${classicCount} well-known songs from the 1950s to today.`}
-          />
-          <ModeOption
-            value="mine"
-            current={deck}
-            onSelect={chooseDeck}
-            title="My Spotify music"
-            detail={mySongs ? `${mySongs} songs from what you listen to.` : 'Songs you actually listen to, from your Spotify account.'}
-          />
-          <ModeOption
-            value="mix"
-            current={deck}
-            onSelect={chooseDeck}
-            title="Mix of both"
-            detail="Your songs plus the classic deck, for a wider spread of years."
-          />
+        <p className="hint">Pick one or more. Songs from several decks are shuffled together.</p>
+        <div className="mode-options deck-options" role="group" aria-label="Which songs?">
+          {DECKS.map((d) => (
+            <DeckOption key={d.id} title={d.title} detail={deckDetail(d.id, d.detail)} checked={decks.includes(d.id)} onToggle={() => toggleDeck(d.id)} />
+          ))}
         </div>
-        {deck !== 'classic' && (
+        {wantsMine && (
           <MyMusic
             authChecked={authChecked}
             profile={profile}
@@ -210,7 +208,7 @@ export function Setup(props: Props) {
             onForget={props.onPersonalForget}
           />
         )}
-        {deck !== 'classic' && authMessage && mode !== 'premium' && <p className="warn">{authMessage}</p>}
+        {wantsMine && authMessage && mode !== 'premium' && <p className="warn">{authMessage}</p>}
       </section>
 
       <DeckFilterPanel
@@ -221,6 +219,7 @@ export function Setup(props: Props) {
         hasPersonal={mySongs > 0}
         count={songCount}
         total={unfilteredCount}
+        note={soundtrackWithGenres ? 'Soundtrack songs have no genre, so a genre choice leaves them out. Use years only to keep them.' : undefined}
       />
 
       <section className="panel">
@@ -238,7 +237,7 @@ export function Setup(props: Props) {
             current={mode}
             onSelect={setMode}
             title="Hidden Spotify player, no login"
-            detail={`A covered-up Spotify player. Full songs if this browser is signed in to Spotify, otherwise 30-second previews.${deck === 'classic' ? ` Plays ${deckSize.noLogin} of the classic songs without a login.` : ''}`}
+            detail={`A covered-up Spotify player. Full songs if this browser is signed in to Spotify, otherwise 30-second previews. Without a login it plays only songs with a known Spotify id (${deckSize.noLogin} of the classic hits, and your own Spotify songs).`}
           />
           <ModeOption value="none" current={mode} onSelect={setMode} title="No audio" detail="Try the rules, or play the music some other way." />
         </div>
@@ -268,8 +267,8 @@ export function Setup(props: Props) {
             {authMessage && <p className="warn">{authMessage}</p>}
           </div>
         )}
-        {mode === 'embed' && profile && deck === 'classic' && (
-          <p className="hint spotify-box">You're logged in, so the hidden player can use all {deckSize.all} songs.</p>
+        {mode === 'embed' && profile && (
+          <p className="hint spotify-box">You're logged in, so the hidden player can use every song in the chosen decks.</p>
         )}
       </section>
 
@@ -285,6 +284,18 @@ function ModeOption<T extends string>(props: { value: T; current: T; onSelect: (
   const selected = props.value === props.current;
   return (
     <button role="radio" aria-checked={selected} className={`mode ${selected ? 'selected' : ''}`} onClick={() => props.onSelect(props.value)}>
+      <strong>{props.title}</strong>
+      <span>{props.detail}</span>
+    </button>
+  );
+}
+
+function DeckOption(props: { title: string; detail: string; checked: boolean; onToggle: () => void }) {
+  return (
+    <button role="checkbox" aria-checked={props.checked} className={`mode deck ${props.checked ? 'selected' : ''}`} onClick={props.onToggle}>
+      <span className="tick" aria-hidden="true">
+        {props.checked ? '✓' : ''}
+      </span>
       <strong>{props.title}</strong>
       <span>{props.detail}</span>
     </button>

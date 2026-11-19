@@ -22,11 +22,34 @@ It runs in the browser on a phone, tablet or laptop that everyone gathers around
 Use **Skip song** if a track can't be found or played; it draws a new song
 without using up the turn. The game is saved in the browser, so a reload doesn't lose it.
 
+## Song decks
+
+Under **Which songs?** the host ticks one or more decks; songs from several decks are
+shuffled together, and a song that appears in two decks is only used once.
+
+| Deck | Songs | Range |
+| --- | --- | --- |
+| Classic hits | 160 | Well-known songs from the 1950s to today |
+| Movie songs | 50 | The Wizard of Oz (1939) to Barbie (2023) |
+| Musicals | 50 | Oklahoma! (1943) to Beetlejuice (2019) |
+| TV themes | 50 | Peter Gunn (1958) to Severance (2022) |
+| Video game music | 50 | Super Mario Bros. (1985) to Baldur's Gate 3 (2023) |
+| My Spotify music | varies | See below |
+
+The four soundtrack decks are in `src/data/soundtracks.ts`. They only hold songs written
+for the film, show, game or musical, so the year on the card is the year that work first
+came out: the film's release, the show's premiere, the game's first release, or the
+musical's first major production (or concept album, as for Evita). Cards say where the
+song is from. None of these songs has a pinned Spotify id yet, so they are found with the
+Spotify search at play time, which needs a Spotify login. Some video game music, Nintendo's
+in particular, isn't on Spotify; the search may then find a cover, or nothing, and
+**Skip song** draws another.
+
 ## Play with your own music
 
-Instead of the classic deck, the host can play with songs they actually listen to.
-Under **Which songs?** choose **My Spotify music** or **Mix of both**, tick what to
-share and press **Allow access and build my deck**:
+The host can also play with songs they actually listen to. Under **Which songs?** tick
+**My Spotify music** (on its own or with other decks), tick what to share and press
+**Allow access and build my deck**:
 
 | Share | Spotify permission | What is read |
 | --- | --- | --- |
@@ -45,7 +68,7 @@ For each track the game searches Spotify for other releases of the same title by
 same artist and uses the earliest year. Repeats, other versions of the same song and
 local files are dropped, and at most 300 songs are used. The setup screen shows how
 the songs spread over the decades; a deck of mostly recent songs is hard to place,
-so **Mix of both** adds the classic deck for spread.
+so ticking another deck as well adds spread.
 
 The code: `src/spotify/listening.ts` (reading and storing) and
 `src/spotify/personalDeck.ts` (turning tracks into cards, tested in `personalDeck.test.ts`).
@@ -123,7 +146,9 @@ npm run build      # type check + production build in dist/
 The project is Vite + React + TypeScript. The pieces:
 
 - `src/game/engine.ts`: the rules as pure functions (deal, place, reveal, next turn, win).
-- `src/data/songs.ts`: the song deck. Add `[title, artist, year]` rows to extend it.
+- `src/data/songs.ts`: the classic deck. Add `[title, artist, year]` rows to extend it.
   Years are the original release year, not a remaster's.
+- `src/data/soundtracks.ts`: the movie, musical, TV and video game decks, as
+  `[title, artist, year, from]` rows. `src/data/decks.ts` combines the chosen decks.
 - `src/spotify/`: login (`auth.ts`), Web API calls (`api.ts`) and the playback options (`playback.ts`).
 - `src/components/`: setup screen, game screen and timeline.

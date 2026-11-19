@@ -10,6 +10,7 @@ interface Props {
   /** Songs left after filtering, and before. */
   count: number;
   total: number;
+  note?: string;
 }
 
 function parseYear(value: string): number | null {
@@ -17,7 +18,7 @@ function parseYear(value: string): number | null {
   return Number.isFinite(n) && n >= 1900 && n <= 2100 ? n : null;
 }
 
-export function DeckFilterPanel({ filter, onChange, presets, personalPresets, hasPersonal, count, total }: Props) {
+export function DeckFilterPanel({ filter, onChange, presets, personalPresets, hasPersonal, count, total, note }: Props) {
   const toggleGenre = (g: Genre) =>
     onChange({ ...filter, genres: filter.genres.includes(g) ? filter.genres.filter((x) => x !== g) : [...filter.genres, g] });
 
@@ -44,7 +45,7 @@ export function DeckFilterPanel({ filter, onChange, presets, personalPresets, ha
           <div className="chips">{personalPresets.map(presetButton)}</div>
         </>
       ) : (
-        !hasPersonal && <p className="hint">Pick “My Spotify music” above and build your deck to get suggestions based on what you listen to.</p>
+        !hasPersonal && <p className="hint">Tick “My Spotify music” above and build your deck to get suggestions based on what you listen to.</p>
       )}
       <p className="hint">Quick picks</p>
       <div className="chips">{presets.map(presetButton)}</div>
@@ -86,6 +87,7 @@ export function DeckFilterPanel({ filter, onChange, presets, personalPresets, ha
         </label>
       </div>
 
+      {note && <p className="hint">{note}</p>}
       <p className={count < 20 ? 'warn' : 'hint'}>
         {count} of {total} songs match.
         {count < 20 && ' That makes a short game; widen the genres or years for more.'}
