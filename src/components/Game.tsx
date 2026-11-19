@@ -7,6 +7,7 @@ import {
   type Playback,
   type PlaybackKind,
 } from '../spotify/playback';
+import { loadFact, type SongFact } from '../facts/wikipedia';
 import { Timeline } from './Timeline';
 
 interface Props {
@@ -59,6 +60,7 @@ export function Game({ state, mode, onModeChange, onChange, onQuit }: Props) {
 
   // Load each new song as it is drawn.
   const songId = state.phase === 'guessing' ? state.current?.id : undefined;
+
   useEffect(() => {
     if (!playback || !songId || !state.current) return;
     let cancelled = false;
@@ -79,6 +81,12 @@ export function Game({ state, mode, onModeChange, onChange, onQuit }: Props) {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [playback, songId]);
+
+  // Look up the fun fact while the song plays, so it's ready at the reveal.
+  useEffect(() => {
+    if (songId && state.current) void loadFact(state.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [songId]);
 
   const player = currentPlayer(state);
 
@@ -260,7 +268,31 @@ function Reveal({ correct, song }: { correct: boolean; song: GameState['deck'][n
           {song.from && <span className="from"> · from {song.from}</span>}
         </span>
       </div>
+      <FunFact song={song} />
     </div>
+  );
+}
+
+/** A few lines from Wikipedia about the song or its artist. Shows nothing until found, or if none is. */
+function FunFact({ song }: { song: GameState['deck'][number] }) {
+  const [fact, setFact] = useState<{ id: string; fact: SongFact | null } | null>(null);
+  useEffect(() => {
+    let live = true;
+    loadFact(song).then((f) => live && setFact({ id: song.id, fact: f }));
+    return () => {
+      live = false;
+    };
+  }, [song]);
+  if (!fact || fact.id !== song.id || !fact.fact) return null;
+  const { text, about, title, url } = fact.fact;
+  return (
+    <aside className="fun-fact">
+      <p className="fun-fact-label">{about === 'song' ? 'About the song' : 'About the artist'}</p>
+      <p>{text}</p>
+      <a href={url} target="_blank" rel="noreferrer">
+        {title} on Wikipedia
+      </a>
+    </aside>
   );
 }
 

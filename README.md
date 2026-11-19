@@ -89,6 +89,21 @@ Classic songs are tagged by artist in `src/data/songs.ts`. Your own songs get
 their genres from the artist's genres on Spotify, folded into the categories above
 (`src/data/genres.ts`). Songs with no known genre are left out when filtering by genre.
 
+## Fun facts
+
+When a song is revealed, a few lines about it from English Wikipedia appear under the
+card, with a link to the article. If the song has no article of its own, the facts are
+about the artist; soundtrack songs only get facts about the song itself. The lookup
+starts while the song is playing, so it is usually ready when the guess is locked in.
+
+A Wikipedia article is only used when its title matches the song (or artist) and the
+text names the artist (or the film, show, game or musical), so a song that shares its
+title with another doesn't get the other song's facts. When nothing matches, or Wikipedia
+can't be reached, the reveal shows no fact. Wikipedia's API needs no key and works from
+the browser, so this works for every deck, including your own Spotify music.
+
+The code: `src/facts/wikipedia.ts`, tested in `wikipedia.test.ts`.
+
 ## Music playback
 
 On the setup screen the host chooses how the music plays:
