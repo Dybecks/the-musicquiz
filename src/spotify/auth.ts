@@ -32,8 +32,20 @@ export function redirectUri(): string {
   return new URL(import.meta.env.BASE_URL, window.location.origin).toString();
 }
 
+/**
+ * The game's own Spotify app. A Client ID is public (the PKCE flow uses no
+ * secret), so it is safe to ship in the site. It can be overridden with
+ * VITE_SPOTIFY_CLIENT_ID at build time, or per browser on the setup screen.
+ */
+export const BUILT_IN_CLIENT_ID = import.meta.env.VITE_SPOTIFY_CLIENT_ID || '5a008c63808c47478e4edcc99db34a87';
+
+/** A Client ID the host typed in to use their own Spotify app, if any. */
+export function getClientIdOverride(): string {
+  return localStorage.getItem(KEYS.clientId) ?? '';
+}
+
 export function getClientId(): string {
-  return localStorage.getItem(KEYS.clientId) || import.meta.env.VITE_SPOTIFY_CLIENT_ID || '';
+  return getClientIdOverride() || BUILT_IN_CLIENT_ID;
 }
 
 export function setClientId(id: string): void {
