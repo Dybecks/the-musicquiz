@@ -14,7 +14,7 @@ interface Props {
   profile: SpotifyProfile | null;
   authMessage: string | null;
   initialMode: PlaybackKind;
-  deckSize: number;
+  deckSize: { all: number; noLogin: number };
   onLogin: () => void;
   onLogout: () => void;
   onStart: (values: SetupValues) => void;
@@ -41,12 +41,15 @@ export function Setup({ authChecked, profile, authMessage, initialMode, deckSize
   const [error, setError] = useState<string | null>(null);
 
   const isPremium = profile?.product === 'premium';
-  const needsLogin = mode !== 'none' && !profile;
+  // Only the Premium option requires a login. The hidden player works without
+  // one, using the songs that have a known Spotify id.
+  const needsLogin = mode === 'premium' && !profile;
+  const songCount = mode === 'embed' && !profile ? deckSize.noLogin : deckSize.all;
   const names = players.map((p) => p.trim()).filter(Boolean);
 
   const start = () => {
     if (names.length === 0) return setError('Add at least one player or team.');
-    if (needsLogin) return setError('Log in with Spotify first, or pick "No audio".');
+    if (needsLogin) return setError('Log in with Spotify first, or choose the hidden Spotify player.');
     localStorage.setItem(PLAYERS_KEY, JSON.stringify(names));
     localStorage.setItem(TARGET_KEY, String(target));
     onStart({ players: names, targetCards: target, mode });
@@ -91,18 +94,30 @@ export function Setup({ authChecked, profile, authMessage, initialMode, deckSize
           <span>Cards needed to win</span>
           <input type="number" min={3} max={30} value={target} onChange={(e) => setTarget(Math.max(3, Math.min(30, Number(e.target.value) || 10)))} />
         </label>
-        <p className="hint">The deck has {deckSize} songs from the 1950s to today.</p>
+        <p className="hint">You'll play with {songCount} songs from the 1950s to today.</p>
       </section>
 
       <section className="panel">
-        <h2>Music</h2>
-        <div className="mode-options" role="radiogroup">
-          <ModeOption value="premium" current={mode} onSelect={setMode} title="Spotify Premium in this browser" detail="Full songs, played right here. Needs a Premium account." />
-          <ModeOption value="embed" current={mode} onSelect={setMode} title="Spotify player (any account)" detail="Uses a hidden Spotify embed. Full songs if this browser is signed in to Spotify Premium, otherwise short previews." />
-          <ModeOption value="none" current={mode} onSelect={setMode} title="No audio" detail="Try the rules, or play the music some other way. No Spotify needed." />
+        <h2>How should the music play?</h2>
+        <div className="mode-options" role="radiogroup" aria-label="How should the music play?">
+          <ModeOption
+            value="premium"
+            current={mode}
+            onSelect={setMode}
+            title="Log in with Spotify"
+            detail={`Full songs played right here, from all ${deckSize.all} songs. Needs Spotify Premium.`}
+          />
+          <ModeOption
+            value="embed"
+            current={mode}
+            onSelect={setMode}
+            title="Hidden Spotify player, no login"
+            detail={`A covered-up Spotify player, ${deckSize.noLogin} songs. Full songs if this browser is signed in to Spotify, otherwise 30-second previews.`}
+          />
+          <ModeOption value="none" current={mode} onSelect={setMode} title="No audio" detail="Try the rules, or play the music some other way." />
         </div>
 
-        {mode !== 'none' && (
+        {mode === 'premium' && (
           <div className="spotify-box">
             {!authChecked ? (
               <p className="hint">Checking Spotify login…</p>
@@ -134,11 +149,14 @@ export function Setup({ authChecked, profile, authMessage, initialMode, deckSize
                 </button>
               </>
             )}
-            {mode === 'premium' && profile && !isPremium && (
-              <p className="warn">This account isn't Premium, so in-browser playback won't work. Pick the Spotify player option instead.</p>
+            {profile && !isPremium && (
+              <p className="warn">This account isn't Premium, so in-browser playback won't work. Choose the hidden Spotify player instead.</p>
             )}
             {authMessage && <p className="warn">{authMessage}</p>}
           </div>
+        )}
+        {mode === 'embed' && profile && (
+          <p className="hint spotify-box">You're logged in, so the hidden player can use all {deckSize.all} songs.</p>
         )}
       </section>
 

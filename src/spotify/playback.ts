@@ -4,10 +4,10 @@
  *  - "premium": the Spotify Web Playback SDK turns this browser tab into a
  *    Spotify Connect device and plays the full track. Needs Spotify Premium.
  *  - "embed": the Spotify Embed (iFrame API) player, kept hidden behind a
- *    cover. Works with any account; it plays the full track if the browser is
- *    signed in to Spotify with Premium, otherwise a preview clip.
+ *    cover. Needs no login for songs with a known Spotify id; it plays the
+ *    full track if the browser is signed in to Spotify, otherwise a preview.
  *
- * Both need the Spotify login, because the songs are found via search.
+ * Songs without a known id are found via search, which needs the login.
  */
 import type { Song } from '../game/engine';
 import { findTrackUri, playOnDevice } from './api';

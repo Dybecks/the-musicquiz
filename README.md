@@ -24,18 +24,18 @@ without using up the turn. The game is saved in the browser, so a reload doesn't
 
 ## Music playback
 
-The game uses Spotify, with three options on the setup screen:
+On the setup screen the host chooses how the music plays:
 
 | Option | Needs | What you get |
 | --- | --- | --- |
-| Spotify Premium in this browser | Premium account | Full songs via the [Web Playback SDK](https://developer.spotify.com/documentation/web-playback-sdk). The browser tab becomes a Spotify device. |
-| Spotify player (any account) | Any account | A hidden [Spotify Embed](https://developer.spotify.com/documentation/embeds) player. Full songs if the browser is signed in to Spotify Premium, otherwise preview clips. |
+| Log in with Spotify | Premium account + a Spotify app Client ID | Full songs via the [Web Playback SDK](https://developer.spotify.com/documentation/web-playback-sdk), from the whole deck. The browser tab becomes a Spotify device. |
+| Hidden Spotify player, no login | Nothing | A covered-up [Spotify Embed](https://developer.spotify.com/documentation/embeds) player. Uses the songs that have a known Spotify id (65 of them). Full songs if the browser is signed in to Spotify, otherwise 30-second previews. If the host is also logged in, it can use the whole deck. |
 | No audio | Nothing | Try the rules, or play the music some other way. |
 
-Both Spotify options need a login, because songs are looked up with the Spotify
-search API. Only the person hosting the game logs in.
+Songs with a Spotify id in `SPOTIFY_IDS` (`src/data/songs.ts`) play without a login.
+Other songs are looked up with the Spotify search API, which needs the login.
 
-### Spotify setup (once)
+### Spotify setup (only for "Log in with Spotify")
 
 1. Create an app at <https://developer.spotify.com/dashboard>, choosing **Web API** and **Web Playback SDK**.
 2. Add the redirect URIs you'll use, for example `http://127.0.0.1:5173/` (dev) and

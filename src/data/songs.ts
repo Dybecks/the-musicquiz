@@ -3,8 +3,9 @@ import type { Song } from '../game/engine';
 /**
  * The default deck. Years are the original release year of the song (single or
  * album, whichever came first), not the year of a remaster on Spotify.
- * Spotify tracks are looked up by title + artist at play time; add a
- * `spotifyId` to a song to pin an exact recording.
+ * Songs without a Spotify id are looked up by title + artist at play time
+ * (needs login); add an id to SPOTIFY_IDS to pin a recording and make the
+ * song playable without login.
  *
  * To add songs: append [title, artist, year] to RAW below.
  */
@@ -179,9 +180,86 @@ const RAW: [title: string, artist: string, year: number][] = [
   ['Die With A Smile', 'Lady Gaga & Bruno Mars', 2024],
 ];
 
+/**
+ * Spotify track ids, keyed by title. Songs with an id can be played with the
+ * hidden Spotify player without logging in. Each id was checked against
+ * Spotify's oEmbed endpoint (2026-11-19); ids came from Wikidata (P2207).
+ */
+const SPOTIFY_IDS: Record<string, string> = {
+  "Johnny B. Goode": '2QfiRTz5Yc8DdShCxG1tB2',
+  "Stand by Me": '2lzbKVKSUVeb01ytbHA8PS',
+  "Twist and Shout": '5ZBeML7Lf3FMEVviTyvi8l',
+  "I Want to Hold Your Hand": '5Qe7NHxeLAn8KoLTNLSdwe',
+  "The House of the Rising Sun": '4mn2kNTqiGLwaUR8JdhJ1l',
+  "(I Can't Get No) Satisfaction": '2PzU4IB8Dr6mxV3lHuaG34',
+  "Like a Rolling Stone": '3AhXZa8sUQht0UEdBJgpGc',
+  "California Dreamin'": '1ZEOIhSn6BKErV59bIgn76',
+  "Light My Fire": '5uvosCdMlFdTXhoazkTI5R',
+  "What a Wonderful World": '6SHg8p52iJfrgnCjfy5ZyO',
+  "Hey Jude": '3m7V717IKZqZLW5qUIOxdD',
+  "Sugar, Sugar": '1X4k8qzCxaF0Lx9oM3hff9',
+  "Bridge over Troubled Water": '6l8EbYRtQMgKOyc1gcDHF9',
+  "Let It Be": '2xAEMttFb293s8FmbH8tgX',
+  "Imagine": '7pKfPomDEeI4TPT6EOYjn9',
+  "Stairway to Heaven": '5CQ30WqJwcep0pYcV4AMNc',
+  "American Pie": '1fDsrQ23eTAVFElUMaf38X',
+  "Superstition": '1h2xVEoJORqrg71HocgqXd',
+  "Rocket Man": '3gdewACMIVMEWVbyb8O9sY',
+  "Piano Man": '70C4NyhjD5OZUMzvWZ3njJ',
+  "Sweet Home Alabama": '7e89621JPkKaeDSTQ3avtg',
+  "Dreams": '5TDZyWDfbQFQJabbPwImVY',
+  "Stayin' Alive": '5LTgRtmnVEXsuNuQUu69Vs',
+  "Le Freak": '7Kszjzps0xbQXyo1pO4KfE',
+  "September": '3kXoKlD84c6OmIcOLfrfEs',
+  "London Calling": '5jzma6gCzYtKB1DbEwFZKH',
+  "Another One Bites the Dust": '5vdp5UmvTsnMEMESIF2Ym7',
+  "Don't Stop Believin'": '4bHsxqR3GMrXTxEPLuK5ue',
+  "Under Pressure": '2fuCquhmrzHpu5xcA1ci9x',
+  "Eye of the Tiger": '65S2uk1hIun6u09QaSckn7',
+  "Africa": '2374M0fQpWi3dLnB54qaLX',
+  "Girls Just Want to Have Fun": '459EpH5UZgE6fMNPMLOgMF',
+  "Every Breath You Take": '2PnNomkEqlg9ADKCVG0Wt0',
+  "Like a Virgin": '22VWmcVQrYqHT4exHD6mMF',
+  "Wake Me Up Before You Go-Go": '0ikz6tENMONtK6qGkOrU3c',
+  "Smalltown Boy": '5vmRQ3zELMLUQPo2FLQ76x',
+  "The Final Countdown": '3MrRksHupTVEQ7YbA0FsZK',
+  "Bad": '5dQ51PaLQPl1vkL4wFBYON',
+  "Like a Prayer": '2v7ywbUzCgcVohHaKUcacV',
+  "The Look": '2oWMI54r0qT4N8Xb4C76vq',
+  "Smells Like Teen Spirit": '4CeeEOM32jQcH3eN9Q2dGj',
+  "Enter Sandman": '5sICkBXVmaCQk5aISGR3x1',
+  "All That She Wants": '6kWJvPfC4DgUpRsXKNa9z9',
+  "Zombie": '7EZC6E7UjZe63f1jRmkWxt',
+  "Wonderwall": '1qPbGZqppFwLwcBC1JQ6Vr',
+  "Gangsta's Paradise": '3P2CQ3VbkRJilviCuOGZl4',
+  "Bitter Sweet Symphony": '57iDDD9N9tTWe75x6qhStw',
+  "My Heart Will Go On": '33LC84JgLvK2KuW43MfaNq',
+  "No Scrubs": '1KGi9sZVMeszgZOWivFpxs',
+  "Umbrella": '49FYlytm3dAAraYgpoJZux',
+  "Viva la Vida": '6WrUT7FOAlDscRWU7ndmyd',
+  "Use Somebody": '5VGlqQANWDKJFl0MBG3sg2',
+  "I Gotta Feeling": '2H1047e0oMSj10dgp7p2VG',
+  "Rolling in the Deep": '5ei5hxLl7yUk2WplfA42kf',
+  "Wake Me Up": '0nrRP2bk19rLc0orkWPQk2',
+  "Shake It Off": '0cqRj7pUJDkTCEsJkx8snD',
+  "Hello": '4aebBr4JAihzJQR0CiIZJv',
+  "Heroes": '4ciaNqHWA2IzHphZaVRzHI',
+  "Lean On": '2YWjW3wwQIBLNhxWKBQd16',
+  "Despacito": '6habFhsOp2NvshLv26DqMb',
+  "Dance Monkey": '5ZULALImTm80tzUbYQYM9d',
+  "Dynamite": '0v1x6rN6JHRapa03JElljE',
+  "Anti-Hero": '02Zkkf2zMkwRGQjZ7T4p8f',
+  "Tattoo": '1DmW5Ep6ywYwxc2HMT5BG6',
+  "Never Gonna Give You Up": '4PTG3Z6ehGkBFwjybzWkR8',
+};
+
 export const DEFAULT_SONGS: Song[] = RAW.map(([title, artist, year], i) => ({
   id: `d${i + 1}`,
   title,
   artist,
   year,
+  ...(SPOTIFY_IDS[title] ? { spotifyId: SPOTIFY_IDS[title] } : {}),
 }));
+
+/** Songs that can be played without a Spotify login. */
+export const NO_LOGIN_SONGS: Song[] = DEFAULT_SONGS.filter((s) => s.spotifyId);

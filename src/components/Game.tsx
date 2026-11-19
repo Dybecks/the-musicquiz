@@ -142,13 +142,15 @@ export function Game({ state, mode, onModeChange, onChange, onQuit }: Props) {
                 <div className="mystery-actions">
                   {mode !== 'none' && (
                     <button className="primary" onClick={togglePlay} disabled={!playback || songStatus !== 'ready'}>
-                      {!playback && !playbackError
-                        ? 'Starting player…'
-                        : songStatus === 'loading'
-                          ? 'Finding song…'
-                          : playing
-                            ? '❚❚ Pause'
-                            : '▶ Play song'}
+                      {playbackError
+                        ? 'Player unavailable'
+                        : !playback
+                          ? 'Starting player…'
+                          : songStatus === 'loading'
+                            ? 'Finding song…'
+                            : playing
+                              ? '❚❚ Pause'
+                              : '▶ Play song'}
                     </button>
                   )}
                   {mode === 'none' && <p className="hint">No audio mode: play the song your own way, or just guess the year.</p>}
@@ -161,7 +163,7 @@ export function Game({ state, mode, onModeChange, onChange, onQuit }: Props) {
                     <p>{playbackError}</p>
                     {mode === 'premium' && (
                       <button className="link" onClick={() => onModeChange('embed')}>
-                        Use the Spotify player instead
+                        Use the hidden Spotify player instead
                       </button>
                     )}
                   </div>

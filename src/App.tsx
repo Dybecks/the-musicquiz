@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { createGame, type GameState } from './game/engine';
-import { DEFAULT_SONGS } from './data/songs';
+import { DEFAULT_SONGS, NO_LOGIN_SONGS } from './data/songs';
 import { getProfile, type SpotifyProfile } from './spotify/api';
 import { handleRedirect, isLoggedIn, login, logout } from './spotify/auth';
 import type { PlaybackKind } from './spotify/playback';
@@ -21,7 +21,7 @@ function loadJson<T>(key: string): T | null {
 
 export function App() {
   const [game, setGame] = useState<GameState | null>(() => loadJson<GameState>(GAME_KEY));
-  const [mode, setMode] = useState<PlaybackKind>(() => loadJson<PlaybackKind>(MODE_KEY) ?? 'premium');
+  const [mode, setMode] = useState<PlaybackKind>(() => loadJson<PlaybackKind>(MODE_KEY) ?? 'embed');
   const [profile, setProfile] = useState<SpotifyProfile | null>(null);
   const [authMessage, setAuthMessage] = useState<string | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
@@ -56,7 +56,9 @@ export function App() {
   const start = (values: SetupValues) => {
     localStorage.setItem(MODE_KEY, JSON.stringify(values.mode));
     setMode(values.mode);
-    setGame(createGame({ playerNames: values.players, targetCards: values.targetCards, songs: DEFAULT_SONGS }));
+    // Without a login we can only play songs whose Spotify id is known.
+    const songs = values.mode === 'embed' && !profile ? NO_LOGIN_SONGS : DEFAULT_SONGS;
+    setGame(createGame({ playerNames: values.players, targetCards: values.targetCards, songs }));
   };
 
   return (
@@ -81,7 +83,7 @@ export function App() {
           profile={profile}
           authMessage={authMessage}
           initialMode={mode}
-          deckSize={DEFAULT_SONGS.length}
+          deckSize={{ all: DEFAULT_SONGS.length, noLogin: NO_LOGIN_SONGS.length }}
           onLogin={() => login().catch((e) => setAuthMessage(e instanceof Error ? e.message : String(e)))}
           onLogout={() => {
             logout();
