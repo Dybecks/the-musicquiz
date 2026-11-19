@@ -415,17 +415,11 @@ and a service worker (`public/sw.js`) that caches the game's own files (never Sp
 On Android, Chrome's **Add to Home screen / Install app** already gives a full-screen
 app with its own icon.
 
-To publish on Google Play, the plan is a **Trusted Web Activity**: a small Android app that
-opens the deployed site in Chrome without browser UI. It keeps one codebase, and the Spotify
-login keeps working because the redirect URI stays `https://dybecks.github.io/the-musicquiz/`.
-
-1. Generate the Android project from the manifest with [Bubblewrap](https://github.com/GoogleChromeLabs/bubblewrap)
-   (`npx @bubblewrap/cli init --manifest https://dybecks.github.io/the-musicquiz/manifest.webmanifest`)
-   or [PWABuilder](https://www.pwabuilder.com/).
-2. Publish a Digital Asset Links file proving the site and app belong together. A TWA checks it at
-   `https://dybecks.github.io/.well-known/assetlinks.json`, the root of the domain rather than
-   `/the-musicquiz/`, so it has to be served from a `dybecks.github.io` repository or a custom domain.
-3. Build the signed bundle and upload it to the Play Console.
+For Google Play, `android/` holds a **Trusted Web Activity**: a small Android app that
+opens the deployed site in Chrome without browser UI. Game changes keep shipping through
+GitHub Pages; the app only needs a release when the app itself changes. Releases are built
+by pushing an `android-v*` tag. See [`android/README.md`](android/README.md) for releasing
+and the one-time Google Play setup.
 
 Still to work out:
 
@@ -433,7 +427,7 @@ Still to work out:
   browsers, so on phones the hidden Spotify player is the option that works. Full in-app
   playback on Android would need Spotify's native Android SDK, so a native wrapper (for example
   Capacitor) instead of a TWA.
-- Test on real devices (small phones, foldables, tablets), and add Play Store screenshots and a privacy policy.
+- Test on real devices (small phones, foldables, tablets).
 
 ## Deployment
 
