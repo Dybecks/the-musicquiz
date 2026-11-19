@@ -126,7 +126,9 @@ export function MyMusic(props: Props) {
         <p className="progress" role="status">
           {progress.step === 'reading'
             ? 'Reading your listening…'
-            : `Finding the original release year: ${progress.done} of ${progress.total}`}
+            : progress.step === 'dating'
+              ? `Finding the original release year: ${progress.done} of ${progress.total}`
+              : `Looking up genres: ${progress.done} of ${progress.total} artists`}
           <progress value={progress.done} max={progress.total || 1} />
         </p>
       ) : (

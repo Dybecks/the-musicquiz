@@ -5,6 +5,7 @@
  */
 import type { Song } from '../game/engine';
 import { spotifyGet } from './api';
+import { genresFromSpotify, type Genre } from '../data/genres';
 import {
   SOURCE_SCOPES,
   earliestYear,
@@ -121,7 +122,7 @@ async function originalYear(track: SpotifyTrack & { id: string }): Promise<numbe
 }
 
 export interface GatherProgress {
-  step: 'reading' | 'dating';
+  step: 'reading' | 'dating' | 'genres';
   done: number;
   total: number;
 }
@@ -164,5 +165,40 @@ export async function gatherListening(
     }
   };
   await Promise.all(Array.from({ length: CONCURRENCY }, worker));
-  return { songs: songs.filter((s): s is Song => s !== null), failures };
+
+  // Genres come from the song's main artist. Spotify may return no genres
+  // for some artists (or none at all for some apps); those songs simply
+  // have no genre and are left out when the host filters by genre.
+  const dated = songs.filter((s): s is Song => s !== null);
+  const artistOf = new Map<string, string>(tracks.map((t) => [`sp:${t.id}`, t.artists[0].id]));
+  const genres = await artistGenres([...new Set(artistOf.values())], onProgress);
+  for (const song of dated) {
+    const g = genres.get(artistOf.get(song.id) ?? '');
+    if (g?.length) song.genres = g;
+  }
+  return { songs: dated, failures };
+}
+
+async function artistGenres(ids: string[], onProgress: (p: GatherProgress) => void): Promise<Map<string, Genre[]>> {
+  const out = new Map<string, Genre[]>();
+  let next = 0;
+  let done = 0;
+  let failuresInARow = 0;
+  onProgress({ step: 'genres', done, total: ids.length });
+  const worker = async () => {
+    // Stop early if the endpoint isn't available to this app at all.
+    while (next < ids.length && failuresInARow < 5) {
+      const id = ids[next++];
+      try {
+        const artist = await spotifyGet<{ genres?: string[] }>(`/artists/${encodeURIComponent(id)}`);
+        out.set(id, genresFromSpotify(artist.genres ?? []));
+        failuresInARow = 0;
+      } catch {
+        failuresInARow++;
+      }
+      onProgress({ step: 'genres', done: ++done, total: ids.length });
+    }
+  };
+  await Promise.all(Array.from({ length: CONCURRENCY }, worker));
+  return out;
 }

@@ -54,6 +54,18 @@ The code: `src/spotify/listening.ts` (reading and storing) and
 (`PersonalDeck.contributors`), each with their own songs, so letting more players
 log in one after another and merge their music only needs the login and UI for it.
 
+## Genres and years
+
+The setup screen can narrow the deck to some genres (pop, rock, hip-hop & R&B,
+dance & electronic, soul/funk/disco, Swedish artists) and a year span, or use a
+quick pick such as "80s & 90s" or "Party". With a deck built from your own
+Spotify music you also get two picks based on it: **Your era** (the years most of
+your music comes from) and **Your genres** (the genres it leans towards).
+
+Classic songs are tagged by artist in `src/data/songs.ts`. Your own songs get
+their genres from the artist's genres on Spotify, folded into the categories above
+(`src/data/genres.ts`). Songs with no known genre are left out when filtering by genre.
+
 ## Music playback
 
 On the setup screen the host chooses how the music plays:

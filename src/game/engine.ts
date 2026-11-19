@@ -1,3 +1,5 @@
+import type { Genre } from '../data/genres';
+
 /**
  * Pure game logic for the music timeline game. No React, no Spotify:
  * every function takes a state and returns a new one, so it is easy to test
@@ -11,6 +13,8 @@ export interface Song {
   year: number;
   /** Optional Spotify track id; when missing the track is found via search. */
   spotifyId?: string;
+  /** Genres, used to narrow down the deck. Unknown when missing. */
+  genres?: Genre[];
 }
 
 export interface Player {
