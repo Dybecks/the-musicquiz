@@ -1,8 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import { createGame, type GameState } from './game/engine';
 import { DEFAULT_SONGS, NO_LOGIN_SONGS } from './data/songs';
+import { chooseSongs } from './data/decks';
 import { getProfile, type SpotifyProfile } from './spotify/api';
-import { handleRedirect, isLoggedIn, login, logout } from './spotify/auth';
+import { handleRedirect, isLoggedIn, login, logout, takeAfterLogin } from './spotify/auth';
+import { forgetPersonalDeck, loadPersonalDeck, savePersonalDeck } from './spotify/listening';
+import type { PersonalDeck } from './spotify/personalDeck';
 import type { PlaybackKind } from './spotify/playback';
 import { Setup, type SetupValues } from './components/Setup';
 import { Game } from './components/Game';
@@ -25,6 +28,8 @@ export function App() {
   const [profile, setProfile] = useState<SpotifyProfile | null>(null);
   const [authMessage, setAuthMessage] = useState<string | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
+  const [personal, setPersonal] = useState<PersonalDeck | null>(loadPersonalDeck);
+  const [autoGather, setAutoGather] = useState(false);
 
   const refreshProfile = useCallback(async () => {
     if (!isLoggedIn()) {
@@ -43,6 +48,7 @@ export function App() {
     void (async () => {
       const err = await handleRedirect().catch((e) => String(e));
       if (err) setAuthMessage(err);
+      if (takeAfterLogin() === 'gather') setAutoGather(true);
       await refreshProfile();
       setAuthChecked(true);
     })();
@@ -56,8 +62,7 @@ export function App() {
   const start = (values: SetupValues) => {
     localStorage.setItem(MODE_KEY, JSON.stringify(values.mode));
     setMode(values.mode);
-    // Without a login we can only play songs whose Spotify id is known.
-    const songs = values.mode === 'embed' && !profile ? NO_LOGIN_SONGS : DEFAULT_SONGS;
+    const songs = chooseSongs({ choice: values.deck, mode: values.mode, loggedIn: !!profile, personal });
     setGame(createGame({ playerNames: values.players, targetCards: values.targetCards, songs }));
   };
 
@@ -84,7 +89,19 @@ export function App() {
           authMessage={authMessage}
           initialMode={mode}
           deckSize={{ all: DEFAULT_SONGS.length, noLogin: NO_LOGIN_SONGS.length }}
-          onLogin={() => login().catch((e) => setAuthMessage(e instanceof Error ? e.message : String(e)))}
+          personal={personal}
+          autoGather={autoGather}
+          onAutoGatherHandled={() => setAutoGather(false)}
+          onLogin={(extraScopes) =>
+            login(extraScopes ? { extraScopes, afterLogin: 'gather' } : {}).catch((e) =>
+              setAuthMessage(e instanceof Error ? e.message : String(e)),
+            )
+          }
+          onPersonalBuilt={(contributor) => setPersonal(savePersonalDeck(contributor))}
+          onPersonalForget={() => {
+            forgetPersonalDeck();
+            setPersonal(null);
+          }}
           onLogout={() => {
             logout();
             setProfile(null);

@@ -10,13 +10,21 @@ export class SpotifyError extends Error {
   }
 }
 
-async function spotifyFetch(path: string, init: RequestInit = {}): Promise<Response> {
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+async function spotifyFetch(path: string, init: RequestInit = {}, retries = 2): Promise<Response> {
   const token = await getAccessToken();
   if (!token) throw new SpotifyError('Not logged in to Spotify.', 401);
   const res = await fetch(`https://api.spotify.com/v1${path}`, {
     ...init,
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json', ...init.headers },
   });
+  // Rate limited: wait as long as Spotify asks (capped) and try again.
+  if (res.status === 429 && retries > 0) {
+    const seconds = Math.min(Number(res.headers.get('Retry-After')) || 2, 30);
+    await wait(seconds * 1000);
+    return spotifyFetch(path, init, retries - 1);
+  }
   if (!res.ok) {
     let message = `Spotify request failed (${res.status}).`;
     try {
@@ -30,7 +38,13 @@ async function spotifyFetch(path: string, init: RequestInit = {}): Promise<Respo
   return res;
 }
 
+/** GET a Web API path (starting with '/') and return the parsed JSON. */
+export async function spotifyGet<T>(path: string): Promise<T> {
+  return (await spotifyFetch(path)).json() as Promise<T>;
+}
+
 export interface SpotifyProfile {
+  id: string;
   display_name: string;
   product: 'premium' | 'free' | 'open' | string;
 }
