@@ -255,7 +255,10 @@ function Reveal({ correct, song }: { correct: boolean; song: GameState['deck'][n
       <div className="song-card big-card">
         <span className="year">{song.year}</span>
         <span className="title">{song.title}</span>
-        <span className="artist">{song.artist}</span>
+        <span className="artist">
+          {song.artist}
+          {song.from && <span className="from"> · from {song.from}</span>}
+        </span>
       </div>
     </div>
   );
