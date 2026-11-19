@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import {
   cleanTitle,
+  friendContributors,
+  hostContributor,
+  needsYearCheck,
+  spreadPick,
+  withContributor,
+  withoutContributor,
+  type Contributor,
   couldMatchYears,
   earliestYear,
   mergeSongs,
@@ -102,5 +109,53 @@ describe('couldMatchYears', () => {
     expect(couldMatchYears(track('b', 'Song', '2011'), from80)).toBe(true);
     expect(couldMatchYears(track('c', 'Song', ''), from80)).toBe(true);
     expect(couldMatchYears(track('d', 'Song', '1975'), { fromYear: null })).toBe(true);
+  });
+});
+
+describe('needsYearCheck', () => {
+  const t = (name: string, album: string, album_type = 'album'): SpotifyTrack => ({
+    id: 'x',
+    name,
+    artists: [{ id: 'a', name: 'A' }],
+    album: { name: album, album_type, release_date: '2011' },
+  });
+  it('trusts songs on their original album', () => expect(needsYearCheck(t('Bohemian Rhapsody', 'A Night at the Opera'))).toBe(false));
+  it('checks reissues, compilations and edited titles', () => {
+    expect(needsYearCheck(t('Bohemian Rhapsody', 'A Night at the Opera (2011 Remaster)'))).toBe(true);
+    expect(needsYearCheck(t('Bohemian Rhapsody', 'Greatest Hits'))).toBe(true);
+    expect(needsYearCheck(t('Bohemian Rhapsody', 'Now 80s', 'compilation'))).toBe(true);
+    expect(needsYearCheck(t('Bohemian Rhapsody - Remastered 2011', 'A Night at the Opera'))).toBe(true);
+  });
+});
+
+describe('spreadPick', () => {
+  it('takes from every decade in turn when there are too many', () => {
+    const years = [2020, 2021, 2022, 2023, 2024, 2025, 1975, 1985];
+    expect(spreadPick(years, 4, (y) => y)).toEqual([2020, 1975, 1985, 2021]);
+  });
+  it('keeps everything when under the limit', () => expect(spreadPick([1, 2], 5, () => null)).toEqual([1, 2]));
+});
+
+describe('contributors', () => {
+  const person = (userId: string, role?: Contributor['role']): Contributor => ({
+    role,
+    userId,
+    name: userId,
+    sources: ['top'],
+    builtAt: '',
+    songs: [],
+  });
+  it('keeps one host and adds friends', () => {
+    let deck = withContributor(null, person('host'));
+    deck = withContributor(deck, person('anna', 'friend'));
+    deck = withContributor(deck, person('bo', 'friend'));
+    deck = withContributor(deck, person('anna', 'friend')); // reloaded, not duplicated
+    expect(deck.contributors.map((c) => c.userId)).toEqual(['host', 'bo', 'anna']);
+    // A new host replaces the old one, friends stay.
+    deck = withContributor(deck, person('host2', 'host'));
+    expect(hostContributor(deck)?.userId).toBe('host2');
+    expect(friendContributors(deck).map((c) => c.userId)).toEqual(['bo', 'anna']);
+    expect(withoutContributor(deck, 'bo')?.contributors.map((c) => c.userId)).toEqual(['host2', 'anna']);
+    expect(withoutContributor(withContributor(null, person('x')), 'x')).toBeNull();
   });
 });

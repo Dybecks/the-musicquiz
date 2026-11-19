@@ -18,6 +18,7 @@ const KEYS = {
   state: 'mq.spotify.state',
   token: 'mq.spotify.token',
   afterLogin: 'mq.spotify.afterLogin',
+  hostToken: 'mq.spotify.hostToken',
 };
 
 interface StoredToken {
@@ -72,13 +73,23 @@ export interface LoginOptions {
   extraScopes?: string[];
   /** Remembered across the redirect; read it back with takeAfterLogin(). */
   afterLogin?: string;
+  /**
+   * Someone else logs in for a moment, to share their music. The current
+   * login is set aside and comes back with restoreHostLogin(), and Spotify
+   * is told to show the account picker so the friend can switch account.
+   */
+  asFriend?: boolean;
 }
 
-export async function login({ extraScopes = [], afterLogin }: LoginOptions = {}): Promise<void> {
+export async function login({ extraScopes = [], afterLogin, asFriend = false }: LoginOptions = {}): Promise<void> {
   const clientId = getClientId();
   if (!clientId) throw new Error('Add your Spotify Client ID first.');
   // Keep what was granted before, so asking for more doesn't drop anything.
-  const scope = [...new Set([...SCOPES.split(' '), ...grantedScopes(), ...extraScopes])].join(' ');
+  // A friend only grants what is needed to read their music.
+  const scope = asFriend
+    ? [...new Set(extraScopes)].join(' ')
+    : [...new Set([...SCOPES.split(' '), ...grantedScopes(), ...extraScopes])].join(' ');
+  if (asFriend) sessionStorage.setItem(KEYS.hostToken, localStorage.getItem(KEYS.token) ?? '');
   if (afterLogin) sessionStorage.setItem(KEYS.afterLogin, afterLogin);
   else sessionStorage.removeItem(KEYS.afterLogin);
   const verifier = randomString(64);
@@ -93,6 +104,7 @@ export async function login({ extraScopes = [], afterLogin }: LoginOptions = {})
     code_challenge: await challengeFor(verifier),
     scope,
     state,
+    ...(asFriend ? { show_dialog: 'true' } : {}),
   });
   window.location.assign(`https://accounts.spotify.com/authorize?${params}`);
 }
@@ -113,7 +125,6 @@ export async function handleRedirect(): Promise<string | null> {
 
   if (error) {
     cleanUrl();
-    sessionStorage.removeItem(KEYS.afterLogin);
     return `Spotify login was cancelled (${error}).`;
   }
   const returnedState = url.searchParams.get('state');
@@ -138,9 +149,10 @@ export async function handleRedirect(): Promise<string | null> {
   sessionStorage.removeItem(KEYS.verifier);
   sessionStorage.removeItem(KEYS.state);
   if (!res.ok) {
-    sessionStorage.removeItem(KEYS.afterLogin);
     return `Spotify login failed (${res.status}).`;
   }
+  // A new login, possibly by someone else: nothing carries over from the old token.
+  localStorage.removeItem(KEYS.token);
   saveToken(await res.json());
   return null;
 }
@@ -179,6 +191,20 @@ export function grantedScopes(): string[] {
 export function hasScopes(scopes: string[]): boolean {
   const granted = new Set(grantedScopes());
   return scopes.every((s) => granted.has(s));
+}
+
+/** Whether a friend's login is in place of the host's (see LoginOptions.asFriend). */
+export function isFriendLogin(): boolean {
+  return sessionStorage.getItem(KEYS.hostToken) !== null;
+}
+
+/** Ends a friend's login and puts back the host's login, or none if there was none. */
+export function restoreHostLogin(): void {
+  const host = sessionStorage.getItem(KEYS.hostToken);
+  if (host === null) return;
+  sessionStorage.removeItem(KEYS.hostToken);
+  if (host) localStorage.setItem(KEYS.token, host);
+  else localStorage.removeItem(KEYS.token);
 }
 
 /** Returns (once) what login() was asked to do after the redirect. */

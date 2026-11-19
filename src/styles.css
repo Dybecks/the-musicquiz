@@ -151,3 +151,10 @@ input:focus { outline: 2px solid var(--accent); border-color: transparent; }
 .steps li.current { color: var(--text); outline: 2px solid var(--accent); }
 .steps li.current .num { background: var(--accent); color: #fff; }
 .steps li.done .num { background: var(--good); color: #062b14; }
+
+/* Friends' music */
+.friends { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--panel-2); }
+.friends h3 { font-size: 0.95rem; margin: 0 0 8px; }
+.friend-list { list-style: none; padding: 0; margin: 0 0 10px; display: grid; gap: 6px; }
+.friend-list li { display: flex; justify-content: space-between; align-items: center; gap: 8px; background: var(--panel-2); border-radius: 12px; padding: 6px 6px 6px 12px; }
+.friend-list button { flex: none; width: 36px; height: 36px; padding: 0; }

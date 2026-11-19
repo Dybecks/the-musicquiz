@@ -3,11 +3,12 @@ import type { SpotifyProfile } from '../spotify/api';
 import { BUILT_IN_CLIENT_ID, getClientIdOverride, hasScopes, redirectUri, setClientId } from '../spotify/auth';
 import type { PlaybackKind } from '../spotify/playback';
 import { DECKS, chooseSongs, deckSongs, normalizeDecks, parseSavedDecks, playableSongs, type DeckId } from '../data/decks';
-import { gatherListening, loadSources, scopesFor, type GatherProgress } from '../spotify/listening';
+import { gatherListening, loadSources, removeContributor, savePersonalDeck, scopesFor, type GatherProgress } from '../spotify/listening';
 import {
   SOURCE_LABELS,
+  friendContributors,
+  hostContributor,
   personalSongs,
-  type Contributor,
   type ListeningSource,
   type PersonalDeck,
 } from '../spotify/personalDeck';
@@ -39,8 +40,11 @@ interface Props {
   onAutoStartHandled: () => void;
   onLogin: (extraScopes: string[]) => void;
   onLogout: () => void;
-  onPersonalBuilt: (contributor: Contributor) => PersonalDeck;
-  onPersonalForget: () => void;
+  onPersonalChange: (deck: PersonalDeck | null) => void;
+  /** Set when a friend just logged in to share their music: load it, then hand the login back. */
+  friendReturn: boolean;
+  onFriendLogin: (scopes: string[]) => void;
+  onFriendDone: () => void;
   onStart: (values: SetupValues) => void;
 }
 
@@ -52,6 +56,10 @@ const PLAYERS_KEY = 'mq.players';
 const TARGET_KEY = 'mq.target';
 const DECK_KEY = 'mq.deck';
 const ACCOUNT_KEY = 'mq.account';
+/** Who was the host when a friend went to log in, to catch the same account logging in twice. */
+const HOST_ID_KEY = 'mq.friendHostId';
+/** What friends share when the host has ticked nothing. */
+const FRIEND_DEFAULT_SOURCES: ListeningSource[] = ['top', 'recent'];
 
 function loadAccount(): Account | null {
   const saved = localStorage.getItem(ACCOUNT_KEY);
@@ -76,7 +84,10 @@ const message = (e: unknown) => (e instanceof Error ? e.message : String(e));
 export function Setup(props: Props) {
   const { profile, authMessage, deckSize, personal, onLogout } = props;
   const [account, setAccountState] = useState<Account | null>(loadAccount);
-  const [step, setStep] = useState<Step>(() => ((props.autoStart || authMessage) && loadAccount() === 'login' ? 'music' : 'account'));
+  const [step, setStep] = useState<Step>(() =>
+    props.friendReturn ? 'loading' : (props.autoStart || authMessage) && loadAccount() === 'login' ? 'music' : 'account',
+  );
+  const [loadingName, setLoadingName] = useState<string | null>(null);
   const [players, setPlayers] = useState<string[]>(loadPlayers);
   const [target, setTarget] = useState<number>(() => Number(localStorage.getItem(TARGET_KEY)) || 10);
   const [mode, setModeState] = useState<PlaybackKind>(props.initialMode);
@@ -109,7 +120,8 @@ export function Setup(props: Props) {
 
   const useLogin = account === 'login';
   const loggedIn = useLogin && !!profile;
-  const owner = personal?.contributors[0];
+  const owner = hostContributor(personal);
+  const friends = friendContributors(personal);
   const mySavedSongs = personalSongs(personal).length;
   // Without a login, the songs saved from an earlier login can still be used.
   const visibleDecks = DECKS.filter((d) => d.id !== 'mine' || useLogin || mySavedSongs > 0);
@@ -124,7 +136,8 @@ export function Setup(props: Props) {
     (!p || owner.userId === p.id) &&
     sameSources(owner.sources, sources) &&
     sameFilter(owner.filter ?? NO_FILTER, filter);
-  const willLoad = useLogin && wantsMine && !canReuse(profile);
+  const willLoad = useLogin && wantsMine && sources.length > 0 && !canReuse(profile);
+  const friendSources = sources.length ? sources : FRIEND_DEFAULT_SOURCES;
 
   const deckOptions = { decks: activeDecks, mode: playMode, loggedIn: useLogin, personal: willLoad ? null : personal };
   const unfilteredCount = chooseSongs(deckOptions).length;
@@ -142,8 +155,9 @@ export function Setup(props: Props) {
 
   const deckDetail = (id: DeckId, detail: string) => {
     if (id === 'mine') {
-      if (willLoad) return 'Loaded from your Spotify when you start, matching the genres and years you choose.';
-      return mySavedSongs ? `${mySavedSongs} songs from what you listen to.` : detail;
+      const who = friends.length ? ` With music from ${friends.map((f) => f.name).join(', ')}.` : '';
+      if (willLoad) return `Loaded from your Spotify when you start, matching the genres and years you choose.${who}`;
+      return mySavedSongs ? `${mySavedSongs} songs from what you listen to.${who}` : detail;
     }
     const all = deckSongs(id, personal).length;
     const playable = playableSongs(deckSongs(id, personal), playMode, useLogin).length;
@@ -194,7 +208,8 @@ export function Setup(props: Props) {
   /** Checks what can be checked before the host's own songs are loaded. */
   const validate = (): string | null => {
     if (names.length === 0) return 'Add at least one player or team.';
-    if (sources.length === 0 && willLoad) return 'Choose at least one kind of Spotify listening, or untick My Spotify music.';
+    if (useLogin && wantsMine && sources.length === 0 && !owner && friends.length === 0)
+      return 'Choose at least one kind of Spotify listening, or untick My Spotify music.';
     if (willLoad) return null; // the count is checked once the songs are loaded
     if (unfilteredCount === 0)
       return useLogin ? 'These decks have no songs to play. Choose other decks.' : 'These songs need a Spotify login to play. Go back and choose to log in, or pick other decks.';
@@ -210,8 +225,9 @@ export function Setup(props: Props) {
       return;
     }
     let deck = personal;
-    if (wantsMine && !canReuse(p)) {
+    if (wantsMine && sources.length > 0 && !canReuse(p)) {
       running.current = true;
+      setLoadingName(null);
       setStep('loading');
       try {
         const result = await gatherListening(sources, filter, setProgress);
@@ -223,7 +239,8 @@ export function Setup(props: Props) {
           setStep('music');
           return;
         }
-        deck = props.onPersonalBuilt({
+        deck = savePersonalDeck({
+          role: 'host',
           userId: p.id,
           name: p.display_name || 'You',
           sources,
@@ -231,6 +248,7 @@ export function Setup(props: Props) {
           builtAt: new Date().toISOString(),
           songs: result.songs,
         });
+        props.onPersonalChange(deck);
       } catch (e) {
         setError(message(e));
         setStep('music');
@@ -259,6 +277,58 @@ export function Setup(props: Props) {
     if (!profile || !hasScopes(needed)) return props.onLogin(needed);
     void loadAndStart(profile);
   };
+
+  const addFriend = () => {
+    setError(null);
+    sessionStorage.setItem(HOST_ID_KEY, profile?.id ?? owner?.userId ?? '');
+    props.onFriendLogin(scopesFor(friendSources));
+  };
+
+  const removeFriend = (userId: string) => props.onPersonalChange(removeContributor(userId));
+
+  // Back from a friend's login: load their music with the same choices,
+  // then hand the login back to the host.
+  useEffect(() => {
+    if (!props.friendReturn || running.current) return;
+    const hostId = sessionStorage.getItem(HOST_ID_KEY);
+    sessionStorage.removeItem(HOST_ID_KEY);
+    const done = (problem?: string) => {
+      if (problem) setError(problem);
+      setStep('music');
+      props.onFriendDone();
+    };
+    const friend = profile;
+    if (!friend) return done('Your friend’s Spotify login could not be completed.');
+    if (friend.id === hostId || friend.id === owner?.userId)
+      return done('That was your own Spotify account. On Spotify’s page, choose “Not you?” and let your friend log in.');
+    if (!hasScopes(scopesFor(friendSources))) return done("Spotify didn't grant access to your friend's listening.");
+    running.current = true;
+    setLoadingName(friend.display_name || 'your friend');
+    void (async () => {
+      try {
+        const result = await gatherListening(friendSources, filter, setProgress);
+        if (result.songs.length === 0) return done(`None of ${friend.display_name || 'your friend'}’s songs match these genres and years.`);
+        props.onPersonalChange(
+          savePersonalDeck({
+            role: 'friend',
+            userId: friend.id,
+            name: friend.display_name || 'Friend',
+            sources: friendSources,
+            filter,
+            builtAt: new Date().toISOString(),
+            songs: result.songs,
+          }),
+        );
+        done();
+      } catch (e) {
+        done(message(e));
+      } finally {
+        running.current = false;
+        setProgress(null);
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [props.friendReturn]);
 
   // Back from Spotify's login page: carry on where the host left off.
   useEffect(() => {
@@ -294,11 +364,11 @@ export function Setup(props: Props) {
       <main className="setup">
         {stepBar}
         <section className="panel">
-          <h2>Loading your music</h2>
+          <h2>{loadingName ? `Loading ${loadingName}’s music` : 'Loading your music'}</h2>
           <p className="hint">Only songs that match the genres and years you chose are kept.</p>
           <p className="progress" role="status">
             {!progress || progress.step === 'reading'
-              ? 'Reading your listening…'
+              ? 'Reading listening…'
               : progress.step === 'genres'
                 ? `Looking up genres: ${progress.done} of ${progress.total} artists`
                 : `Finding the original release year: ${progress.done} of ${progress.total}`}
@@ -368,6 +438,40 @@ export function Setup(props: Props) {
         </button>
       </p>
 
+      <DeckFilterPanel
+        filter={filter}
+        onChange={setFilter}
+        presets={STANDARD_PRESETS}
+        personalPresets={myPresets}
+        count={songCount}
+        total={unfilteredCount}
+        pending={willLoad ? 'plus your matching Spotify songs, loaded when you start' : undefined}
+        note={soundtrackWithGenres ? 'Soundtrack songs have no genre, so a genre choice leaves them out. Use years only to keep them.' : undefined}
+      />
+
+      <section className="panel">
+        <h2>Which songs?</h2>
+        <p className="hint">Pick one or more. Songs from several decks are shuffled together.</p>
+        <div className="mode-options deck-options" role="group" aria-label="Which songs?">
+          {visibleDecks.map((d) => (
+            <DeckOption key={d.id} title={d.title} detail={deckDetail(d.id, d.detail)} checked={activeDecks.includes(d.id)} onToggle={() => toggleDeck(d.id)} />
+          ))}
+        </div>
+        {wantsMine && useLogin && (
+          <MyMusic
+            personal={personal}
+            sources={sources}
+            onSourcesChange={setSources}
+            willLoad={willLoad}
+            onForgetMine={() => owner && props.onPersonalChange(removeContributor(owner.userId))}
+            onAddFriend={addFriend}
+            onRemoveFriend={removeFriend}
+            canAddFriend={!!clientId.trim()}
+          />
+        )}
+      </section>
+
+
       <section className="panel">
         <h2>Players or teams</h2>
         <ul className="player-list">
@@ -398,30 +502,6 @@ export function Setup(props: Props) {
           <input type="number" min={3} max={30} value={target} onChange={(e) => setTarget(Math.max(3, Math.min(30, Number(e.target.value) || 10)))} />
         </label>
       </section>
-
-      <section className="panel">
-        <h2>Which songs?</h2>
-        <p className="hint">Pick one or more. Songs from several decks are shuffled together.</p>
-        <div className="mode-options deck-options" role="group" aria-label="Which songs?">
-          {visibleDecks.map((d) => (
-            <DeckOption key={d.id} title={d.title} detail={deckDetail(d.id, d.detail)} checked={activeDecks.includes(d.id)} onToggle={() => toggleDeck(d.id)} />
-          ))}
-        </div>
-        {wantsMine && useLogin && (
-          <MyMusic personal={personal} sources={sources} onSourcesChange={setSources} willLoad={willLoad} onForget={props.onPersonalForget} />
-        )}
-      </section>
-
-      <DeckFilterPanel
-        filter={filter}
-        onChange={setFilter}
-        presets={STANDARD_PRESETS}
-        personalPresets={myPresets}
-        count={songCount}
-        total={unfilteredCount}
-        pending={willLoad ? 'plus your matching Spotify songs, loaded when you start' : undefined}
-        note={soundtrackWithGenres ? 'Soundtrack songs have no genre, so a genre choice leaves them out. Use years only to keep them.' : undefined}
-      />
 
       <section className="panel">
         <h2>How should the music play?</h2>

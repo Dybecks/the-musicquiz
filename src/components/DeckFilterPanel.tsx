@@ -37,7 +37,8 @@ export function DeckFilterPanel({ filter, onChange, presets, personalPresets, co
 
   return (
     <section className="panel">
-      <h2>Genres and years</h2>
+      <h2>What kind of songs?</h2>
+      <p className="hint">Choose genres and years first. Only songs that fit are used, and only those are loaded from Spotify.</p>
 
       {personalPresets.length > 0 && (
         <>
