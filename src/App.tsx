@@ -29,7 +29,7 @@ export function App() {
   const [authMessage, setAuthMessage] = useState<string | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
   const [personal, setPersonal] = useState<PersonalDeck | null>(loadPersonalDeck);
-  const [autoGather, setAutoGather] = useState(false);
+  const [autoStart, setAutoStart] = useState(false);
 
   const refreshProfile = useCallback(async () => {
     if (!isLoggedIn()) {
@@ -48,7 +48,7 @@ export function App() {
     void (async () => {
       const err = await handleRedirect().catch((e) => String(e));
       if (err) setAuthMessage(err);
-      if (takeAfterLogin() === 'gather') setAutoGather(true);
+      if (takeAfterLogin() === 'start') setAutoStart(true);
       await refreshProfile();
       setAuthChecked(true);
     })();
@@ -62,7 +62,7 @@ export function App() {
   const start = (values: SetupValues) => {
     localStorage.setItem(MODE_KEY, JSON.stringify(values.mode));
     setMode(values.mode);
-    const songs = chooseSongs({ decks: values.decks, mode: values.mode, loggedIn: !!profile, personal, filter: values.filter });
+    const songs = chooseSongs({ decks: values.decks, mode: values.mode, loggedIn: values.loggedIn, personal: values.personal, filter: values.filter });
     setGame(createGame({ playerNames: values.players, targetCards: values.targetCards, songs }));
   };
 
@@ -82,22 +82,29 @@ export function App() {
           onChange={setGame}
           onQuit={() => setGame(null)}
         />
+      ) : !authChecked ? (
+        <p className="hint center">Checking Spotify login…</p>
       ) : (
         <Setup
-          authChecked={authChecked}
           profile={profile}
           authMessage={authMessage}
           initialMode={mode}
+          onModeChange={(m) => {
+            localStorage.setItem(MODE_KEY, JSON.stringify(m));
+            setMode(m);
+          }}
           deckSize={{ all: DEFAULT_SONGS.length, noLogin: NO_LOGIN_SONGS.length }}
           personal={personal}
-          autoGather={autoGather}
-          onAutoGatherHandled={() => setAutoGather(false)}
+          autoStart={autoStart}
+          onAutoStartHandled={() => setAutoStart(false)}
           onLogin={(extraScopes) =>
-            login(extraScopes ? { extraScopes, afterLogin: 'gather' } : {}).catch((e) =>
-              setAuthMessage(e instanceof Error ? e.message : String(e)),
-            )
+            login({ extraScopes, afterLogin: 'start' }).catch((e) => setAuthMessage(e instanceof Error ? e.message : String(e)))
           }
-          onPersonalBuilt={(contributor) => setPersonal(savePersonalDeck(contributor))}
+          onPersonalBuilt={(contributor) => {
+            const deck = savePersonalDeck(contributor);
+            setPersonal(deck);
+            return deck;
+          }}
           onPersonalForget={() => {
             forgetPersonalDeck();
             setPersonal(null);

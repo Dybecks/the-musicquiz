@@ -47,19 +47,32 @@ in particular, isn't on Spotify; the search may then find a cover, or nothing, a
 
 ## Play with your own music
 
-The host can also play with songs they actually listen to. Under **Which songs?** tick
-**My Spotify music** (on its own or with other decks), tick what to share and press
-**Allow access and build my deck**:
+The host can also play with songs they actually listen to. Setup goes in three steps:
+
+1. **Spotify:** choose whether to play with a Spotify login or without one. Nothing
+   happens yet; you are not sent to Spotify at this point.
+2. **Music:** add the players, tick the decks (with a login, **My Spotify music** and
+   what to share from it), pick genres and years, and how the music plays.
+3. **Log in & load:** with a login, **Log in with Spotify and start** is the last step.
+   After the login the game reads your listening, keeps only the songs that match the
+   chosen genres and years, and starts. Without a login, **Start game** starts right away.
+
+Because the music is chosen first, only matching songs are loaded: songs whose album is
+older than the chosen years are dropped before any lookup, with a genre choice the
+artists' genres are looked up first and other genres dropped, and only then are original
+release years looked up for at most 300 songs. The loaded songs are saved together with
+the choices they were loaded for and reused as long as the sources, genres and years stay
+the same; change them and they are loaded again at start.
 
 | Share | Spotify permission | What is read |
 | --- | --- | --- |
 | Top tracks | `user-top-read` | Top 50 tracks for the last month, 6 months and year |
 | Recently played | `user-read-recently-played` | The last 50 played tracks |
-| Liked songs | `user-library-read` | Up to 200 saved tracks |
+| Liked songs | `user-library-read` | Up to 200 saved tracks (500 when filtering by genre or year) |
 
-Nothing is read until the person opts in, and Spotify shows its own consent screen
-for exactly the permissions ticked. The deck is built in the browser and stored in
-its `localStorage` only; nothing is uploaded. **Delete my Spotify songs** removes it.
+Nothing is read until the person logs in at the last step, and Spotify shows its own
+consent screen for exactly the permissions ticked. The deck is built in the browser and stored in
+its `localStorage` only; nothing is uploaded. **Delete my saved Spotify songs** removes it.
 Logging out keeps the deck, and because every card has a Spotify track id it plays
 with any of the playback options below, including the hidden player.
 

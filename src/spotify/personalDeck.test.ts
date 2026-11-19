@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   cleanTitle,
+  couldMatchYears,
   earliestYear,
   mergeSongs,
   releaseYear,
@@ -90,5 +91,16 @@ describe('summarize', () => {
   it('counts songs per decade', () => {
     const s = summarize([1975, 1979, 1981, 2023].map((year, i) => ({ id: `${i}`, title: 't', artist: 'a', year })));
     expect(s).toEqual({ count: 4, minYear: 1975, maxYear: 2023, decades: [[1970, 2], [1980, 1], [2020, 1]] });
+  });
+});
+
+describe('couldMatchYears', () => {
+  it('drops only tracks whose album is older than the span', () => {
+    const from80 = { fromYear: 1980 };
+    expect(couldMatchYears(track('a', 'Song', '1975'), from80)).toBe(false);
+    // A 2011 remaster could still be a song from the 80s.
+    expect(couldMatchYears(track('b', 'Song', '2011'), from80)).toBe(true);
+    expect(couldMatchYears(track('c', 'Song', ''), from80)).toBe(true);
+    expect(couldMatchYears(track('d', 'Song', '1975'), { fromYear: null })).toBe(true);
   });
 });

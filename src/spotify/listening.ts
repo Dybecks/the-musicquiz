@@ -5,9 +5,10 @@
  */
 import type { Song } from '../game/engine';
 import { spotifyGet } from './api';
-import { genresFromSpotify, type Genre } from '../data/genres';
+import { filterSongs, genresFromSpotify, isFiltered, NO_FILTER, type DeckFilter, type Genre } from '../data/genres';
 import {
   SOURCE_SCOPES,
+  couldMatchYears,
   earliestYear,
   releaseYear,
   trackToSong,
@@ -23,8 +24,9 @@ const SOURCES_KEY = 'mq.personalSources';
 
 /** Spotify allows at most this many tracks per page of these endpoints. */
 const PAGE = 50;
-/** Liked songs: how many pages to read at most. */
+/** Liked songs: how many pages to read at most, without and with a genre or year filter. */
 const LIKED_PAGES = 4;
+const LIKED_PAGES_FILTERED = 10;
 /** Upper bound on cards, which also bounds the number of year lookups. */
 const MAX_TRACKS = 300;
 /** Year lookups run this many at a time. */
@@ -91,9 +93,9 @@ async function recentTracks(): Promise<SpotifyTrack[]> {
   return page.items.map((i) => i.track);
 }
 
-async function likedTracks(): Promise<SpotifyTrack[]> {
+async function likedTracks(pages: number): Promise<SpotifyTrack[]> {
   const out: SpotifyTrack[] = [];
-  for (let i = 0; i < LIKED_PAGES; i++) {
+  for (let i = 0; i < pages; i++) {
     const page = await spotifyGet<Paged<{ track: SpotifyTrack }>>(`/me/tracks?limit=${PAGE}&offset=${i * PAGE}`);
     out.push(...page.items.map((item) => item.track));
     if (!page.next) break;
@@ -101,10 +103,11 @@ async function likedTracks(): Promise<SpotifyTrack[]> {
   return out;
 }
 
-const READERS: Record<ListeningSource, () => Promise<SpotifyTrack[]>> = {
+const READERS: Record<ListeningSource, (filtered: boolean) => Promise<SpotifyTrack[]>> = {
   top: topTracks,
   recent: recentTracks,
-  liked: likedTracks,
+  // With a filter many liked songs are left out, so read further back.
+  liked: (filtered) => likedTracks(filtered ? LIKED_PAGES_FILTERED : LIKED_PAGES),
 };
 
 async function originalYear(track: SpotifyTrack & { id: string }): Promise<number | null> {
@@ -122,7 +125,7 @@ async function originalYear(track: SpotifyTrack & { id: string }): Promise<numbe
 }
 
 export interface GatherProgress {
-  step: 'reading' | 'dating' | 'genres';
+  step: 'reading' | 'genres' | 'dating';
   done: number;
   total: number;
 }
@@ -133,9 +136,15 @@ export interface GatherResult {
   failures: { source: ListeningSource; message: string }[];
 }
 
-/** Reads the chosen listening data and builds cards with each song's original release year. */
+/**
+ * Reads the chosen listening data and builds cards with each song's original
+ * release year. Only songs that match the filter are kept, and the slow
+ * lookups (genres, original years) skip songs that can't match it, so the
+ * card limit is spent on songs that will actually be played.
+ */
 export async function gatherListening(
   sources: ListeningSource[],
+  filter: DeckFilter = NO_FILTER,
   onProgress: (p: GatherProgress) => void = () => {},
 ): Promise<GatherResult> {
   const failures: GatherResult['failures'] = [];
@@ -144,14 +153,27 @@ export async function gatherListening(
   for (const source of sources) {
     onProgress({ step: 'reading', done: read, total: sources.length });
     try {
-      raw.push(...(await READERS[source]()));
+      raw.push(...(await READERS[source](isFiltered(filter))));
     } catch (e) {
       failures.push({ source, message: e instanceof Error ? e.message : String(e) });
     }
     read++;
   }
 
-  const tracks = uniqueTracks(raw).slice(0, MAX_TRACKS);
+  let candidates = uniqueTracks(raw).filter((t) => couldMatchYears(t, filter));
+  // Without a genre choice, genres are only extra information, so look them
+  // up for the songs that are kept. With one, look them up first and drop
+  // songs from other genres before dating anything.
+  if (filter.genres.length === 0) candidates = candidates.slice(0, MAX_TRACKS);
+  // Genres come from the song's main artist. Spotify may return no genres
+  // for some artists (or none at all for some apps); those songs simply
+  // have no genre and are left out when the host filters by genre.
+  const genres = await artistGenres([...new Set(candidates.map((t) => t.artists[0].id))], onProgress);
+  const genresOf = (t: SpotifyTrack) => genres.get(t.artists[0].id) ?? [];
+  const tracks = candidates
+    .filter((t) => filter.genres.length === 0 || genresOf(t).some((g) => filter.genres.includes(g)))
+    .slice(0, MAX_TRACKS);
+
   const songs: (Song | null)[] = new Array(tracks.length).fill(null);
   let next = 0;
   let done = 0;
@@ -160,23 +182,19 @@ export async function gatherListening(
     while (next < tracks.length) {
       const i = next++;
       const year = await originalYear(tracks[i]);
-      if (year !== null) songs[i] = trackToSong(tracks[i], year);
+      if (year !== null) {
+        const song = trackToSong(tracks[i], year);
+        const g = genresOf(tracks[i]);
+        if (g.length) song.genres = g;
+        songs[i] = song;
+      }
       onProgress({ step: 'dating', done: ++done, total: tracks.length });
     }
   };
   await Promise.all(Array.from({ length: CONCURRENCY }, worker));
 
-  // Genres come from the song's main artist. Spotify may return no genres
-  // for some artists (or none at all for some apps); those songs simply
-  // have no genre and are left out when the host filters by genre.
   const dated = songs.filter((s): s is Song => s !== null);
-  const artistOf = new Map<string, string>(tracks.map((t) => [`sp:${t.id}`, t.artists[0].id]));
-  const genres = await artistGenres([...new Set(artistOf.values())], onProgress);
-  for (const song of dated) {
-    const g = genres.get(artistOf.get(song.id) ?? '');
-    if (g?.length) song.genres = g;
-  }
-  return { songs: dated, failures };
+  return { songs: filterSongs(dated, filter), failures };
 }
 
 async function artistGenres(ids: string[], onProgress: (p: GatherProgress) => void): Promise<Map<string, Genre[]>> {

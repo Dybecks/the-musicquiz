@@ -3,6 +3,7 @@
  * cards. No network calls here, so the rules are easy to test.
  */
 import type { Song } from '../game/engine';
+import type { DeckFilter } from '../data/genres';
 
 /** The parts of a Spotify track object the game uses. */
 export interface SpotifyTrack {
@@ -40,6 +41,8 @@ export interface Contributor {
   name: string;
   sources: ListeningSource[];
   builtAt: string;
+  /** The genres and years the songs were picked for. Missing on decks built by older versions (no filter). */
+  filter?: DeckFilter;
   songs: Song[];
 }
 
@@ -124,6 +127,16 @@ export function earliestYear(track: SpotifyTrack, candidates: SpotifyTrack[]): n
     if (year !== null && (best === null || year < best)) best = year;
   }
   return best;
+}
+
+/**
+ * Whether a track can still fall inside the year span before its original
+ * year is known. The album year is never earlier than the original release,
+ * so an album from before the span rules the song out; a later album doesn't.
+ */
+export function couldMatchYears(track: SpotifyTrack, filter: Pick<DeckFilter, 'fromYear'>): boolean {
+  const year = releaseYear(track.album.release_date);
+  return filter.fromYear === null || year === null || year >= filter.fromYear;
 }
 
 export function trackToSong(track: SpotifyTrack & { id: string }, year: number): Song {

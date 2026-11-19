@@ -143,3 +143,11 @@ input:focus { outline: 2px solid var(--accent); border-color: transparent; }
 .chip.preset { display: grid; text-align: left; gap: 2px; border-radius: 12px; }
 .chip.preset span { color: var(--muted); font-size: 0.8rem; font-weight: 400; }
 .year-range { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+/* Setup steps */
+.steps { list-style: none; display: flex; gap: 6px; padding: 0; margin: 0 0 14px; font-size: 0.85rem; color: var(--muted); }
+.steps li { flex: 1; display: flex; align-items: center; gap: 6px; padding: 6px 8px; border-radius: 999px; background: var(--panel); min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.steps .num { flex: none; display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--panel-2); font-weight: 700; font-size: 0.75rem; }
+.steps li.current { color: var(--text); outline: 2px solid var(--accent); }
+.steps li.current .num { background: var(--accent); color: #fff; }
+.steps li.done .num { background: var(--good); color: #062b14; }
