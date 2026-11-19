@@ -40,12 +40,22 @@ Other songs are looked up with the Spotify search API, which needs the login.
 1. Create an app at <https://developer.spotify.com/dashboard>, choosing **Web API** and **Web Playback SDK**.
 2. Add the redirect URIs you'll use, for example `http://127.0.0.1:5173/` (dev) and
    `http://127.0.0.1:4173/` (preview). Spotify does not accept `localhost`; use `127.0.0.1`.
-   When the game is deployed, add its public URL too (it must be `https`).
+   For the deployed game, add `https://dybecks.github.io/the-musicquiz/`.
 3. Copy the **Client ID** into `.env` as `VITE_SPOTIFY_CLIENT_ID`, or paste it into the setup screen.
 4. While the app is in Spotify's *Development mode*, add the Spotify account(s)
    that will log in under **User Management** in the dashboard.
 
 The login uses the Authorization Code + PKCE flow, so there is no backend and no client secret.
+
+## Deployment
+
+Every push to `main` runs the tests, builds the app and deploys it to GitHub Pages at
+<https://dybecks.github.io/the-musicquiz/> (`.github/workflows/deploy.yml`). Pull requests
+run the tests and build but don't deploy.
+
+One-time setup in the repository: **Settings → Pages → Build and deployment → Source: GitHub Actions**.
+Optionally add a repository variable `SPOTIFY_CLIENT_ID` (Settings → Secrets and variables →
+Actions → Variables) so players don't have to paste the Client ID.
 
 ## Development
 
