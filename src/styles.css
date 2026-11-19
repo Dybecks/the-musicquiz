@@ -135,3 +135,11 @@ input:focus { outline: 2px solid var(--accent); border-color: transparent; }
 .song-card .from { color: var(--muted); font-style: italic; }
 .own-app { margin: 4px 0 12px; font-size: 0.9rem; color: var(--muted); }
 .own-app summary { cursor: pointer; margin-bottom: 8px; }
+
+/* Genre and year filters */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+.chip { padding: 8px 14px; border: 2px solid transparent; font-weight: 500; font-size: 0.92rem; }
+.chip.selected { border-color: var(--accent); background: #35284f; }
+.chip.preset { display: grid; text-align: left; gap: 2px; border-radius: 12px; }
+.chip.preset span { color: var(--muted); font-size: 0.8rem; font-weight: 400; }
+.year-range { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }

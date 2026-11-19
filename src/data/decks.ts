@@ -3,6 +3,7 @@ import type { PlaybackKind } from '../spotify/playback';
 import { mergeSongs, personalSongs, type PersonalDeck } from '../spotify/personalDeck';
 import { DEFAULT_SONGS } from './songs';
 import { GAME_SONGS, MOVIE_SONGS, MUSICAL_SONGS, TV_SONGS } from './soundtracks';
+import { filterSongs, NO_FILTER, type DeckFilter } from './genres';
 
 /** The decks a game can be played with. Any combination can be chosen. */
 export type DeckId = 'classic' | 'movies' | 'musicals' | 'tv' | 'games' | 'mine';
@@ -68,11 +69,13 @@ export interface DeckOptions {
   mode: PlaybackKind;
   loggedIn: boolean;
   personal: PersonalDeck | null;
+  /** Genres and years to keep. */
+  filter?: DeckFilter;
 }
 
-/** All playable songs from the chosen decks, without duplicates. */
-export function chooseSongs({ decks, mode, loggedIn, personal }: DeckOptions): Song[] {
+/** All playable songs from the chosen decks, without duplicates, narrowed by genre and year. */
+export function chooseSongs({ decks, mode, loggedIn, personal, filter = NO_FILTER }: DeckOptions): Song[] {
   // The person's own songs go first: they carry Spotify ids, so their copy wins.
   const ordered = [...decks].sort((a, b) => Number(b === 'mine') - Number(a === 'mine'));
-  return mergeSongs(...ordered.map((id) => playableSongs(deckSongs(id, personal), mode, loggedIn)));
+  return filterSongs(mergeSongs(...ordered.map((id) => playableSongs(deckSongs(id, personal), mode, loggedIn))), filter);
 }

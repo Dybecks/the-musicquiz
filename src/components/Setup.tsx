@@ -6,12 +6,15 @@ import { DECKS, chooseSongs, deckSongs, normalizeDecks, parseSavedDecks, playabl
 import { loadSources } from '../spotify/listening';
 import { personalSongs, type Contributor, type ListeningSource, type PersonalDeck } from '../spotify/personalDeck';
 import { MyMusic } from './MyMusic';
+import { DeckFilterPanel } from './DeckFilterPanel';
+import { loadFilter, personalPresets, saveFilter, STANDARD_PRESETS, type DeckFilter } from '../data/genres';
 
 export interface SetupValues {
   players: string[];
   targetCards: number;
   mode: PlaybackKind;
   decks: DeckId[];
+  filter: DeckFilter;
 }
 
 interface Props {
@@ -58,6 +61,11 @@ export function Setup(props: Props) {
   const [error, setError] = useState<string | null>(null);
   const [decks, setDecks] = useState<DeckId[]>(loadDecks);
   const [sources, setSources] = useState<ListeningSource[]>(loadSources);
+  const [filter, setFilterState] = useState<DeckFilter>(loadFilter);
+  const setFilter = (f: DeckFilter) => {
+    setFilterState(f);
+    saveFilter(f);
+  };
 
   const isPremium = profile?.product === 'premium';
   // Only the Premium option requires a login. The hidden player works without
@@ -66,7 +74,11 @@ export function Setup(props: Props) {
   const mySongs = personalSongs(personal).length;
   const wantsMine = decks.includes('mine');
   const needsPersonal = wantsMine && mySongs === 0;
-  const songCount = chooseSongs({ decks, mode, loggedIn: !!profile, personal }).length;
+  const deckOptions = { decks, mode, loggedIn: !!profile, personal };
+  const unfilteredCount = chooseSongs(deckOptions).length;
+  const songCount = chooseSongs({ ...deckOptions, filter }).length;
+  const myPresets = personalPresets(personalSongs(personal));
+  const soundtrackWithGenres = filter.genres.length > 0 && decks.some((d) => d !== 'classic' && d !== 'mine');
   const names = players.map((p) => p.trim()).filter(Boolean);
 
   const toggleDeck = (id: DeckId) => {
@@ -117,12 +129,13 @@ export function Setup(props: Props) {
   const start = () => {
     if (names.length === 0) return setError('Add at least one player or team.');
     if (needsPersonal) return setError('Build your deck from Spotify first, or untick My Spotify music.');
-    if (songCount === 0) return setError('These songs need a Spotify login to play. Log in, or choose other decks.');
+    if (unfilteredCount === 0) return setError('These songs need a Spotify login to play. Log in, or choose other decks.');
+    if (unfilteredCount > 0 && songCount < names.length + 1) return setError('Too few songs match. Widen the genres or years, or use fewer players.');
     if (songCount < names.length + 1) return setError('There are too few songs for this many players.');
     if (needsLogin) return setError('Log in with Spotify first, or choose the hidden Spotify player.');
     localStorage.setItem(PLAYERS_KEY, JSON.stringify(names));
     localStorage.setItem(TARGET_KEY, String(target));
-    onStart({ players: names, targetCards: target, mode, decks });
+    onStart({ players: names, targetCards: target, mode, decks, filter });
   };
 
   return (
@@ -197,6 +210,17 @@ export function Setup(props: Props) {
         )}
         {wantsMine && authMessage && mode !== 'premium' && <p className="warn">{authMessage}</p>}
       </section>
+
+      <DeckFilterPanel
+        filter={filter}
+        onChange={setFilter}
+        presets={STANDARD_PRESETS}
+        personalPresets={myPresets}
+        hasPersonal={mySongs > 0}
+        count={songCount}
+        total={unfilteredCount}
+        note={soundtrackWithGenres ? 'Soundtrack songs have no genre, so a genre choice leaves them out. Use years only to keep them.' : undefined}
+      />
 
       <section className="panel">
         <h2>How should the music play?</h2>
