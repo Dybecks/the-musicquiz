@@ -11,6 +11,8 @@ export interface Song {
   year: number;
   /** Optional Spotify track id; when missing the track is found via search. */
   spotifyId?: string;
+  /** The film, show, game or musical the song is from, shown on the card. */
+  from?: string;
 }
 
 export interface Player {

@@ -62,7 +62,7 @@ export function App() {
   const start = (values: SetupValues) => {
     localStorage.setItem(MODE_KEY, JSON.stringify(values.mode));
     setMode(values.mode);
-    const songs = chooseSongs({ choice: values.deck, mode: values.mode, loggedIn: !!profile, personal });
+    const songs = chooseSongs({ decks: values.decks, mode: values.mode, loggedIn: !!profile, personal });
     setGame(createGame({ playerNames: values.players, targetCards: values.targetCards, songs }));
   };
 

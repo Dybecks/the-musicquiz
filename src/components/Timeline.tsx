@@ -50,7 +50,10 @@ export function Timeline({ cards, selectable, selectedSlot, onSelect, highlightI
           <li className={`song-card ${card.id === highlightId ? 'new' : ''}`}>
             <span className="year">{card.year}</span>
             <span className="title">{card.title}</span>
-            <span className="artist">{card.artist}</span>
+            <span className="artist">
+              {card.artist}
+              {card.from && <span className="from"> · {card.from}</span>}
+            </span>
           </li>
         </Fragment>
       ))}
