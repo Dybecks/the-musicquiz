@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { addSongs, currentPlayer, nextTurn, placeCurrent, skipSong, type GameState } from '../game/engine';
 import { builtInForGenres, fetchBatch, type RefillPlan } from '../spotify/listening';
-import { RateLimitError } from '../spotify/api';
+import { RateLimitError, findTrackUri } from '../spotify/api';
 import {
   createEmbedPlayback,
   createPremiumPlayback,
@@ -134,6 +134,26 @@ export function Game({ state, mode, onModeChange, onChange, onQuit: quitGame }: 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [playback, songId]);
 
+  // A link that opens the song in the Spotify app, to play it on any speaker
+  // the app can reach. Songs found by search reuse the lookup the player made.
+  const [spotifyUrl, setSpotifyUrl] = useState<string | null>(null);
+  useEffect(() => {
+    setSpotifyUrl(null);
+    const song = state.current;
+    if (!song || state.phase !== 'guessing') return;
+    let cancelled = false;
+    const toUrl = (uri: string | null) => uri && `https://open.spotify.com/track/${uri.split(':').pop()}`;
+    if (song.spotifyId) setSpotifyUrl(toUrl(`spotify:track:${song.spotifyId}`));
+    else if (songStatus === 'ready' && mode !== 'none')
+      void findTrackUri(song)
+        .then((uri) => !cancelled && setSpotifyUrl(toUrl(uri)))
+        .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [songId, songStatus]);
+
   // Look up the fun fact while the song plays, so it's ready at the reveal.
   useEffect(() => {
     if (songId && state.current) void loadFact(state.current);
@@ -219,6 +239,21 @@ export function Game({ state, mode, onModeChange, onChange, onQuit: quitGame }: 
                       Skip song
                     </button>
                   </div>
+                  {spotifyUrl && (
+                    <p className="hint open-spotify">
+                      <a
+                        href={spotifyUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={() => {
+                          if (playing) void playback?.pause().catch(() => {});
+                        }}
+                      >
+                        Open in Spotify ↗
+                      </a>{' '}
+                      to play it on any speaker, like a Sonos. Spotify shows the title, so let someone who isn’t guessing tap it.
+                    </p>
+                  )}
                   {playbackError && (
                     <div className="warn">
                       <p>{playbackError}</p>

@@ -302,3 +302,5 @@ input:focus { outline: 2px solid var(--accent); border-color: transparent; }
 .voters { list-style: none; padding: 0; margin: 0 0 8px; display: grid; gap: 4px; font-size: 0.92rem; color: var(--muted); }
 .voters li.voted { color: var(--text); }
 .voters li.locked { color: var(--good); }
+.open-spotify { text-align: center; margin-top: 10px; }
+.open-spotify a { color: var(--accent-2); font-weight: 600; }
