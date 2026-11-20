@@ -6,7 +6,7 @@
  */
 import type { Song } from '../game/engine';
 import TRACK_IDS from './spotify/track-ids.json';
-import { SEARCH_GENRES } from './searchGenres';
+import { SEARCH_GENRE_DEFS as SEARCH_GENRES } from './searchGenres';
 
 /** How a ready-made song is found in track-ids.json. */
 export const premadeKey = (song: Pick<Song, 'title' | 'artist'>) => `${song.title}|${song.artist}`;

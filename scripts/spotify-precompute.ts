@@ -24,7 +24,7 @@ import type { Song } from '../src/game/engine';
 import { DEFAULT_SONGS } from '../src/data/songs';
 import { GAME_SONGS, MOVIE_SONGS, MUSICAL_SONGS, TV_SONGS } from '../src/data/soundtracks';
 import { premadeKey, type GenrePools, type PoolRow } from '../src/data/spotifyData';
-import { SEARCH_GENRES } from '../src/data/searchGenres';
+import { SEARCH_GENRE_DEFS as SEARCH_GENRES } from '../src/data/searchGenres';
 import {
   cleanTitle,
   needsYearCheck,
@@ -340,7 +340,7 @@ async function fillGenrePools(): Promise<void> {
           rows.push([cleanTitle(t.name), artist, year, t.id]);
         }
         addToPool(genre.id, rows.slice(0, Math.max(0, PER_DECADE - kept)));
-        console.log(`${genre.label} ${decade}s, offset ${offset}: ${rows.length} songs (total ${total})`);
+        console.log(`${genre.id} ${decade}s, offset ${offset}: ${rows.length} songs (total ${total})`);
         save();
       }
     }
@@ -380,7 +380,7 @@ function review(): string {
     ...SEARCH_GENRES.map((g) => {
       const rows = pools[g.id] ?? [];
       const counts = DECADES.map((d) => rows.filter((r) => r[2] >= d && r[2] <= d + 9).length);
-      return `| ${g.label} | ${counts.join(' | ')} | ${rows.length} |`;
+      return `| ${g.id} | ${counts.join(' | ')} | ${rows.length} |`;
     }),
     '',
   ];

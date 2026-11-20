@@ -1,3 +1,4 @@
+import { msg } from '../i18n';
 /**
  * Spotify login with the Authorization Code + PKCE flow. This needs no backend
  * and no client secret: only the app's Client ID, which is public.
@@ -85,7 +86,7 @@ export interface LoginOptions {
 
 export async function login({ extraScopes = [], afterLogin, asFriend = false }: LoginOptions = {}): Promise<void> {
   const clientId = getClientId();
-  if (!clientId) throw new Error('Add your Spotify Client ID first.');
+  if (!clientId) throw new Error(msg().errors.addClientId);
   // Keep what was granted before, so asking for more doesn't drop anything.
   // A friend only grants what is needed to read their music.
   const scope = asFriend
@@ -127,14 +128,14 @@ export async function handleRedirect(): Promise<string | null> {
 
   if (error) {
     cleanUrl();
-    return `Spotify login was cancelled (${error}).`;
+    return msg().errors.loginCancelled(error);
   }
   const returnedState = url.searchParams.get('state');
   const expectedState = sessionStorage.getItem(KEYS.state);
   const verifier = sessionStorage.getItem(KEYS.verifier);
   cleanUrl();
   if (!verifier || !expectedState || returnedState !== expectedState) {
-    return 'Spotify login could not be completed. Please try again.';
+    return msg().errors.loginIncomplete;
   }
 
   const res = await fetch('https://accounts.spotify.com/api/token', {
@@ -151,7 +152,7 @@ export async function handleRedirect(): Promise<string | null> {
   sessionStorage.removeItem(KEYS.verifier);
   sessionStorage.removeItem(KEYS.state);
   if (!res.ok) {
-    return `Spotify login failed (${res.status}).`;
+    return msg().errors.loginFailed(res.status);
   }
   // A new login, possibly by someone else: nothing carries over from the old token.
   localStorage.removeItem(KEYS.token);

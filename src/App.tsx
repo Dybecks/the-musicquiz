@@ -5,18 +5,22 @@ import { handleRedirect, isFriendLogin, isLoggedIn, login, logout, restoreHostLo
 import { loadPersonalDeck } from './spotify/listening';
 import type { PersonalDeck } from './spotify/personalDeck';
 import type { PlaybackKind } from './spotify/playback';
-import { parseSonosChoice, type SonosChoice } from './sonos/bridge';
+import { parseSpeakerChoice, type SpeakerChoice } from './speakers';
 import { Setup, type SetupValues } from './components/Setup';
 import { Game } from './components/Game';
 import { Remote, savedRemote } from './components/Remote';
-import { isValidCode, lobbyTeams, normalizeCode } from './multiplayer/protocol';
+import { isValidCode, lobbyTeams, normalizeCode, renameLobbyTeam } from './multiplayer/protocol';
 import { useHostRoom } from './multiplayer/useHostRoom';
 import { SharePanel } from './components/SharePanel';
 import { mergeSongs } from './spotify/personalDeck';
+import { msg, useT } from './i18n';
+import { LanguagePicker } from './i18n/LanguagePicker';
 
 const GAME_KEY = 'mq.game';
 const MODE_KEY = 'mq.mode';
-const SONOS_KEY = 'mq.sonos';
+const SPEAKER_KEY = 'mq.speaker';
+/** Where a Sonos choice was saved before the Spotify app could be chosen. */
+const OLD_SONOS_KEY = 'mq.sonos';
 const PROFILE_KEY = 'mq.profile';
 
 function loadJson<T>(key: string): T | null {
@@ -57,6 +61,7 @@ function codeFromLink(): string | null {
 }
 
 export function App() {
+  const t = useT();
   // Joining someone else's game: from a link, or carrying on after a reload.
   const [remote, setRemote] = useState<{ code?: string } | null>(() => {
     const code = codeFromLink();
@@ -65,15 +70,18 @@ export function App() {
   });
   const [game, setGame] = useState<GameState | null>(() => loadJson<GameState>(GAME_KEY));
   const [mode, setMode] = useState<PlaybackKind>(() => loadJson<PlaybackKind>(MODE_KEY) ?? 'embed');
-  const [sonos, setSonos] = useState<SonosChoice | null>(() => parseSonosChoice(loadJson<unknown>(SONOS_KEY)));
-  const changeSonos = (c: SonosChoice | null) => {
+  const [speaker, setSpeaker] = useState<SpeakerChoice | null>(() =>
+    parseSpeakerChoice(loadJson<unknown>(SPEAKER_KEY) ?? loadJson<unknown>(OLD_SONOS_KEY)),
+  );
+  const changeSpeaker = (c: SpeakerChoice | null) => {
     try {
-      if (c) localStorage.setItem(SONOS_KEY, JSON.stringify(c));
-      else localStorage.removeItem(SONOS_KEY);
+      if (c) localStorage.setItem(SPEAKER_KEY, JSON.stringify(c));
+      else localStorage.removeItem(SPEAKER_KEY);
+      localStorage.removeItem(OLD_SONOS_KEY);
     } catch {
       /* not remembered */
     }
-    setSonos(c);
+    setSpeaker(c);
   };
   const [profile, setProfile] = useState<SpotifyProfile | null>(null);
   const [authMessage, setAuthMessage] = useState<string | null>(null);
@@ -81,9 +89,22 @@ export function App() {
   const [personal, setPersonal] = useState<PersonalDeck | null>(loadPersonalDeck);
   const [returnedFromLogin, setReturnedFromLogin] = useState(false);
   // The teams typed in setup, so phones can join a team before the game starts.
-  const [teamNames, setTeamNames] = useState<string[]>(() => loadJson<string[]>('mq.players') ?? ['Team 1', 'Team 2']);
+  const [teamNames, setTeamNames] = useState<string[]>(() => loadJson<string[]>('mq.players') ?? [msg().app.defaultTeam(1), msg().app.defaultTeam(2)]);
   const lobby = useMemo(() => lobbyTeams(teamNames), [teamNames]);
-  const host = useHostRoom(game, setGame, lobby);
+  // A team renamed from a phone (or by the host): in the game, and in setup for the next one.
+  const renameTeam = useCallback((teamId: string, name: string) => {
+    setGame((g) => (g ? { ...g, players: g.players.map((p) => (p.id === teamId ? { ...p, name } : p)) } : g));
+    setTeamNames((cur) => {
+      const next = renameLobbyTeam(cur, teamId, name);
+      try {
+        localStorage.setItem('mq.players', JSON.stringify(next));
+      } catch {
+        /* not remembered */
+      }
+      return next;
+    });
+  }, []);
+  const host = useHostRoom(game, setGame, lobby, renameTeam);
 
   const refreshProfile = useCallback(async () => {
     if (!isLoggedIn()) {
@@ -131,7 +152,8 @@ export function App() {
   return (
     <div className="app">
       <header className="brand">
-        <span className="brand-mark">♪</span> The Music Quiz
+        <span className="brand-mark">♪</span> <span className="brand-name">{t.app.name}</span>
+        <LanguagePicker />
       </header>
       {remote ? (
         <Remote initialCode={remote.code} onLeave={() => setRemote(null)} profile={profile} />
@@ -143,14 +165,14 @@ export function App() {
             localStorage.setItem(MODE_KEY, JSON.stringify(m));
             setMode(m);
           }}
-          sonos={sonos}
-          onSonosChange={changeSonos}
+          speaker={speaker}
+          onSpeakerChange={changeSpeaker}
           onChange={setGame}
           onQuit={() => setGame(null)}
           host={host}
         />
       ) : !authChecked ? (
-        <p className="hint center">Checking Spotify login…</p>
+        <p className="hint center">{t.app.checkingLogin}</p>
       ) : (
         <Setup
           profile={profile}
@@ -168,6 +190,7 @@ export function App() {
           }}
           onStart={start}
           onJoin={() => setRemote({})}
+          players={teamNames}
           onPlayersChange={(names) => setTeamNames((cur) => (cur.join('\n') === names.join('\n') ? cur : names))}
           invite={<SharePanel host={host} lobby />}
         />

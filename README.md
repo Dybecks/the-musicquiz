@@ -12,7 +12,7 @@ It runs in the browser on a phone, tablet or laptop that everyone gathers around
 
 1. Add the players or teams and choose how many cards are needed to win.
 2. Everyone gets one random face-up starting card (title, artist, year).
-3. On your turn, press **Play song** and listen. The title stays hidden.
+3. On your turn the song starts by itself (or press **Play song**) and you listen. The title stays hidden.
 4. Tap the gap on your timeline where you think the song belongs and **Lock in guess**.
 5. The song is revealed. A correct placement adds the card to your timeline; a
    wrong one discards it and shows where it really belonged. Songs from the same
@@ -29,7 +29,8 @@ The host's device plays the music, and everyone else can follow along on their o
 1. Invite people before the game starts, on the **Players & play** screen, or at any time
    during a game: tap **Share a game code**. A four-letter code appears (and
    **Share link** sends a `?join=CODE` link). The room stays open from game to game
-   until **Stop sharing**.
+   (**Play again**) until **Stop sharing** or **End game**, which sends every phone
+   out of the game right away.
 2. On a phone, open the game, tap **Join a game on this phone**, type the code and a name,
    or just open the link. Everyone gets a random emoji as a profile picture (tap it for
    another one), shown next to their name, also on their votes.
@@ -42,6 +43,16 @@ The host's device plays the music, and everyone else can follow along on their o
    team who is connected has locked in, the spot with the most votes is the guess. If the
    votes are split evenly, the team agrees on one spot and locks in again. Changing a vote
    unlocks it.
+6. After the reveal, the next song starts as the host chose under **Who starts the next
+   song**: **Most players** (more than half of the connected phones tap **Next song**; the
+   default), **Any player** (one tap is enough) or **Only me**. With the first two, phones
+   can also play and pause the song. The host's own **Next** button always works.
+
+Team members can rename their own team from their phone (**✎ Rename**), and the host can
+rename any team with ✎ in the share panel; the new name shows everywhere and is kept for the
+next game. The host taps a player's name in the share panel to move them to another team
+or **Remove from the game**. A removed phone is sent out at once and can't join that game
+again until the host taps **let back in**.
 
 Everything that happens is sent to every device as it happens: votes, lock-ins, team
 changes, the reveal, whether the song is playing, and the spot the host has tapped when
@@ -205,10 +216,12 @@ When a song is revealed, a short fun fact appears under the card.
 Songs in the built-in decks have facts written for them in `src/data/facts.ts`
 (345 of the 360 songs). They need no network, so they appear right away. To add one, append
 `[title, artist, fact]` to the deck's list; `facts.test.ts` checks that the title and artist
-match a song. Leave a song out rather than add a fact you aren't sure of.
+match a song. Leave a song out rather than add a fact you aren't sure of. Every written fact
+also has a Swedish version in `src/data/facts.sv.ts`, shown when the game is in Swedish;
+`facts.test.ts` fails if one is missing, so add both.
 
-Every other song, including your own lists, gets a few lines from English
-Wikipedia instead, with a link to the article. If the song has no article of its own, the
+Every other song, including your own lists, gets a few lines from Wikipedia in the
+game's language (English or Swedish Wikipedia) instead, with a link to the article. If the song has no article of its own, the
 lines are about the artist; soundtrack songs only get lines about the song itself. The
 lookup starts while the song is playing, so it is usually ready when the guess is locked in.
 
@@ -221,6 +234,28 @@ the browser.
 The code: `src/facts/index.ts` (picks the fact), `src/facts/wikipedia.ts` (the lookup,
 tested in `wikipedia.test.ts`) and `src/data/facts.ts` (the written facts).
 
+## Languages
+
+The whole site is in English and Swedish. The **EN / SV** switch in the top corner changes
+the language right away, mid-game too, and is remembered on that device. The first time,
+the game picks Swedish if the browser's language is Swedish, otherwise English. Each phone
+that joins a game has its own language, so a Swedish host and an English-speaking guest
+each see the game in their own language.
+
+Every text a player can see lives in `src/i18n/en.ts` and `src/i18n/sv.ts`. To add or
+change a text:
+
+1. Add it to `en.ts`, in the section for the screen it belongs to. Texts with numbers or
+   names in them are functions, like `` songsLeft: (n: number) => `${n} songs left` ``.
+2. Add the Swedish version to `sv.ts`. The build fails until you do: `sv.ts` must have
+   exactly the same texts as `en.ts`.
+3. Use it: `const t = useT()` in a component (`t.game.songsLeft(n)`), or `msg()` in other
+   code, such as error messages. Wrap a text in `<Rich text={…} />` to show `**bold**` parts.
+
+`src/i18n/i18n.test.ts` fails if a component, a `title`/`aria-label`/`placeholder`, an
+error message or a `confirm()` has text written straight into it, so no English-only
+text slips in. Song titles, artists and team names are never translated.
+
 ## Music playback
 
 Step 1 of setup decides how the music plays:
@@ -232,8 +267,44 @@ Step 1 of setup decides how the music plays:
 | Play without login | A covered-up [Spotify Embed](https://developer.spotify.com/documentation/embeds) player. Uses the songs that have a known Spotify id. Full songs if the browser is signed in to Spotify, otherwise 30-second previews. |
 
 The music plays from the device the game is open on, so it goes wherever that device
-sends its sound: its own speaker, headphones, Bluetooth or AirPlay. To play on a Sonos
-from the game instead, see [Playing on a Sonos](#playing-on-a-sonos) below.
+sends its sound: its own speaker, headphones, Bluetooth or AirPlay. **🔊** at the bottom of
+the game picks another place to play (needs the login and Spotify Premium for everything
+but the Sonos bridge):
+
+- **A Spotify Connect device**: every speaker, TV, game console, and Spotify app on a
+  computer (PC or Mac) or phone that the Spotify account can play on is listed by name.
+  Pick one and each song is started there; nothing plays on the device the game runs on.
+  The list is fetched when the picker opens and again whenever you come back to the page.
+  A speaker that's asleep or not listed shows up after you open the Spotify app, pick it
+  in the device list (the speaker icon) and start any song there. Speakers with Google
+  Cast (Chromecast built-in) only appear while something plays on them, which is how
+  Spotify works. Spotify shows the title in its app and on a TV's screen, so keep them
+  out of sight. Devices Spotify won't let other apps control (often a Sonos) are shown
+  with 🔒; use the Sonos bridge for those. A phone closes the Spotify app in the
+  background after a while when nothing plays; then **Open the Spotify app** under the
+  message brings it back, and Play starts the song again.
+- **Wherever Spotify plays**: each song starts on the device the Spotify app is using at
+  that moment. When nothing is playing anywhere, it uses the device the last song played on,
+  or the only device that's open. If several are open, it asks you to pick one.
+- **A Sonos through the Sonos bridge**, see [Playing on a Sonos](#playing-on-a-sonos) below.
+
+Spotify's Connect commands are unreliable on a device that has gone idle, so
+`src/spotify/remote.ts` works around them:
+
+- An idle device is first made the active one (a transfer), and the game waits until Spotify
+  says it is active before sending the song.
+- Every start is checked against what Spotify reports as playing. If the device accepted the
+  song but nothing plays (a speaker that just woke up often does this), the song is sent again.
+  If it still doesn't play, the game says so instead of showing the song as playing.
+- A "device not found" or server error makes the game wake the device and try again once.
+- Spotify forgets a paused device after a few minutes, so resuming after a long reveal
+  starts the song on the same device again from where it was paused.
+- Spotify sometimes refuses a pause with "Restriction violated" when the song had already
+  stopped (it ended, or someone paused it in the app). That counts as paused, not as a locked speaker.
+
+A start costs 3 requests when all goes well and about 10 for a sleepy speaker. A picked device
+is found again by name if Spotify gives it a new id, and the game never quietly plays somewhere
+else when it can't be found.
 
 While the song is hidden, the game reports it as **Mystery song** to the device's
 lock screen, Control Center, car displays and AirPlay/Bluetooth receivers (such as the
@@ -264,8 +335,8 @@ example a Mac or a Raspberry Pi) on the same Wi-Fi as the speakers.
 
 1. Start the bridge (`cd bridge && npm install && npm start`). It shows a six-letter
    speaker code.
-2. In the game, tap **🔊 This device** at the bottom, enter the code, tap **Find Sonos
-   speakers** and pick one.
+2. In the game, tap **🔊 This device** at the bottom, open **Sonos through the Sonos
+   bridge**, enter the code, tap **Find Sonos speakers** and pick one.
 
 Nothing then plays on the host device; the game tells the speaker which Spotify song to
 play, and the speaker plays it with the Spotify account added in the Sonos app. The songs
@@ -279,7 +350,7 @@ on the home network. The bridge connects to the game over WebRTC like the phones
 controls the speakers over the network the way the Sonos app does.
 
 The code: `src/sonos/bridge.ts` (the link to the bridge), `src/sonos/playback.ts`,
-`src/components/SonosPicker.tsx` and `bridge/`.
+`src/components/SpeakerPicker.tsx` and `bridge/`.
 
 ### Spotify setup (only for "Log in with Spotify")
 
@@ -371,4 +442,5 @@ The project is Vite + React + TypeScript. The pieces:
   `[title, artist, year, from]` rows. `src/data/decks.ts` combines the chosen decks.
 - `src/spotify/`: login (`auth.ts`), Web API calls (`api.ts`) and the playback options (`playback.ts`).
 - `src/components/`: setup screen, game screen and timeline.
+- `src/i18n/`: the English and Swedish texts (see [Languages](#languages)).
 - `bridge/`: the Sonos bridge, a separate Node program (`cd bridge && npm test`).

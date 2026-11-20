@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { FACT_ROWS, writtenFact } from './facts';
+import { FACTS_SV } from './facts.sv';
 import { DEFAULT_SONGS } from './songs';
 import { GAME_SONGS, MOVIE_SONGS, MUSICAL_SONGS, TV_SONGS } from './soundtracks';
 
@@ -28,5 +29,23 @@ describe('written facts', () => {
   it('finds facts by title and artist', () => {
     expect(writtenFact({ title: 'Waterloo', artist: 'ABBA' })).toMatch(/Eurovision/);
     expect(writtenFact({ title: 'Waterloo', artist: 'Someone Else' })).toBeUndefined();
+  });
+
+  it('has every fact in Swedish too, and nothing else', () => {
+    const key = ([title, artist]: readonly string[]) => `${title} / ${artist}`;
+    const english = FACT_ROWS.map(key);
+    const swedish = FACTS_SV.map(key);
+    expect(english.filter((k) => !swedish.includes(k)), 'missing in facts.sv.ts').toEqual([]);
+    expect(swedish.filter((k) => !english.includes(k)), 'not in facts.ts').toEqual([]);
+    expect(swedish.filter((k, i) => swedish.indexOf(k) !== i), 'twice in facts.sv.ts').toEqual([]);
+    for (const [title, , fact] of FACTS_SV) {
+      expect(fact.length, title).toBeLessThanOrEqual(240);
+      expect(fact, title).toMatch(/^[A-ZÅÄÖ”'(0-9.]/);
+      expect(fact, title).toMatch(/[.!?”]$/);
+    }
+  });
+
+  it('finds the Swedish fact in Swedish', () => {
+    expect(writtenFact({ title: 'Waterloo', artist: 'ABBA' }, 'sv')).toMatch(/Sveriges första seger/);
   });
 });

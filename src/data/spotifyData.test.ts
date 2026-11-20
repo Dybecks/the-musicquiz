@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import TRACK_IDS from './spotify/track-ids.json';
 import POOLS from './spotify/genre-pools.json';
 import { poolSongs, premadeKey, withTrackId, type GenrePools } from './spotifyData';
-import { SEARCH_GENRES } from './searchGenres';
+import { SEARCH_GENRE_DEFS as SEARCH_GENRES } from './searchGenres';
 import { DEFAULT_SONGS } from './songs';
 import { GAME_SONGS, MOVIE_SONGS, MUSICAL_SONGS, TV_SONGS } from './soundtracks';
 

@@ -5,9 +5,10 @@
  */
 import type { Song } from '../game/engine';
 import { RateLimitError, spotifyGet, SpotifyError } from './api';
+import { msg } from '../i18n';
 import { filterSongs } from '../data/genres';
 import { DEFAULT_SONGS } from '../data/songs';
-import { SEARCH_GENRES } from '../data/searchGenres';
+import { SEARCH_GENRE_DEFS, type SearchGenre } from '../data/searchGenres';
 import { loadGenrePools, poolSongs } from '../data/spotifyData';
 import {
   earliestYear,
@@ -55,7 +56,13 @@ const CACHE_LIMIT = 8000;
 /** Reading playlists needs these on top of the login's usual access. */
 export const PLAYLIST_SCOPES = ['playlist-read-private', 'playlist-read-collaborative'];
 
-export { SEARCH_GENRES } from '../data/searchGenres';
+/** The genres of "By genre"; the label is in the current language (searchGenres in src/i18n). */
+export const SEARCH_GENRES: { id: string; readonly label: string; query: string; genre?: SearchGenre['genre'] }[] = SEARCH_GENRE_DEFS.map((g) => ({
+  ...g,
+  get label() {
+    return msg().searchGenres[g.id] ?? g.id;
+  },
+}));
 
 // ---- The saved list ----
 
@@ -364,16 +371,16 @@ export async function startList(
 ): Promise<{ songs: Song[]; plan: RefillPlan | null; note: string | null }> {
   let songs: Song[] = [];
   if (plan.kind === 'genres') {
-    onProgress({ label: 'Picking songs', done: 0, total: want });
+    onProgress({ label: msg().errors.pickingSongs, done: 0, total: want });
     songs = await ownGenreSongs(plan.genres, plan.from, plan.to);
     if (songs.length >= ENOUGH_OWN_SONGS || !canAskSpotify) {
-      onProgress({ label: 'Picking songs', done: want, total: want });
+      onProgress({ label: msg().errors.pickingSongs, done: want, total: want });
       return { songs, plan: null, note: null };
     }
   }
   let next: RefillPlan | null = plan;
   let tries = 0;
-  const label = plan.kind === 'genres' ? 'Finding songs on Spotify' : 'Reading your playlists';
+  const label = plan.kind === 'genres' ? msg().errors.findingSongs : msg().errors.readingPlaylists;
   while (next && (tries === 0 || songs.length < want) && tries < 5) {
     onProgress({ label, done: Math.min(songs.length, want), total: want });
     try {
@@ -386,7 +393,7 @@ export async function startList(
         throw e;
       }
       if (songs.length === 0) throw e;
-      return { songs, plan: null, note: `${e.message} Until then the game uses its own songs for these genres and years.` };
+      return { songs, plan: null, note: msg().game.refillFallback(e.message) };
     }
     tries++;
     if (next && songs.length < want) await pause(PAUSE_MS);
@@ -431,7 +438,7 @@ export async function fetchPlaylists(offset = 0): Promise<{ playlists: PlaylistS
     .filter((p): p is RawPlaylist => !!p?.id)
     .map((p) => ({
       id: p.id,
-      name: p.name || 'Untitled playlist',
+      name: p.name || msg().errors.untitledPlaylist,
       owner: p.owner?.display_name || p.owner?.id || '',
       // The smallest cover that still looks sharp.
       image: [...(p.images ?? [])].sort((a, b) => (a.width ?? 999) - (b.width ?? 999)).find((i) => (i.width ?? 999) >= 60)?.url ?? p.images?.[0]?.url ?? null,

@@ -1,4 +1,6 @@
 import type { Song } from '../game/engine';
+import type { Lang } from '../i18n';
+import { FACTS_SV } from './facts.sv';
 
 /**
  * Facts written for the built-in decks, shown on the reveal screen ahead of the
@@ -9,6 +11,9 @@ import type { Song } from '../game/engine';
  * Each row is [title, artist, fact]; title and artist must match the deck
  * exactly (facts.test.ts checks this). Keep facts to one or two sentences, and
  * don't repeat the year: the card already shows it.
+ *
+ * Every fact also has a Swedish version in facts.sv.ts (facts.test.ts checks
+ * this): add both when you add one.
  */
 type Row = [title: string, artist: string, fact: string];
 
@@ -386,7 +391,10 @@ export const FACT_ROWS: readonly Row[] = [...CLASSIC, ...MOVIES, ...MUSICALS, ..
 
 const FACTS = new Map(FACT_ROWS.map(([title, artist, fact]) => [key(title, artist), fact]));
 
-/** The written fact for a song from a built-in deck, if there is one. */
-export function writtenFact(song: Pick<Song, 'title' | 'artist'>): string | undefined {
-  return FACTS.get(key(song.title, song.artist));
+const FACTS_IN_SWEDISH = new Map(FACTS_SV.map(([title, artist, fact]) => [key(title, artist), fact]));
+
+/** The written fact for a song from a built-in deck, if there is one, in the given language. */
+export function writtenFact(song: Pick<Song, 'title' | 'artist'>, lang: Lang = 'en'): string | undefined {
+  const k = key(song.title, song.artist);
+  return (lang === 'sv' ? FACTS_IN_SWEDISH : FACTS).get(k);
 }

@@ -1,4 +1,5 @@
 import type { Genre } from '../data/genres';
+import { msg } from '../i18n';
 
 /**
  * Pure game logic for the music timeline game. No React, no Spotify:
@@ -102,9 +103,9 @@ export interface NewGameOptions {
 
 export function createGame({ playerNames, targetCards, songs, order = 'random', rng = Math.random }: NewGameOptions): GameState {
   const names = playerNames.map((n) => n.trim()).filter(Boolean);
-  if (names.length === 0) throw new Error('Add at least one player or team.');
-  if (targetCards < 2) throw new Error('The target must be at least 2 cards.');
-  if (songs.length < names.length + 1) throw new Error('Not enough songs in the deck.');
+  if (names.length === 0) throw new Error(msg().setup.addPlayer);
+  if (targetCards < 2) throw new Error(msg().errors.targetTooLow);
+  if (songs.length < names.length + 1) throw new Error(msg().errors.notEnoughSongs);
 
   const deck = order === 'decades' ? spreadByDecade(songs, rng) : shuffle(songs, rng);
   // Each player gets one face-up starting card. Try to give everyone a

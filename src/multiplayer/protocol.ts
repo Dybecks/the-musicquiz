@@ -54,6 +54,8 @@ export interface Member {
   songs?: number;
   /** A random emoji as a profile picture, given when they join. */
   emoji?: string;
+  /** The turn (`turnOf`) after whose reveal this member wants the next song. */
+  next?: string;
 }
 
 /** The emoji people get as their picture. */
@@ -79,7 +81,22 @@ export interface Room {
   members: Member[];
   /** Songs phones sent before the game started; they join the deck at the start. */
   pending?: Song[];
+  /** Members the host removed: they can't join this room again unless let back in. */
+  kicked?: { id: string; name: string }[];
+  /** Who moves the game on after a reveal (and plays or pauses) besides the host. Missing: 'majority'. */
+  nextRule?: NextRule;
 }
+
+/**
+ * Besides the host, who starts the next song after the reveal:
+ *  - 'host': only the host (phones can't play or pause either),
+ *  - 'anyone': any player's tap,
+ *  - 'majority': more than half of the connected players tap "Next song".
+ */
+export type NextRule = 'host' | 'anyone' | 'majority';
+export const NEXT_RULES: NextRule[] = ['majority', 'anyone', 'host'];
+export const nextRuleOf = (room: Pick<Room, 'nextRule'> | null): NextRule =>
+  room?.nextRule && NEXT_RULES.includes(room.nextRule) ? room.nextRule : 'majority';
 
 export interface Team {
   id: string;
@@ -122,6 +139,7 @@ export interface RoomView {
   live: Live;
   /** Songs sent by phones waiting for the game to start. */
   pendingSongs: number;
+  nextRule: NextRule;
 }
 
 /** Phone → host. */
@@ -132,7 +150,23 @@ export type ClientMessage =
   | { type: 'lock'; locked: boolean }
   /** A new random emoji picture. */
   | { type: 'reroll' }
-  | { type: 'songs'; songs: Song[] };
+  | { type: 'songs'; songs: Song[] }
+  /** A new name for the sender's own team. */
+  | { type: 'team-name'; name: string }
+  /**
+   * Move on after the reveal: the next song (or the winner), or with the
+   * 'majority' rule a vote for it (`want: false` takes it back). `turn` is
+   * the `turnOf` the phone saw, so two taps don't skip a turn.
+   */
+  | { type: 'next'; turn: string; want?: boolean }
+  /** Start or pause the song on the host's device. */
+  | { type: 'play'; playing: boolean };
+
+/** Something a phone asks the host's screen to do. */
+export type Command = Extract<ClientMessage, { type: 'next' } | { type: 'play' }>;
+
+/** Names one turn, for `next` messages. */
+export const turnOf = (game: Pick<GameState, 'round' | 'currentPlayerIndex'>) => `${game.round}:${game.currentPlayerIndex}`;
 
 /** Host → phone. */
 export type HostMessage =
@@ -160,6 +194,7 @@ export function roomView(room: Room, game: GameState | null, lobby: readonly Tea
     split: decision?.kind === 'split',
     live,
     pendingSongs: room.pending?.length ?? 0,
+    nextRule: nextRuleOf(room),
   };
 }
 
@@ -205,7 +240,34 @@ export function teamDecision(room: Room, game: GameState): Decision {
 
 /** Everyone's votes cleared, for a new song or turn. */
 export function clearVotes(room: Room): Room {
-  return { ...room, members: room.members.map((m) => ({ ...m, vote: null, locked: false })) };
+  return { ...room, members: room.members.map(({ next: _, ...m }) => ({ ...m, vote: null, locked: false })) };
+}
+
+/** Records a member's vote for the next song after the reveal of `turn`. */
+export function voteNext(room: Room, memberId: string, turn: string, want = true): Room {
+  return {
+    ...room,
+    members: room.members.map((m) => {
+      if (m.id !== memberId) return m;
+      if (want) return { ...m, next: turn };
+      const { next: _, ...rest } = m;
+      return rest;
+    }),
+  };
+}
+
+/** How many connected players (not the host's device) want the next song, and how many it takes. */
+export function nextVotes(members: readonly Member[], turn: string): { yes: number; needed: number } {
+  const players = members.filter((m) => m.connected && m.id !== HOST_ID);
+  const yes = players.filter((m) => m.next === turn).length;
+  return { yes, needed: Math.floor(players.length / 2) + 1 };
+}
+
+/** The phones' majority wants the next song after this reveal. */
+export function majorityWantsNext(room: Room, game: GameState): boolean {
+  if (game.phase !== 'revealed' || nextRuleOf(room) !== 'majority') return false;
+  const { yes, needed } = nextVotes(room.members, turnOf(game));
+  return yes > 0 && yes >= needed;
 }
 
 /** Members whose team no longer exists (a team removed before the start) choose again. */
@@ -260,7 +322,7 @@ export function applyMessage(
     }
     return { ...room, members };
   }
-  if (i === -1 || msg.type === 'songs') return room;
+  if (i === -1 || msg.type === 'songs' || msg.type === 'team-name' || msg.type === 'next' || msg.type === 'play') return room;
   const m = members[i];
   if (msg.type === 'reroll') {
     members[i] = { ...m, emoji: pickAvatar(members, Math.random, m.emoji) };
@@ -284,6 +346,57 @@ export function applyMessage(
   }
   return { ...room, members };
 }
+
+/** The most a team name can be. */
+export const MAX_TEAM_NAME = 24;
+
+/** A typed team name, tidied; null if nothing is left. */
+export function cleanTeamName(input: unknown): string | null {
+  if (typeof input !== 'string') return null;
+  const name = input.replace(/\s+/g, ' ').trim().slice(0, MAX_TEAM_NAME);
+  return name || null;
+}
+
+/** The team a member may rename and its new name, or null: only members of an existing team rename it. */
+export function teamRename(room: Room, teams: readonly Team[], memberId: string, name: unknown): { teamId: string; name: string } | null {
+  const teamId = room.members.find((m) => m.id === memberId)?.teamId;
+  const clean = cleanTeamName(name);
+  if (!teamId || !clean || !teams.some((t) => t.id === teamId)) return null;
+  return { teamId, name: clean };
+}
+
+/**
+ * The names typed in setup with one team renamed. Lobby team ids count only
+ * the names that aren't empty (see `lobbyTeams`), so blanks are skipped.
+ */
+export function renameLobbyTeam(names: readonly string[], teamId: string, name: string): string[] {
+  const n = Number(/^p(\d+)$/.exec(teamId)?.[1]);
+  let seen = 0;
+  return names.map((raw) => (raw.trim() && ++seen === n ? name : raw));
+}
+
+/** The host moves a member to a team (or to none). */
+export function moveMember(room: Room, memberId: string, teamId: string | null, teams: readonly Team[]): Room {
+  if (teamId !== null && !teams.some((t) => t.id === teamId)) return room;
+  return { ...room, members: room.members.map((m) => (m.id === memberId ? { ...m, teamId, vote: null, locked: false } : m)) };
+}
+
+/** The host removes a member; they can't join again until let back in. Not the host itself. */
+export function kickMember(room: Room, memberId: string): Room {
+  const m = room.members.find((x) => x.id === memberId);
+  if (!m || memberId === HOST_ID) return room;
+  const kicked = [...(room.kicked ?? []).filter((k) => k.id !== memberId), { id: m.id, name: m.name }];
+  return { ...room, members: room.members.filter((x) => x.id !== memberId), kicked };
+}
+
+export function letBackIn(room: Room, memberId: string): Room {
+  return { ...room, kicked: (room.kicked ?? []).filter((k) => k.id !== memberId) };
+}
+
+export const isKicked = (room: Room | null, memberId: string) => !!room?.kicked?.some((k) => k.id === memberId);
+
+/** Sent to a removed phone. A code on the wire: phones show remote.removedText from src/i18n in their own language. */
+export const KICKED_REASON = 'The host removed you from the game.';
 
 export function setConnected(room: Room, memberId: string, connected: boolean): Room {
   return {
