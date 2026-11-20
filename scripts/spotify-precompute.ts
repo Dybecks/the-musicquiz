@@ -15,7 +15,8 @@
  *
  * Songs it can't match are listed in src/data/spotify/REVIEW.md, never guessed.
  *
- *   SPOTIFY_CLIENT_ID=… SPOTIFY_CLIENT_SECRET=… npx vite-node scripts/spotify-precompute.ts
+ * Locally: put SPOTIFY_CLIENT_ID=… and SPOTIFY_CLIENT_SECRET=… in .env.local
+ * (never committed), then `npm run spotify-data`. Environment variables work too.
  */
 import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -35,6 +36,16 @@ import {
 } from '../src/spotify/personalDeck';
 
 const file = (p: string) => fileURLToPath(new URL(p, import.meta.url));
+
+// Values from .env.local (KEY=value lines), unless already set.
+try {
+  for (const line of readFileSync(file('../.env.local'), 'utf8').split(/\r?\n/)) {
+    const m = line.match(/^\s*([A-Z_][A-Z0-9_]*)\s*=\s*(.*?)\s*$/);
+    if (m && !process.env[m[1]]) process.env[m[1]] = m[2].replace(/^(['"])(.*)\1$/, '$2');
+  }
+} catch {
+  /* no .env.local */
+}
 const IDS_FILE = file('../src/data/spotify/track-ids.json');
 const POOLS_FILE = file('../src/data/spotify/genre-pools.json');
 const REVIEW_FILE = file('../src/data/spotify/REVIEW.md');

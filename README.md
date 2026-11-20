@@ -117,6 +117,11 @@ account, so a run makes at most 300 requests, one every 1.5 seconds, and stops b
 if Spotify asks for a long pause; the next run carries on (`scripts/spotify-progress.json`).
 Results go to the `spotify-data` branch and a pull request from it.
 
+To run it on your own computer instead: put the two values in `.env.local` (never
+committed) as `SPOTIFY_CLIENT_ID=…` and `SPOTIFY_CLIENT_SECRET=…`, then run
+`npm run spotify-data`. Run it again to carry on after it stops; `MAX_REQUESTS=…` changes
+the cap.
+
 ## Setting up a game
 
 Setup asks one thing per screen, in three steps:
