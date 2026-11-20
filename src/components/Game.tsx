@@ -274,6 +274,8 @@ export function Game({ state, mode, onModeChange, speaker, onSpeakerChange, onCh
   const quit = () => {
     if (state.phase === 'finished' || window.confirm('End this game? Progress will be lost.')) {
       void playback?.stop();
+      // Phones that joined are sent back to their start screen right away.
+      if (host.room) host.stop('The host ended the game.');
       onQuit();
     }
   };
@@ -354,6 +356,15 @@ export function Game({ state, mode, onModeChange, speaker, onSpeakerChange, onCh
                           <button className="link" onClick={() => setAttempt((n) => n + 1)}>
                             Try again
                           </button>{' '}
+                          ·{' '}
+                        </>
+                      )}
+                      {remote.kind === 'spotify-app' && (
+                        <>
+                          {/* Opens (wakes) the Spotify app without showing the song. */}
+                          <a className="link" href="spotify:">
+                            Open the Spotify app
+                          </a>{' '}
                           ·{' '}
                         </>
                       )}

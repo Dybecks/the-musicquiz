@@ -29,7 +29,8 @@ The host's device plays the music, and everyone else can follow along on their o
 1. Invite people before the game starts, on the **Players & play** screen, or at any time
    during a game: tap **Share a game code**. A four-letter code appears (and
    **Share link** sends a `?join=CODE` link). The room stays open from game to game
-   until **Stop sharing**.
+   (**Play again**) until **Stop sharing** or **End game**, which sends every phone
+   out of the game right away.
 2. On a phone, open the game, tap **Join a game on this phone**, type the code and a name,
    or just open the link. Everyone gets a random emoji as a profile picture (tap it for
    another one), shown next to their name, also on their votes.
@@ -206,8 +207,10 @@ the game picks another place to play:
   of playing itself. The music plays wherever the app plays: the phone, or a speaker
   picked in the app's device list, like a Sonos or a TV. Open the app first (start
   any song if it doesn't show up); each song is then started on the device the app
-  uses at that moment, or else on an open but idle app, a phone first
-  (`src/spotify/remote.ts`). The game's own old in-browser player, which Spotify keeps
+  uses at that moment, or else on an open but idle app, a phone first, which is woken
+  first (`src/spotify/remote.ts`). A phone closes the Spotify app in the background
+  after a while when nothing plays; then **Open the Spotify app** under the message
+  brings it back, and Play starts the song again. The game's own old in-browser player, which Spotify keeps
   listing for a while, is skipped. The app shows the title, so keep it out of sight. Spotify
   refuses some speakers ("won't let other apps control"), Sonos ones in particular,
   most often when the music was started from the Sonos app rather than the Spotify app.

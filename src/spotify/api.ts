@@ -196,3 +196,8 @@ export async function pauseDevice(deviceId: string): Promise<void> {
 export async function resumeDevice(deviceId: string): Promise<void> {
   await spotifyFetch(`/me/player/play${onDevice(deviceId)}`, { method: 'PUT' });
 }
+
+/** Moves Spotify's playback to `deviceId` without starting anything, so an open but idle app takes commands. */
+export async function transferPlayback(deviceId: string): Promise<void> {
+  await spotifyFetch('/me/player', { method: 'PUT', body: JSON.stringify({ device_ids: [deviceId], play: false }) });
+}
