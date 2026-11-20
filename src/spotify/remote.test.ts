@@ -9,7 +9,7 @@ vi.mock('./api', () => {
       super(message);
     }
   }
-  return { SpotifyError, getDevices: vi.fn(), playOnDevice: vi.fn(), pauseDevice: vi.fn(), resumeDevice: vi.fn() };
+  return { SpotifyError, getDevices: vi.fn(), playOnDevice: vi.fn(), pauseDevice: vi.fn(), resumeDevice: vi.fn(), transferPlayback: vi.fn() };
 });
 vi.mock('./playback', () => ({ uriFor: vi.fn(async () => 'spotify:track:abc') }));
 
@@ -26,6 +26,58 @@ describe('steering the Spotify app', () => {
     mocked.pauseDevice.mockResolvedValue();
     mocked.playOnDevice.mockResolvedValue();
     mocked.resumeDevice.mockResolvedValue();
+    mocked.transferPlayback.mockResolvedValue();
+  });
+
+  it('wakes an open but idle app before playing on it, and tries once more if it isn’t ready', async () => {
+    vi.useFakeTimers();
+    mocked.getDevices.mockResolvedValue([{ ...phone, is_active: false }]);
+    mocked.playOnDevice.mockRejectedValueOnce(new api.SpotifyError('Spotify: Device not found', 404));
+    const p = createSpotifyAppPlayback();
+    await p.prepare(song);
+    const playing = p.play();
+    await vi.advanceTimersByTimeAsync(1000);
+    await playing;
+    vi.useRealTimers();
+    expect(mocked.transferPlayback).toHaveBeenCalledWith('phone1');
+    expect(mocked.playOnDevice).toHaveBeenCalledTimes(2);
+  });
+
+  it('doesn’t wake an app that is already playing', async () => {
+    mocked.getDevices.mockResolvedValue([phone]);
+    const p = createSpotifyAppPlayback();
+    await p.prepare(song);
+    await p.play();
+    expect(mocked.transferPlayback).not.toHaveBeenCalled();
+  });
+
+  it('counts pausing an app that is already paused, or gone, as paused', async () => {
+    mocked.getDevices.mockResolvedValue([phone]);
+    const p = createSpotifyAppPlayback();
+    await p.prepare(song);
+    await p.play();
+    mocked.pauseDevice.mockRejectedValueOnce(new api.SpotifyError('Spotify: Player command failed: Restriction violated', 403));
+    await expect(p.pause()).resolves.toBeUndefined();
+    mocked.pauseDevice.mockRejectedValueOnce(new api.SpotifyError('Spotify: Device not found', 404));
+    await expect(p.pause()).resolves.toBeUndefined();
+  });
+
+  it('starts the song again when the app went away while paused', async () => {
+    mocked.getDevices.mockResolvedValue([phone]);
+    const p = createSpotifyAppPlayback();
+    await p.prepare(song);
+    await p.play();
+    await p.pause();
+    mocked.resumeDevice.mockRejectedValueOnce(new api.SpotifyError('Spotify: Device not found', 404));
+    await p.play();
+    expect(mocked.playOnDevice).toHaveBeenCalledTimes(2);
+  });
+
+  it('asks for a new login when the old one lacks the permission', async () => {
+    mocked.getDevices.mockRejectedValue(new api.SpotifyError('Spotify: Insufficient client scope', 403));
+    const p = createSpotifyAppPlayback();
+    await p.prepare(song);
+    await expect(p.play()).rejects.toThrow(/log in again/);
   });
 
   it('plays on the device the app is using, then pauses and resumes there', async () => {
@@ -48,7 +100,7 @@ describe('steering the Spotify app', () => {
     mocked.getDevices.mockResolvedValue([{ ...phone, name: 'The Music Quiz', is_active: true }]);
     const p = createSpotifyAppPlayback();
     await p.prepare(song);
-    await expect(p.play()).rejects.toThrow(/isn’t open anywhere/);
+    await expect(p.play()).rejects.toThrow(/can’t see the Spotify app/);
     expect(mocked.playOnDevice).not.toHaveBeenCalled();
   });
 
@@ -103,6 +155,6 @@ describe('choosing the device', () => {
   it('explains a locked active device or a locked only device', () => {
     expect(() => chooseDevice([d({ name: 'Kitchen', is_active: true, is_restricted: true })])).toThrow(/“Kitchen”/);
     expect(() => chooseDevice([d({ name: 'Kitchen', is_restricted: true })])).toThrow(/“Kitchen”/);
-    expect(() => chooseDevice([])).toThrow(/isn’t open anywhere/);
+    expect(() => chooseDevice([])).toThrow(/can’t see the Spotify app/);
   });
 });

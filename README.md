@@ -29,7 +29,8 @@ The host's device plays the music, and everyone else can follow along on their o
 1. Invite people before the game starts, on the **Players & play** screen, or at any time
    during a game: tap **Share a game code**. A four-letter code appears (and
    **Share link** sends a `?join=CODE` link). The room stays open from game to game
-   until **Stop sharing**.
+   (**Play again**) until **Stop sharing** or **End game**, which sends every phone
+   out of the game right away.
 2. On a phone, open the game, tap **Join a game on this phone**, type the code and a name,
    or just open the link. Everyone gets a random emoji as a profile picture (tap it for
    another one), shown next to their name, also on their votes.
@@ -42,6 +43,16 @@ The host's device plays the music, and everyone else can follow along on their o
    team who is connected has locked in, the spot with the most votes is the guess. If the
    votes are split evenly, the team agrees on one spot and locks in again. Changing a vote
    unlocks it.
+6. After the reveal, the next song starts as the host chose under **Who starts the next
+   song**: **Most players** (more than half of the connected phones tap **Next song**; the
+   default), **Any player** (one tap is enough) or **Only me**. With the first two, phones
+   can also play and pause the song. The host's own **Next** button always works.
+
+Team members can rename their own team from their phone (**✎ Rename**), and the host can
+rename any team with ✎ in the share panel; the new name shows everywhere and is kept for the
+next game. The host taps a player's name in the share panel to move them to another team
+or **Remove from the game**. A removed phone is sent out at once and can't join that game
+again until the host taps **let back in**.
 
 Everything that happens is sent to every device as it happens: votes, lock-ins, team
 changes, the reveal, whether the song is playing, and the spot the host has tapped when
@@ -206,8 +217,10 @@ the game picks another place to play:
   of playing itself. The music plays wherever the app plays: the phone, or a speaker
   picked in the app's device list, like a Sonos or a TV. Open the app first (start
   any song if it doesn't show up); each song is then started on the device the app
-  uses at that moment, or else on an open but idle app, a phone first
-  (`src/spotify/remote.ts`). The game's own old in-browser player, which Spotify keeps
+  uses at that moment, or else on an open but idle app, a phone first, which is woken
+  first (`src/spotify/remote.ts`). A phone closes the Spotify app in the background
+  after a while when nothing plays; then **Open the Spotify app** under the message
+  brings it back, and Play starts the song again. The game's own old in-browser player, which Spotify keeps
   listing for a while, is skipped. The app shows the title, so keep it out of sight. Spotify
   refuses some speakers ("won't let other apps control"), Sonos ones in particular,
   most often when the music was started from the Sonos app rather than the Spotify app.

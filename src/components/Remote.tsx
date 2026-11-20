@@ -1,7 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { joinRoom, type ClientLink, type ClientStatus } from '../multiplayer/connection';
 import {
+  cleanTeamName,
   HOST_ID,
+  KICKED_REASON,
+  MAX_TEAM_NAME,
+  nextVotes,
+  turnOf,
   isValidCode,
   label,
   normalizeCode,
@@ -226,7 +231,7 @@ function Joined({
     return (
       <main className="remote">
         <section className="panel center">
-          <h1>Game over</h1>
+          <h1>{status.reason === KICKED_REASON ? 'Removed from the game' : 'Game over'}</h1>
           <p>{status.reason}</p>
           {view?.game && view.game.phase === 'finished' && <Finished state={view.game} />}
           <button className="primary big" onClick={onLeave}>
@@ -291,6 +296,7 @@ function Joined({
               'Pick your team below.'
             )}
           </p>
+          {myTeam && <TeamName team={myTeam} onRename={(name) => send({ type: 'team-name', name })} />}
           {view.pendingSongs > 0 && <p className="hint">{view.pendingSongs} songs from players will be added at the start.</p>}
         </section>
         {teamPicker}
@@ -345,7 +351,10 @@ function Joined({
               <span className="muted">’s turn</span>
             </h1>
             {game.phase === 'revealed' && game.lastGuess ? (
-              <Reveal correct={game.lastGuess.correct} song={game.lastGuess.song} />
+              <>
+                <Reveal correct={game.lastGuess.correct} song={game.lastGuess.song} />
+                <NextSong view={view} me={me} send={send} />
+              </>
             ) : (
               <>
                 <div className="now-playing">
@@ -353,6 +362,11 @@ function Joined({
                     ?
                   </div>
                   <span className="hint">{view.live.playing ? 'The song is playing…' : 'Waiting for the song to play'}</span>
+                  {view.nextRule !== 'host' && (
+                    <button className="ghost" onClick={() => send({ type: 'play', playing: !view.live.playing })}>
+                      {view.live.playing ? '❚❚ Pause' : '▶ Play'}
+                    </button>
+                  )}
                 </div>
                 {myTurn ? (
                   <p>Vote for where the song belongs. The guess goes in when everyone on the team has locked in.</p>
@@ -411,6 +425,7 @@ function Joined({
           Change team
         </button>
       </p>
+      <TeamName team={myTeam} onRename={(name) => send({ type: 'team-name', name })} />
       {addMusic}
     </main>
   );
@@ -423,5 +438,79 @@ function Who({ member }: { member: Member }) {
       {member.name}
       {member.id === HOST_ID && ' (host)'}
     </span>
+  );
+}
+
+/** Lets a team member rename their team; the host's screen and every phone follow. */
+function TeamName({ team, onRename }: { team: { id: string; name: string }; onRename: (name: string) => void }) {
+  const [editing, setEditing] = useState(false);
+  const [name, setName] = useState(team.name);
+  if (!editing)
+    return (
+      <p className="hint center">
+        <button
+          className="link"
+          onClick={() => {
+            setName(team.name);
+            setEditing(true);
+          }}
+        >
+          ✎ Rename {team.name}
+        </button>
+      </p>
+    );
+  const clean = cleanTeamName(name);
+  return (
+    <form
+      className="team-rename"
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (clean && clean !== team.name) onRename(clean);
+        setEditing(false);
+      }}
+    >
+      <input value={name} maxLength={MAX_TEAM_NAME} onChange={(e) => setName(e.target.value)} aria-label="Team name" autoFocus />
+      <button type="submit" className="primary" disabled={!clean}>
+        Save
+      </button>
+      <button type="button" className="ghost" onClick={() => setEditing(false)}>
+        Cancel
+      </button>
+    </form>
+  );
+}
+
+/** After the reveal: move on to the next song, as the host allows (one tap, or most players). */
+function NextSong({ view, me, send }: { view: RoomView; me: string; send: (msg: ClientMessage) => void }) {
+  const game = view.game!;
+  const turn = turnOf(game);
+  const nextTeam = game.players[(game.currentPlayerIndex + 1) % game.players.length];
+  const label = game.winnerIds.length ? 'See the winner' : `Next song: ${nextTeam.name}`;
+  if (view.nextRule === 'host') return <p className="hint center">The host starts the next song.</p>;
+  if (view.nextRule === 'anyone')
+    return (
+      <div className="action-bar">
+        <button className="primary big" onClick={() => send({ type: 'next', turn })}>
+          {label}
+        </button>
+      </div>
+    );
+  const want = view.members.find((m) => m.id === me)?.next === turn;
+  const { yes, needed } = nextVotes(view.members, turn);
+  return (
+    <div className="action-bar">
+      {want ? (
+        <button className="ghost big" onClick={() => send({ type: 'next', turn, want: false })}>
+          Ready ✓ · tap to wait
+        </button>
+      ) : (
+        <button className="primary big" onClick={() => send({ type: 'next', turn, want: true })}>
+          {label}
+        </button>
+      )}
+      <p className="hint center vote-status">
+        {yes} of {needed} needed want the next song
+      </p>
+    </div>
   );
 }

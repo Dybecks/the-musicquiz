@@ -1,8 +1,19 @@
 import { describe, expect, it } from 'vitest';
-import { createGame, type GameState, type Song } from '../game/engine';
+import { createGame, placeCurrent, type GameState, type Song } from '../game/engine';
 import {
   AVATARS,
+  HOST_ID,
   applyMessage,
+  isKicked,
+  kickMember,
+  majorityWantsNext,
+  nextVotes,
+  turnOf,
+  voteNext,
+  letBackIn,
+  moveMember,
+  renameLobbyTeam,
+  teamRename,
   cleanSongs,
   dropMissingTeams,
   lobbyTeams,
@@ -163,5 +174,71 @@ describe('songs from phones', () => {
     expect(out).toHaveLength(2);
     expect(out[1]).not.toHaveProperty('spotifyId');
     expect(cleanSongs('nope')).toEqual([]);
+  });
+});
+
+describe('the host managing the room', () => {
+  const teams = [
+    { id: 'p1', name: 'Red' },
+    { id: 'p2', name: 'Blue' },
+  ];
+
+  it('moves a member to another team, clearing their vote', () => {
+    let room = roomWith(game(), ['a', 'p1']);
+    room = applyMessage(room, game(), 'a', { type: 'vote', slot: 0 });
+    room = moveMember(room, 'a', 'p2', teams);
+    expect(room.members[0]).toMatchObject({ teamId: 'p2', vote: null, locked: false });
+    expect(moveMember(room, 'a', 'nope', teams)).toBe(room);
+  });
+
+  it('removes a member, remembers them until let back in, and never removes the host', () => {
+    let room = roomWith(game(), ['a', 'p1'], ['b', 'p2']);
+    room = kickMember(room, 'a');
+    expect(room.members.map((m) => m.id)).toEqual(['b']);
+    expect(isKicked(room, 'a')).toBe(true);
+    expect(isKicked(letBackIn(room, 'a'), 'a')).toBe(false);
+    const withHost = roomWith(game(), [HOST_ID, 'p1']);
+    expect(kickMember(withHost, HOST_ID)).toBe(withHost);
+  });
+
+  it('lets only a team’s own members rename it, with a tidy name', () => {
+    const room = roomWith(game(), ['a', 'p1'], ['b', null]);
+    expect(teamRename(room, teams, 'a', '  The   Rockers ')).toEqual({ teamId: 'p1', name: 'The Rockers' });
+    expect(teamRename(room, teams, 'b', 'Sneaky')).toBeNull();
+    expect(teamRename(room, teams, 'a', '   ')).toBeNull();
+    expect(teamRename(room, teams, 'a', 'x'.repeat(50))?.name).toHaveLength(24);
+  });
+
+  it('renames the right setup name, skipping blank ones', () => {
+    expect(renameLobbyTeam(['Red', '', 'Blue'], 'p2', 'Green')).toEqual(['Red', '', 'Green']);
+    expect(lobbyTeams(renameLobbyTeam(['Red', '', 'Blue'], 'p2', 'Green'))[1]).toEqual({ id: 'p2', name: 'Green' });
+  });
+});
+
+describe('moving on after the reveal', () => {
+  const revealed = () => placeCurrent(game(), 0);
+
+  it('goes on when more than half of the connected players want to', () => {
+    const g = revealed();
+    const turn = turnOf(g);
+    let room = roomWith(g, [HOST_ID, 'p1'], ['a', 'p1'], ['b', 'p2'], ['c', null]);
+    room = voteNext(room, 'a', turn);
+    expect(nextVotes(room.members, turn)).toEqual({ yes: 1, needed: 2 });
+    expect(majorityWantsNext(room, g)).toBe(false);
+    room = voteNext(room, 'b', turn);
+    expect(majorityWantsNext(room, g)).toBe(true);
+    // Taken back, or the rule changed: no.
+    expect(majorityWantsNext(voteNext(room, 'b', turn, false), g)).toBe(false);
+    expect(majorityWantsNext({ ...room, nextRule: 'host' }, g)).toBe(false);
+  });
+
+  it('ignores votes for an earlier turn and players who left', () => {
+    const g = revealed();
+    let room = roomWith(g, ['a', 'p1'], ['b', 'p2']);
+    room = voteNext(room, 'a', 'old');
+    expect(majorityWantsNext(room, g)).toBe(false);
+    room = setConnected(voteNext(room, 'a', turnOf(g)), 'b', false);
+    expect(majorityWantsNext(room, g)).toBe(true);
+    expect(clearVotes(room).members.every((m) => m.next === undefined)).toBe(true);
   });
 });

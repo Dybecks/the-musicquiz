@@ -9,7 +9,7 @@ import { parseSpeakerChoice, type SpeakerChoice } from './speakers';
 import { Setup, type SetupValues } from './components/Setup';
 import { Game } from './components/Game';
 import { Remote, savedRemote } from './components/Remote';
-import { isValidCode, lobbyTeams, normalizeCode } from './multiplayer/protocol';
+import { isValidCode, lobbyTeams, normalizeCode, renameLobbyTeam } from './multiplayer/protocol';
 import { useHostRoom } from './multiplayer/useHostRoom';
 import { SharePanel } from './components/SharePanel';
 import { mergeSongs } from './spotify/personalDeck';
@@ -88,7 +88,20 @@ export function App() {
   // The teams typed in setup, so phones can join a team before the game starts.
   const [teamNames, setTeamNames] = useState<string[]>(() => loadJson<string[]>('mq.players') ?? ['Team 1', 'Team 2']);
   const lobby = useMemo(() => lobbyTeams(teamNames), [teamNames]);
-  const host = useHostRoom(game, setGame, lobby);
+  // A team renamed from a phone (or by the host): in the game, and in setup for the next one.
+  const renameTeam = useCallback((teamId: string, name: string) => {
+    setGame((g) => (g ? { ...g, players: g.players.map((p) => (p.id === teamId ? { ...p, name } : p)) } : g));
+    setTeamNames((cur) => {
+      const next = renameLobbyTeam(cur, teamId, name);
+      try {
+        localStorage.setItem('mq.players', JSON.stringify(next));
+      } catch {
+        /* not remembered */
+      }
+      return next;
+    });
+  }, []);
+  const host = useHostRoom(game, setGame, lobby, renameTeam);
 
   const refreshProfile = useCallback(async () => {
     if (!isLoggedIn()) {
@@ -173,6 +186,7 @@ export function App() {
           }}
           onStart={start}
           onJoin={() => setRemote({})}
+          players={teamNames}
           onPlayersChange={(names) => setTeamNames((cur) => (cur.join('\n') === names.join('\n') ? cur : names))}
           invite={<SharePanel host={host} lobby />}
         />

@@ -13,7 +13,7 @@ import { hideNowPlaying, primeNowPlaying, showNowPlaying, unprimeNowPlaying } fr
 import { loadFact, type SongFact } from '../facts';
 import { Timeline } from './Timeline';
 import type { HostRoom } from '../multiplayer/useHostRoom';
-import { HOST_ID, activeVoters, votesBySlot } from '../multiplayer/protocol';
+import { HOST_ID, activeVoters, nextRuleOf, nextVotes, turnOf, votesBySlot } from '../multiplayer/protocol';
 import { SharePanel } from './SharePanel';
 import { SpeakerPicker } from './SpeakerPicker';
 import { createSonosPlayback } from '../sonos/playback';
@@ -222,10 +222,11 @@ export function Game({ state, mode, onModeChange, speaker, onSpeakerChange, onCh
     }
   };
 
-  const togglePlay = async () => {
+  /** `fromPhone`: asked for by a phone, so not inside a tap on this screen. */
+  const togglePlay = async (fromPhone = false) => {
     if (!playback) return;
     // Start the silent cover inside the click: Safari won't start it later.
-    const priming = !playing && hidden;
+    const priming = !playing && hidden && !fromPhone;
     if (priming) primeNowPlaying();
     setStarting(true);
     try {
@@ -264,6 +265,23 @@ export function Game({ state, mode, onModeChange, speaker, onSpeakerChange, onCh
     onChange(nextTurn(state));
   };
 
+  // What the phones ask for: the next song after the reveal, play and pause.
+  const commands = useRef({ state, playing, ready: false, next, togglePlay });
+  commands.current = { state, playing, ready: !!playback && songStatus === 'ready' && !starting, next, togglePlay };
+  const { onCommand } = host;
+  useEffect(
+    () =>
+      onCommand((cmd) => {
+        const c = commands.current;
+        if (cmd.type === 'next') {
+          if (c.state.phase === 'revealed' && cmd.turn === turnOf(c.state)) c.next();
+        } else if (c.state.phase === 'guessing' && mode !== 'none' && c.ready && cmd.playing !== c.playing) {
+          void c.togglePlay(true);
+        }
+      }),
+    [onCommand, mode],
+  );
+
   const skip = () => {
     void playback?.stop();
     setPlaying(false);
@@ -274,11 +292,23 @@ export function Game({ state, mode, onModeChange, speaker, onSpeakerChange, onCh
   const quit = () => {
     if (state.phase === 'finished' || window.confirm('End this game? Progress will be lost.')) {
       void playback?.stop();
+      // Phones that joined are sent back to their start screen right away.
+      if (host.room) host.stop('The host ended the game.');
       onQuit();
     }
   };
 
   const nextPlayer = state.players[(state.currentPlayerIndex + 1) % state.players.length];
+  // With phones in the room: who else can move on.
+  const phones = host.room?.members.filter((m) => m.id !== HOST_ID && m.connected).length ?? 0;
+  const rule = nextRuleOf(host.room);
+  const nextStatus = !phones
+    ? null
+    : rule === 'majority'
+      ? (({ yes, needed }) => `Phones: ${yes} of ${needed} needed want the next song`)(nextVotes(host.room!.members, turnOf(state)))
+      : rule === 'anyone'
+        ? 'Any player can move on from their phone.'
+        : null;
 
   return (
     <main className="game">
@@ -302,7 +332,7 @@ export function Game({ state, mode, onModeChange, speaker, onSpeakerChange, onCh
                   </div>
                   <div className="mystery-actions">
                     {mode !== 'none' && (
-                      <button className="primary" onClick={togglePlay} disabled={!playback || songStatus !== 'ready' || starting}>
+                      <button className="primary" onClick={() => void togglePlay()} disabled={!playback || songStatus !== 'ready' || starting}>
                         {playbackError
                           ? 'Player unavailable'
                           : !playback
@@ -354,6 +384,15 @@ export function Game({ state, mode, onModeChange, speaker, onSpeakerChange, onCh
                           <button className="link" onClick={() => setAttempt((n) => n + 1)}>
                             Try again
                           </button>{' '}
+                          ·{' '}
+                        </>
+                      )}
+                      {remote.kind === 'spotify-app' && (
+                        <>
+                          {/* Opens (wakes) the Spotify app without showing the song. */}
+                          <a className="link" href="spotify:">
+                            Open the Spotify app
+                          </a>{' '}
                           ·{' '}
                         </>
                       )}
@@ -419,9 +458,12 @@ export function Game({ state, mode, onModeChange, speaker, onSpeakerChange, onCh
                   )}
                 </>
               ) : (
-                <button className="primary big" onClick={next}>
-                  {state.winnerIds.length ? 'See the winner' : `Next: ${nextPlayer.name}`}
-                </button>
+                <>
+                  <button className="primary big" onClick={next}>
+                    {state.winnerIds.length ? 'See the winner' : `Next: ${nextPlayer.name}`}
+                  </button>
+                  {nextStatus && <p className="hint center vote-status">{nextStatus}</p>}
+                </>
               )}
             </div>
           </div>

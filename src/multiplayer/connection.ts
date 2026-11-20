@@ -44,6 +44,8 @@ export interface HostHandlers {
 export interface HostLink {
   broadcast: (msg: HostMessage) => void;
   sendTo: (memberId: string, msg: HostMessage) => void;
+  /** Tells one phone it is out (it stops reconnecting) and drops its connection. */
+  dismiss: (memberId: string, reason: string) => void;
   close: (reason?: string) => void;
 }
 
@@ -127,6 +129,14 @@ export function openHost(code: string, handlers: HostHandlers): HostLink {
     sendTo(memberId, msg) {
       const conn = conns.get(memberId);
       if (conn?.open) conn.send(msg);
+    },
+    dismiss(memberId, reason) {
+      const conn = conns.get(memberId);
+      if (!conn) return;
+      conns.delete(memberId);
+      if (conn.open) conn.send({ type: 'closed', reason } satisfies HostMessage);
+      // Give the goodbye a moment to go out.
+      setTimeout(() => conn.close(), 300);
     },
     close(reason = 'The host ended the game.') {
       if (closed) return;

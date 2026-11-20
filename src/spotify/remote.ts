@@ -1,4 +1,4 @@
-import { getDevices, pauseDevice, playOnDevice, resumeDevice, SpotifyError, type SpotifyDevice } from './api';
+import { getDevices, pauseDevice, playOnDevice, resumeDevice, SpotifyError, transferPlayback, type SpotifyDevice } from './api';
 import { uriFor, type Playback } from './playback';
 
 /**
@@ -6,18 +6,25 @@ import { uriFor, type Playback } from './playback';
  * the device the Spotify app plays on right now (the phone itself, or a
  * speaker picked in the app, like a Sonos or a TV). Needs Spotify Premium.
  *
- * Starting a song costs two requests (find the device, play) and each pause
- * or resume one; nothing is polled, so pausing in the Spotify app itself
- * isn't seen here.
+ * Starting a song costs two requests (find the device, play), three when
+ * the app is open but idle (it is woken first), and each pause or resume
+ * one; nothing is polled, so pausing in the Spotify app itself isn't seen
+ * here. Commands that only fail because the app already is where it was
+ * asked to be (paused, playing) count as done.
  */
 
-const NOTHING_ACTIVE =
-  'The Spotify app isn’t open anywhere Spotify can see. Open the Spotify app, pick the speaker (the speaker icon at the bottom of a playing song), start any song, then press Play here again.';
+export const NOTHING_ACTIVE =
+  'Spotify can’t see the Spotify app right now. Open the Spotify app (a phone closes it in the background after a while when nothing plays), start any song there, then press Play here again.';
+
+const scopeMissing = 'The Spotify login is missing permission to steer the app. End the game, log out of Spotify in setup and log in again.';
 
 const restricted = (d: SpotifyDevice) =>
   `Spotify won’t let other apps control “${d.name}”. If it’s a Sonos, pick it in the Spotify app’s device list (the speaker icon), not in the Sonos app, start a song there and try again. Otherwise choose another speaker under 🔊.`;
 
 const premiumNeeded = 'Steering the Spotify app needs Spotify Premium.';
+
+/** How long to wait before asking a just-woken app again. */
+export const RETRY_MS = 1000;
 
 /** The game's own in-browser player. Spotify keeps listing it for a while after it's gone. */
 const OWN_PLAYER = 'The Music Quiz';
@@ -44,10 +51,15 @@ async function activeDevice(): Promise<SpotifyDevice> {
   return chooseDevice(await getDevices());
 }
 
+const is = (e: unknown, status: number) => e instanceof SpotifyError && e.status === status;
+/** Spotify refused because the app already is paused, or already playing. */
+const alreadyThere = (e: unknown) => is(e, 403) && /restriction|already/i.test((e as Error).message);
+
 function explain(e: unknown, device: SpotifyDevice | null): never {
   if (e instanceof SpotifyError) {
     // Spotify's own words help when the guess below is wrong.
     const why = ` (${e.message.replace(/^Spotify: /, '')})`;
+    if (/scope/i.test(e.message) || e.status === 401) throw new Error(scopeMissing + why);
     if (e.status === 404) throw new Error(NOTHING_ACTIVE + why);
     if (e.status === 403) {
       if (/premium/i.test(e.message) || !device) throw new Error(premiumNeeded + why);
@@ -78,13 +90,37 @@ export function createSpotifyAppPlayback(): Playback {
     },
     async play() {
       if (!uri) return;
+      const song = uri;
+      /** Starts the song from the top on the device the app uses now. */
+      const start = async () => {
+        // The device may have changed since the last song (picked in the app).
+        const d = await activeDevice();
+        device = d;
+        const id = d.id!;
+        // An open but idle app often ignores "play" until it is woken.
+        if (!d.is_active) await transferPlayback(id);
+        try {
+          await playOnDevice(id, song);
+        } catch (e) {
+          // Waking can take a moment: one more go.
+          if (![404, 502, 503].some((s) => is(e, s))) throw e;
+          await new Promise((r) => setTimeout(r, RETRY_MS));
+          await playOnDevice(id, song);
+        }
+        started = true;
+      };
       try {
-        if (!started) {
-          // The device may have changed since the last song (picked in the app).
-          device = await activeDevice();
-          await playOnDevice(device.id!, uri);
-          started = true;
-        } else await resumeDevice(device!.id!);
+        if (!started) await start();
+        else {
+          try {
+            await resumeDevice(device!.id!);
+          } catch (e) {
+            if (alreadyThere(e)) {
+              /* already playing */
+            } else if (is(e, 404)) await start(); // The app went away meanwhile.
+            else throw e;
+          }
+        }
       } catch (e) {
         explain(e, device);
       }
@@ -94,7 +130,8 @@ export function createSpotifyAppPlayback(): Playback {
       try {
         await pauseDevice(device?.id ?? '');
       } catch (e) {
-        explain(e, device);
+        // Already paused, or the app is gone (and with it the music): paused either way.
+        if (!alreadyThere(e) && !is(e, 404)) explain(e, device);
       }
       set(false);
     },

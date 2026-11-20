@@ -10,15 +10,28 @@ import {
   clearVotes,
   countSongs,
   dropMissingTeams,
+  isKicked,
+  kickMember,
+  KICKED_REASON,
+  letBackIn,
+  majorityWantsNext,
+  moveMember,
+  nextRuleOf,
+  turnOf,
+  voteNext,
   newRoomCode,
   pickAvatar,
   roomView,
   setConnected,
+  cleanTeamName,
   teamDecision,
+  teamRename,
   teamsOf,
   type ClientMessage,
+  type Command,
   type Decision,
   type Live,
+  type NextRule,
   type Room,
   type Team,
 } from './protocol';
@@ -53,6 +66,16 @@ export interface HostRoom {
   setLive: (live: Live) => void;
   /** Takes the songs phones sent before the start, to put in the new game's deck. */
   takePending: () => Song[];
+  /** Removes a member (not the host); they can't join again until let back in. */
+  kick: (memberId: string) => void;
+  letBackIn: (memberId: string) => void;
+  /** Puts a member on a team (or on none). */
+  move: (memberId: string, teamId: string | null) => void;
+  /** Renames a team, for the host. */
+  renameTeam: (teamId: string, name: string) => void;
+  /** The game screen carries out what phones ask (next song, play, pause); returns an unsubscribe function. */
+  onCommand: (fn: (cmd: Command, memberId: string) => void) => () => void;
+  setNextRule: (rule: NextRule) => void;
 }
 
 /**
@@ -62,14 +85,21 @@ export interface HostRoom {
  * places the team's guess once all its members have locked in, and adds the
  * songs phones send.
  */
-export function useHostRoom(game: GameState | null, setGame: Dispatch<SetStateAction<GameState | null>>, lobby: Team[]): HostRoom {
+export function useHostRoom(
+  game: GameState | null,
+  setGame: Dispatch<SetStateAction<GameState | null>>,
+  lobby: Team[],
+  /** Gives a team a new name, in the game and in setup. */
+  onRenameTeam: (teamId: string, name: string) => void,
+): HostRoom {
   const [room, setRoom] = useState<Room | null>(loadRoom);
   const [status, setStatus] = useState<HostStatus | null>(null);
   const [live, setLiveState] = useState<Live>(NO_LIVE);
   const link = useRef<HostLink | null>(null);
   const teams = useMemo(() => teamsOf(game, lobby), [game, lobby]);
-  const latest = useRef({ game, teams, room });
-  latest.current = { game, teams, room };
+  const commandHandler = useRef<((cmd: Command, memberId: string) => void) | null>(null);
+  const latest = useRef({ game, teams, room, onRenameTeam });
+  latest.current = { game, teams, room, onRenameTeam };
   const code = room?.code ?? null;
 
   const receiveSongs = useCallback(
@@ -104,7 +134,27 @@ export function useHostRoom(game: GameState | null, setGame: Dispatch<SetStateAc
       },
       onMessage: (memberId, msg) => {
         if (memberId === HOST_ID) return; // A phone can't pretend to be the host.
+        if (isKicked(latest.current.room, memberId)) return link.current?.dismiss(memberId, KICKED_REASON);
         if (msg.type === 'songs') return receiveSongs(memberId, msg.songs);
+        if (msg.type === 'next' || msg.type === 'play') {
+          const r = latest.current.room;
+          // Only members in the room, not just anyone who connects, and as the host allows.
+          if (!r?.members.some((m) => m.id === memberId)) return;
+          const rule = nextRuleOf(r);
+          if (rule === 'host') return;
+          if (msg.type === 'next' && rule === 'majority') {
+            if (typeof msg.turn === 'string') setRoom((cur) => (cur ? voteNext(cur, memberId, msg.turn, msg.want !== false) : cur));
+            return;
+          }
+          commandHandler.current?.(msg, memberId);
+          return;
+        }
+        if (msg.type === 'team-name') {
+          const { room: r, teams: t } = latest.current;
+          const rename = r && teamRename(r, t, memberId, msg.name);
+          if (rename) latest.current.onRenameTeam(rename.teamId, rename.name);
+          return;
+        }
         setRoom((r) => (r ? applyMessage(r, latest.current.game, memberId, msg, latest.current.teams) : r));
       },
       onLeave: (memberId) => setRoom((r) => (r ? setConnected(r, memberId, false) : r)),
@@ -134,6 +184,13 @@ export function useHostRoom(game: GameState | null, setGame: Dispatch<SetStateAc
     lastTurn.current = turnKey;
     setRoom((r) => (r ? clearVotes(r) : r));
   }, [turnKey]);
+
+  // Most of the players want the next song: on to it.
+  const nextNow = !!room && !!game && majorityWantsNext(room, game);
+  useEffect(() => {
+    if (nextNow && game) commandHandler.current?.({ type: 'next', turn: turnOf(game) }, HOST_ID);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nextNow]);
 
   const decision: Decision = room && game ? teamDecision(room, game) : { kind: 'none' };
 
@@ -201,5 +258,32 @@ export function useHostRoom(game: GameState | null, setGame: Dispatch<SetStateAc
     return songs;
   }, [room]);
 
-  return { room, status, decision, teams, share, stop, act, setLive, takePending };
+  const kick = useCallback((memberId: string) => {
+    if (memberId === HOST_ID) return;
+    link.current?.dismiss(memberId, KICKED_REASON);
+    setRoom((r) => (r ? kickMember(r, memberId) : r));
+  }, []);
+
+  const allowBack = useCallback((memberId: string) => setRoom((r) => (r ? letBackIn(r, memberId) : r)), []);
+
+  const move = useCallback(
+    (memberId: string, teamId: string | null) => setRoom((r) => (r ? moveMember(r, memberId, teamId, latest.current.teams) : r)),
+    [],
+  );
+
+  const renameTeam = useCallback((teamId: string, name: string) => {
+    const clean = cleanTeamName(name);
+    if (clean && latest.current.teams.some((t) => t.id === teamId)) latest.current.onRenameTeam(teamId, clean);
+  }, []);
+
+  const setNextRule = useCallback((rule: NextRule) => setRoom((r) => (r ? { ...r, nextRule: rule } : r)), []);
+
+  const onCommand = useCallback((fn: (cmd: Command, memberId: string) => void) => {
+    commandHandler.current = fn;
+    return () => {
+      if (commandHandler.current === fn) commandHandler.current = null;
+    };
+  }, []);
+
+  return { room, status, decision, teams, share, stop, act, setLive, takePending, kick, letBackIn: allowBack, move, renameTeam, onCommand, setNextRule };
 }
