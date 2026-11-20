@@ -47,6 +47,8 @@ export interface Contributor {
   builtAt: string;
   /** The genres and years the songs were picked for. Missing on decks built by older versions (no filter). */
   filter?: DeckFilter;
+  /** What the list was built from, for example "Pop, Rock · 1970–1999". */
+  label?: string;
   songs: Song[];
 }
 
@@ -268,4 +270,50 @@ export function summarize(songs: readonly Song[]): DeckSummary {
     maxYear: years.length ? Math.max(...years) : null,
     decades: [...decades.entries()].sort((a, b) => a[0] - b[0]),
   };
+}
+
+/** An inclusive span of years, searched with one request per genre. */
+export interface YearSlice {
+  from: number;
+  to: number;
+}
+
+/**
+ * Splits a year span into slices to search, one request per genre per slice.
+ * Searching each decade on its own spreads the songs over the years (a
+ * single wide search returns mostly recent hits). When genres × decades would
+ * pass `maxRequests`, neighbouring decades are searched together.
+ */
+export function yearSlices(from: number, to: number, genreCount: number, maxRequests = 12): YearSlice[] {
+  if (to < from) [from, to] = [to, from];
+  const decades: YearSlice[] = [];
+  for (let start = from; start <= to; start = Math.floor(start / 10) * 10 + 10) {
+    decades.push({ from: start, to: Math.min(to, Math.floor(start / 10) * 10 + 9) });
+  }
+  const most = Math.max(1, Math.floor(maxRequests / Math.max(1, genreCount)));
+  if (decades.length <= most) return decades;
+  const out: YearSlice[] = [];
+  for (let i = 0; i < most; i++) {
+    const first = decades[Math.floor((i * decades.length) / most)];
+    const last = decades[Math.floor(((i + 1) * decades.length) / most) - 1];
+    out.push({ from: first.from, to: last.to });
+  }
+  return out;
+}
+
+/**
+ * Turns genre-search results into songs dated by their album, without any
+ * further requests. Compilations, reissues and remasters are skipped, since
+ * their album year may be later than the song; what is left is on its
+ * original album or single, so the album year is the song's year.
+ */
+export function songsFromSearch(tracks: (SpotifyTrack | null | undefined)[], slice: YearSlice): Song[] {
+  const out: Song[] = [];
+  for (const t of uniqueTracks(tracks)) {
+    if (needsYearCheck(t)) continue;
+    const year = releaseYear(t.album.release_date);
+    if (year === null || year < slice.from || year > slice.to) continue;
+    out.push(trackToSong(t, year));
+  }
+  return out;
 }

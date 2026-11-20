@@ -34,7 +34,6 @@ shuffled together, and a song that appears in two decks is only used once.
 | Musicals | 50 | Oklahoma! (1943) to Beetlejuice (2019) |
 | TV themes | 50 | Peter Gunn (1958) to Severance (2022) |
 | Video game music | 50 | Super Mario Bros. (1985) to Baldur's Gate 3 (2023) |
-| My Spotify music | varies | See below |
 
 The four soundtrack decks are in `src/data/soundtracks.ts`. They only hold songs written
 for the film, show, game or musical, so the year on the card is the year that work first
@@ -45,85 +44,52 @@ Spotify search at play time, which needs a Spotify login. Some video game music,
 in particular, isn't on Spotify; the search may then find a cover, or nothing, and
 **Skip song** draws another.
 
-## Play with your own music
+## Setting up a game
 
-The host can also play with songs they actually listen to. Setup goes in three steps:
+Setup asks one thing per screen, in three steps:
 
-1. **Spotify:** choose whether to play with a Spotify login or without one. Nothing
-   happens yet; you are not sent to Spotify at this point.
-2. **Music:** first **What kind of songs?** (genres and years), then the decks (with a
-   login, **My Spotify music**, what to share from it and friends' music), the players,
-   and how the music plays.
-3. **Log in & load:** with a login, **Log in with Spotify and start** is the last step.
-   After the login the game reads your listening, keeps only the songs that match the
-   chosen genres and years, and starts. Without a login, **Start game** starts right away.
+1. **Spotify:** play with a Spotify login or without one. Choosing a login sends you to
+   Spotify right away (with permission to read your playlists), and you come back to step 2.
+   This choice also decides how the music plays: with a Premium login it plays right here
+   in the browser, otherwise through the hidden Spotify player.
+2. **Music:** **Ready-made lists** or **Make your own**.
+   - **Ready-made lists:** tick one or more of the decks above. No Spotify requests.
+   - **Make your own** (needs the login): **By genre** or **From my playlists**, or
+     **Use my last list** to play the list built last time again without any requests.
+3. **Players & play:** players or teams, cards needed to win, and **Start game**.
 
-Because the music is chosen first, only matching songs are loaded: songs whose album is
-older than the chosen years are dropped before any lookup, with a genre choice the
-artists' genres are looked up first and other genres dropped, and only then are original
-release years settled for at most 600 songs. When there are more, the 600 are spread
-over the decades.
+### By genre
 
-Loading is kept quick: the sources and pages are read in parallel, artist genres come
-50 at a time, and a song is only searched for an older release when it looks like a
-reissue (a compilation, an album called "Remastered", "Greatest Hits" and so on, or a
-title like "Song - Remastered 2011"). Songs on their original album are dated by it.
-Every lookup is remembered in the browser, so loading again with other genres or
-years is faster. The loaded songs are saved together with
-the choices they were loaded for and reused as long as the sources, genres and years stay
-the same; change them and they are loaded again at start.
+Pick 1 to 4 genres and a year span. The list is built from Spotify searches such as
+`genre:"rock" year:1980-1989`: one request per genre per decade, all at once, and never
+more than 12 (wider spans search neighbouring decades together). The screen shows the
+number of requests before you build. Searching decade by decade spreads the songs over
+the years. Songs on compilations, "Remastered" albums and the like are skipped, so every
+song is dated by its own album and no further lookups are needed.
 
-| Share | Spotify permission | What is read |
-| --- | --- | --- |
-| Top tracks | `user-top-read` | Up to about 100 top tracks each for the last month, 6 months and year |
-| Recently played | `user-read-recently-played` | The last 50 played tracks |
-| Liked songs | `user-library-read` | Up to 1,000 saved tracks |
-| Your playlists | `playlist-read-private` | Up to 100 tracks from each of up to 20 playlists |
+### From my playlists
 
-Nothing is read until the person logs in at the last step, and Spotify shows its own
-consent screen for exactly the permissions ticked. The deck is built in the browser and stored in
-its `localStorage` only; nothing is uploaded. **Delete my saved Spotify songs** removes it.
-Logging out keeps the deck, and because every card has a Spotify track id it plays
-with any of the playback options below, including the hidden player.
+Opening the screen makes ONE request (`/me/playlists`) that lists up to 50 playlists with
+name, cover and number of songs; **Show more** fetches the next 50 only when tapped. Tick
+the playlists to use. Each one is then read with one request per 100 songs (at most 300
+songs per playlist). Songs that look like reissues (a compilation, an album called
+"Remastered" or "Greatest Hits", or a title like "Song - Remastered 2011") get one search
+each for the original year; everything else is dated by its album. Year lookups are
+remembered in the browser. At most 400 songs are kept, spread over the decades.
 
-Spotify dates a track by the album it's on, so a 1975 song on a 2011 remaster says 2011.
-For each track the game searches Spotify for other releases of the same title by the
-same artist and uses the earliest year. Repeats, other versions of the same song and
-local files are dropped, and at most 600 songs are used. The setup screen shows how
-the songs spread over the decades; a deck of mostly recent songs is hard to place,
-so ticking another deck as well adds spread.
+The list is built in the browser and kept in its `localStorage` only; nothing is uploaded.
+While the game's Spotify app is in development mode, Spotify only lets accounts log in
+that are added as users of the app in the Spotify developer dashboard.
 
-The code: `src/spotify/listening.ts` (reading and storing) and
+The code: `src/spotify/listening.ts` (requests and storing) and
 `src/spotify/personalDeck.ts` (turning tracks into cards, tested in `personalDeck.test.ts`).
-
-### Friends' music
-
-Under **My Spotify music**, **Add a friend's Spotify music** lets other people mix in
-what they listen to. The friend logs in to Spotify on the same device (Spotify shows its
-account picker; "Not you?" switches account) and grants only the read permissions for
-the ticked sources. Their songs are loaded for the genres and years already chosen,
-saved next to the host's, and then the host's own login is put back. Each friend can be
-removed again. While the game's Spotify app is in development mode, Spotify only lets
-accounts log in that are added as users of the app in the Spotify developer dashboard.
 
 ## Decades
 
-Unless the host chooses years, the game spreads the songs evenly over the decades: each
+With ready-made lists, the game spreads the songs evenly over the decades: each
 draw picks a decade first and then a song from it, so a deck that is mostly recent
 music still brings up older songs regularly (`spreadByDecade` in `src/game/engine.ts`).
-With years chosen, the songs are simply shuffled.
-
-## Genres and years
-
-The setup screen can narrow the deck to some genres (pop, rock, hip-hop & R&B,
-dance & electronic, soul/funk/disco, Swedish artists) and a year span, or use a
-quick pick such as "80s & 90s" or "Party". With a deck built from your own
-Spotify music you also get two picks based on it: **Your era** (the years most of
-your music comes from) and **Your genres** (the genres it leans towards).
-
-Classic songs are tagged by artist in `src/data/songs.ts`. Your own songs get
-their genres from the artist's genres on Spotify, folded into the categories above
-(`src/data/genres.ts`). Songs with no known genre are left out when filtering by genre.
+A list you make yourself is simply shuffled.
 
 ## Fun facts
 
@@ -134,7 +100,7 @@ Songs in the built-in decks have facts written for them in `src/data/facts.ts`
 `[title, artist, fact]` to the deck's list; `facts.test.ts` checks that the title and artist
 match a song. Leave a song out rather than add a fact you aren't sure of.
 
-Every other song, including your own Spotify music, gets a few lines from English
+Every other song, including your own lists, gets a few lines from English
 Wikipedia instead, with a link to the article. If the song has no article of its own, the
 lines are about the artist; soundtrack songs only get lines about the song itself. The
 lookup starts while the song is playing, so it is usually ready when the guess is locked in.
@@ -150,13 +116,13 @@ tested in `wikipedia.test.ts`) and `src/data/facts.ts` (the written facts).
 
 ## Music playback
 
-On the setup screen the host chooses how the music plays:
+Step 1 of setup decides how the music plays:
 
-| Option | Needs | What you get |
-| --- | --- | --- |
-| Log in with Spotify | Premium account | Full songs via the [Web Playback SDK](https://developer.spotify.com/documentation/web-playback-sdk), from the whole deck. The browser tab becomes a Spotify device. |
-| Hidden Spotify player, no login | Nothing | A covered-up [Spotify Embed](https://developer.spotify.com/documentation/embeds) player. Uses the songs that have a known Spotify id (65 of them). Full songs if the browser is signed in to Spotify, otherwise 30-second previews. If the host is also logged in, it can use the whole deck. |
-| No audio | Nothing | Try the rules, or play the music some other way. |
+| Step 1 choice | What you get |
+| --- | --- |
+| Log in with Spotify (Premium) | Full songs via the [Web Playback SDK](https://developer.spotify.com/documentation/web-playback-sdk). The browser tab becomes a Spotify device. If it can't start, the game offers the hidden player instead. |
+| Log in with Spotify (Free) | The hidden player below, for any song. |
+| Play without login | A covered-up [Spotify Embed](https://developer.spotify.com/documentation/embeds) player. Uses the songs that have a known Spotify id. Full songs if the browser is signed in to Spotify, otherwise 30-second previews. |
 
 Songs with a Spotify id in `SPOTIFY_IDS` (`src/data/songs.ts`) play without a login.
 Other songs are looked up with the Spotify search API, which needs the login.
