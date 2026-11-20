@@ -228,7 +228,7 @@ export async function buildFromGenres(
     if (limited) throw limited;
     if (failed === jobs.length && lastError) throw lastError;
   }
-  const note = limited ? `Spotify asked the game to slow down, so ${done} of ${jobs.length} searches were made. ${limited.message}` : null;
+  const note = limited ? `Spotify kept refusing the game, so ${done} of ${jobs.length} searches were made.` : null;
   return { songs, note };
 }
 
@@ -354,9 +354,9 @@ export async function buildFromPlaylists(
   const limited = limitedReading ?? limitedChecks;
   if (songs.length === 0 && limited) throw limited;
   const note = limitedReading
-    ? `Spotify asked the game to slow down, so only part of the playlists was read. ${limited!.message}`
+    ? 'Spotify kept refusing the game, so only part of the playlists was read.'
     : limitedChecks
-      ? `Spotify asked the game to slow down, so some remastered songs whose original year wasn't checked were left out. ${limited!.message}`
+      ? "Spotify kept refusing the game, so some remastered songs whose original year wasn't checked were left out."
       : null;
   return { songs, skipped: [...skipped], note };
 }

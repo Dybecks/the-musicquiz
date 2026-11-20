@@ -12,34 +12,33 @@ export class SpotifyError extends Error {
 
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-/** The longest Spotify may ask us to wait before we give up and say so. */
-const MAX_WAIT_SECONDS = 30;
+/** How many times one request is refused before the game gives up on it. */
+const MAX_ATTEMPTS = 6;
 
-/** Spotify asked us to slow down, for longer than is worth waiting for. */
+/** Spotify kept refusing the game, even after waiting as asked. */
 export class RateLimitError extends SpotifyError {
-  constructor(public retryAfterSeconds: number) {
-    const minutes = Math.ceil(retryAfterSeconds / 60);
-    super(
-      retryAfterSeconds > MAX_WAIT_SECONDS
-        ? `Spotify asks the game to wait ${minutes > 1 ? `about ${minutes} minutes` : 'a minute'} before asking again.`
-        : 'Spotify is busy right now. Try again in a moment.',
-      429,
-    );
+  constructor() {
+    super('Spotify keeps saying the game is asking too often. Try again in a while.', 429);
   }
 }
 
 /**
  * When Spotify says "too many requests", every request waits until then,
  * not just the one that was refused: firing the others anyway only makes
- * Spotify wait longer.
+ * Spotify wait longer. Screens can listen to show the wait.
  */
 let blockedUntil = 0;
+const waitListeners = new Set<(until: number) => void>();
+
+/** Calls `fn` with the time (ms since epoch) requests are paused until; returns an unsubscribe function. */
+export function onSpotifyWait(fn: (until: number) => void): () => void {
+  waitListeners.add(fn);
+  if (blockedUntil > Date.now()) fn(blockedUntil);
+  return () => void waitListeners.delete(fn);
+}
 
 async function waitForGate(): Promise<void> {
-  const ms = blockedUntil - Date.now();
-  if (ms <= 0) return;
-  if (ms > MAX_WAIT_SECONDS * 1000) throw new RateLimitError(Math.ceil(ms / 1000));
-  await wait(ms);
+  while (blockedUntil > Date.now()) await wait(blockedUntil - Date.now());
 }
 
 async function spotifyFetch(path: string, init: RequestInit = {}, attempt = 0): Promise<Response> {
@@ -51,11 +50,16 @@ async function spotifyFetch(path: string, init: RequestInit = {}, attempt = 0): 
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json', ...init.headers },
   });
   if (res.status === 429) {
-    // Retry-After may be missing (or hidden from the browser): back off 5, 10, 20 seconds.
+    if (attempt + 1 >= MAX_ATTEMPTS) throw new RateLimitError();
+    // Wait as long as Spotify asks. Retry-After may be missing (or hidden
+    // from the browser): then back off 5, 10, 20… seconds.
     const header = Number(res.headers.get('Retry-After'));
     const seconds = header > 0 ? header : 5 * 2 ** attempt;
-    blockedUntil = Math.max(blockedUntil, Date.now() + seconds * 1000);
-    if (seconds > MAX_WAIT_SECONDS || attempt >= 2) throw new RateLimitError(seconds);
+    const until = Date.now() + seconds * 1000;
+    if (until > blockedUntil) {
+      blockedUntil = until;
+      for (const fn of waitListeners) fn(until);
+    }
     return spotifyFetch(path, init, attempt + 1);
   }
   if (!res.ok) {

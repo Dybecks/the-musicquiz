@@ -79,9 +79,10 @@ each for the original year; everything else is dated by its album. Year lookups 
 remembered in the browser. At most 400 songs are kept, spread over the decades.
 
 Requests are sent one after another with a short pause, never as a burst. If Spotify
-still answers "too many requests", every request waits as long as Spotify asks (up to
-30 seconds); when it asks for longer, the game stops asking, keeps the songs it already
-has and says how long Spotify wants it to wait.
+still answers "too many requests", every request waits as long as Spotify asks, and the
+loading screen shows a countdown and carries on by itself; nothing needs to be tapped.
+Only if Spotify refuses the same request six times does the game stop, keeping the songs
+it already has.
 
 The list is built in the browser and kept in its `localStorage` only; nothing is uploaded.
 While the game's Spotify app is in development mode, Spotify only lets accounts log in
