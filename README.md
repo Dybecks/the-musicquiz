@@ -199,9 +199,8 @@ Step 1 of setup decides how the music plays:
 | Play without login | A covered-up [Spotify Embed](https://developer.spotify.com/documentation/embeds) player. Uses the songs that have a known Spotify id. Full songs if the browser is signed in to Spotify, otherwise 30-second previews. |
 
 The music plays from the device the game is open on, so it goes wherever that device
-sends its sound: its own speaker, headphones, Bluetooth or AirPlay (for example to a
-Sonos). Picking a Spotify Connect speaker from the game was tried and dropped: Spotify
-locks a Sonos against control from other apps.
+sends its sound: its own speaker, headphones, Bluetooth or AirPlay. To play on a Sonos
+from the game instead, see [Playing on a Sonos](#playing-on-a-sonos) below.
 
 While the song is hidden, the game reports it as **Mystery song** to the device's
 lock screen, Control Center, car displays and AirPlay/Bluetooth receivers (such as the
@@ -223,6 +222,31 @@ isn't guessing should tap it.
 
 Songs with a Spotify id in `SPOTIFY_IDS` (`src/data/songs.ts`) play without a login.
 Other songs are looked up with the Spotify search API, which needs the login.
+
+### Playing on a Sonos
+
+The game can play the mystery songs on a Sonos speaker or group through the **Sonos
+bridge**: a small program in [`bridge/`](bridge/README.md) that runs on a computer (for
+example a Mac or a Raspberry Pi) on the same Wi-Fi as the speakers.
+
+1. Start the bridge (`cd bridge && npm install && npm start`). It shows a six-letter
+   speaker code.
+2. In the game, tap **🔊 This device** at the bottom, enter the code, tap **Find Sonos
+   speakers** and pick one.
+
+Nothing then plays on the host device; the game tells the speaker which Spotify song to
+play, and the speaker plays it with the Spotify account added in the Sonos app. The songs
+are found as for the other players (a known Spotify id, or a search with the login).
+The choice is remembered, and **Play on this device instead** appears if the speaker
+can't be reached.
+
+Why a bridge: Spotify doesn't let apps control Sonos speakers (an earlier Spotify
+speaker picker failed with "Restriction violated"), and a web page can't reach devices
+on the home network. The bridge connects to the game over WebRTC like the phones do, and
+controls the speakers over the network the way the Sonos app does.
+
+The code: `src/sonos/bridge.ts` (the link to the bridge), `src/sonos/playback.ts`,
+`src/components/SonosPicker.tsx` and `bridge/`.
 
 ### Spotify setup (only for "Log in with Spotify")
 
@@ -314,3 +338,4 @@ The project is Vite + React + TypeScript. The pieces:
   `[title, artist, year, from]` rows. `src/data/decks.ts` combines the chosen decks.
 - `src/spotify/`: login (`auth.ts`), Web API calls (`api.ts`) and the playback options (`playback.ts`).
 - `src/components/`: setup screen, game screen and timeline.
+- `bridge/`: the Sonos bridge, a separate Node program (`cd bridge && npm test`).

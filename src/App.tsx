@@ -5,6 +5,7 @@ import { handleRedirect, isFriendLogin, isLoggedIn, login, logout, restoreHostLo
 import { loadPersonalDeck } from './spotify/listening';
 import type { PersonalDeck } from './spotify/personalDeck';
 import type { PlaybackKind } from './spotify/playback';
+import type { SonosChoice } from './sonos/bridge';
 import { Setup, type SetupValues } from './components/Setup';
 import { Game } from './components/Game';
 import { Remote, savedRemote } from './components/Remote';
@@ -15,6 +16,7 @@ import { mergeSongs } from './spotify/personalDeck';
 
 const GAME_KEY = 'mq.game';
 const MODE_KEY = 'mq.mode';
+const SONOS_KEY = 'mq.sonos';
 const PROFILE_KEY = 'mq.profile';
 
 function loadJson<T>(key: string): T | null {
@@ -63,6 +65,12 @@ export function App() {
   });
   const [game, setGame] = useState<GameState | null>(() => loadJson<GameState>(GAME_KEY));
   const [mode, setMode] = useState<PlaybackKind>(() => loadJson<PlaybackKind>(MODE_KEY) ?? 'embed');
+  const [sonos, setSonos] = useState<SonosChoice | null>(() => loadJson<SonosChoice>(SONOS_KEY));
+  const changeSonos = (c: SonosChoice | null) => {
+    if (c) localStorage.setItem(SONOS_KEY, JSON.stringify(c));
+    else localStorage.removeItem(SONOS_KEY);
+    setSonos(c);
+  };
   const [profile, setProfile] = useState<SpotifyProfile | null>(null);
   const [authMessage, setAuthMessage] = useState<string | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
@@ -131,6 +139,8 @@ export function App() {
             localStorage.setItem(MODE_KEY, JSON.stringify(m));
             setMode(m);
           }}
+          sonos={sonos}
+          onSonosChange={changeSonos}
           onChange={setGame}
           onQuit={() => setGame(null)}
           host={host}
