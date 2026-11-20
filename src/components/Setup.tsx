@@ -45,6 +45,8 @@ interface Props {
   onStart: (values: SetupValues) => void;
   /** Join a game someone else is hosting, with its code. */
   onJoin: () => void;
+  /** The players or teams, which phones can rename before the start. */
+  players: string[];
   /** The players or teams as they are typed, so phones can pick a team before the start. */
   onPlayersChange: (names: string[]) => void;
   /** Inviting phones (the share panel), shown with the players. */
@@ -145,6 +147,10 @@ export function Setup(props: Props) {
     props.onPlayersChange(players);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [players]);
+  // A team renamed from a phone.
+  useEffect(() => {
+    setPlayers((cur) => (cur.join('\n') === props.players.join('\n') ? cur : props.players));
+  }, [props.players]);
   useEffect(() => localStorage.setItem(TARGET_KEY, String(target)), [target]);
 
   useEffect(() => {

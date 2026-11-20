@@ -43,6 +43,16 @@ The host's device plays the music, and everyone else can follow along on their o
    team who is connected has locked in, the spot with the most votes is the guess. If the
    votes are split evenly, the team agrees on one spot and locks in again. Changing a vote
    unlocks it.
+6. After the reveal, the next song starts as the host chose under **Who starts the next
+   song**: **Most players** (more than half of the connected phones tap **Next song**; the
+   default), **Any player** (one tap is enough) or **Only me**. With the first two, phones
+   can also play and pause the song. The host's own **Next** button always works.
+
+Team members can rename their own team from their phone (**✎ Rename**), and the host can
+rename any team with ✎ in the share panel; the new name shows everywhere and is kept for the
+next game. The host taps a player's name in the share panel to move them to another team
+or **Remove from the game**. A removed phone is sent out at once and can't join that game
+again until the host taps **let back in**.
 
 Everything that happens is sent to every device as it happens: votes, lock-ins, team
 changes, the reveal, whether the song is playing, and the spot the host has tapped when

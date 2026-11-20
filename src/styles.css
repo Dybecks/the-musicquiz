@@ -285,8 +285,17 @@ input:focus { outline: 2px solid var(--accent); border-color: transparent; }
 .team-members li { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: baseline; background: var(--panel-2); border-radius: 10px; padding: 8px 12px; }
 .team-members li > span { display: flex; flex-wrap: wrap; gap: 6px; }
 .member { font-size: 0.9rem; }
-.member:not(:last-child)::after { content: ','; }
+.member:not(:last-child):not(.member-button)::after { content: ','; }
 .member.offline { color: var(--muted); text-decoration: line-through; }
+.member-button { background: var(--panel); color: var(--text); border: 1px solid #4a4466; border-radius: 999px; padding: 2px 10px; min-height: 0; font-weight: 500; }
+.member-button.offline { color: var(--muted); }
+.member-button.picked { border-color: var(--accent-2); background: var(--panel-2); }
+.member-manage { background: var(--panel-2); border-radius: 10px; padding: 8px 12px; margin: 0 0 12px; }
+.member-manage .hint { margin: 0 0 6px; }
+button.link.danger { color: var(--bad); }
+button.link.small { font-size: 0.9rem; text-decoration: none; }
+.team-rename { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: center; margin: 8px 0; }
+.team-rename input { max-width: 14rem; }
 .vote-status { margin: 8px 0 0; }
 .slot { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 6px; }
 .slot:disabled { opacity: 1; cursor: default; }
@@ -313,7 +322,7 @@ input:focus { outline: 2px solid var(--accent); border-color: transparent; }
 .who-chip { margin-right: 8px; white-space: nowrap; }
 .who-chip.offline { opacity: 0.5; }
 .team-choice span .who-chip { color: var(--text); }
-.now-playing { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+.now-playing { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 10px; }
 .vinyl.mini { width: 48px; font-size: 1.1rem; flex: none; }
 .row-actions { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; }
 .pick-playlists { max-height: 320px; overflow-y: auto; }
