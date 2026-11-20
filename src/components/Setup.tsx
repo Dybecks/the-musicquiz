@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Song } from '../game/engine';
-import type { SpotifyProfile } from '../spotify/api';
+import { onSpotifyWait, type SpotifyProfile } from '../spotify/api';
 import { BUILT_IN_CLIENT_ID, getClientIdOverride, hasScopes, redirectUri, setClientId } from '../spotify/auth';
 import type { PlaybackKind } from '../spotify/playback';
 import { DECKS, chooseSongs, deckSongs, normalizeDecks, parseSavedDecks, playableSongs, type DeckId } from '../data/decks';
@@ -106,6 +106,29 @@ export function Setup(props: Props) {
   const [progress, setProgress] = useState<BuildProgress | null>(null);
   const [buildReturn, setBuildReturn] = useState<Step>('own');
   const buildId = useRef(0);
+  const [waitUntil, setWaitUntil] = useState(0);
+  const [now, setNow] = useState(() => Date.now());
+
+  // When Spotify asks the game to pause, the loading screen counts down and
+  // carries on by itself.
+  useEffect(() => onSpotifyWait(setWaitUntil), []);
+  const waiting = waitUntil > now;
+  useEffect(() => {
+    if (waitUntil <= Date.now()) return;
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    setNow(Date.now());
+    return () => clearInterval(timer);
+  }, [waitUntil]);
+  const secondsLeft = Math.max(0, Math.ceil((waitUntil - now) / 1000));
+  const waitNotice = waiting && (
+    <p className="info warn-info" role="status">
+      <span aria-hidden="true">⏳</span>
+      <span>
+        Spotify asked the game to pause for a moment. Carrying on by itself in{' '}
+        <strong>{secondsLeft >= 60 ? `${Math.floor(secondsLeft / 60)}:${String(secondsLeft % 60).padStart(2, '0')}` : `${secondsLeft} s`}</strong>.
+      </span>
+    </p>
+  );
 
   useEffect(() => saveJson(PLAYERS_KEY, players), [players]);
   useEffect(() => localStorage.setItem(TARGET_KEY, String(target)), [target]);
@@ -160,11 +183,18 @@ export function Setup(props: Props) {
 
   // ---- Building the host's own list ----
 
-  const finishBuild = (id: number, built: Song[], label: string, from: Step, sources: PersonalDeck['contributors'][number]['sources']) => {
+  const finishBuild = (
+    id: number,
+    built: Song[],
+    label: string,
+    from: Step,
+    sources: PersonalDeck['contributors'][number]['sources'],
+    note: string | null,
+  ) => {
     if (id !== buildId.current) return; // cancelled
     setProgress(null);
     if (built.length < 5) {
-      setError(`Only ${built.length} songs were found. Pick more ${from === 'genres' ? 'genres or a wider year span' : 'playlists'}.`);
+      setError(note ?? `Only ${built.length} songs were found. Pick more ${from === 'genres' ? 'genres or a wider year span' : 'playlists'}.`);
       setStep(from);
       return;
     }
@@ -180,6 +210,7 @@ export function Setup(props: Props) {
     props.onPersonalChange(deck);
     setSource('own');
     setStep('players');
+    setError(note);
   };
 
   const failBuild = (id: number, e: unknown, from: Step) => {
@@ -197,7 +228,7 @@ export function Setup(props: Props) {
     setBuildReturn('genres');
     go('building');
     buildFromGenres(genres, from, to, setProgress).then(
-      (built) => finishBuild(id, built, label, 'genres', []),
+      ({ songs: built, note }) => finishBuild(id, built, label, 'genres', [], note),
       (e) => failBuild(id, e, 'genres'),
     );
   };
@@ -210,9 +241,9 @@ export function Setup(props: Props) {
     setBuildReturn('playlists');
     go('building');
     buildFromPlaylists(chosenPlaylists, setProgress).then(
-      ({ songs: built, skipped }) => {
-        finishBuild(id, built, label, 'playlists', ['playlists']);
-        if (skipped.length && id === buildId.current) setError(`Spotify didn't share ${skipped.join(', ')}, so those were skipped.`);
+      ({ songs: built, skipped, note }) => {
+        const skippedNote = skipped.length ? `Spotify didn't share ${skipped.join(', ')}, so those were skipped.` : null;
+        finishBuild(id, built, label, 'playlists', ['playlists'], [note, skippedNote].filter(Boolean).join(' ') || null);
       },
       (e) => failBuild(id, e, 'playlists'),
     );
@@ -582,9 +613,12 @@ export function Setup(props: Props) {
             </button>
           </>
         ) : playlists === null ? (
-          <p className="hint" role="status">
-            {listBusy ? 'Loading your playlists…' : ''}
-          </p>
+          <>
+            {waitNotice}
+            <p className="hint" role="status">
+              {listBusy ? 'Loading your playlists…' : ''}
+            </p>
+          </>
         ) : (
           <>
             <p className="hint">
@@ -640,6 +674,7 @@ export function Setup(props: Props) {
       <main className="setup flow">
         {stepBar}
         <h2 className="screen-title">{buildReturn === 'genres' ? 'Building your list…' : 'Reading your playlists…'}</h2>
+        {waitNotice}
         <section className="panel">
           <p className="progress" role="status">
             {progress?.label ?? 'Starting…'}

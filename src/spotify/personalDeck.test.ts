@@ -177,6 +177,17 @@ describe('yearSlices', () => {
     expect(slices[2].to).toBe(2026);
     for (let i = 1; i < slices.length; i++) expect(slices[i].from).toBe(slices[i - 1].to + 1);
   });
+  it('searches a stub of a decade at either end with its neighbour', () => {
+    expect(yearSlices(1980, 2010, 2)).toEqual([
+      { from: 1980, to: 1989 },
+      { from: 1990, to: 1999 },
+      { from: 2000, to: 2010 },
+    ]);
+    expect(yearSlices(1979, 1995, 1)).toEqual([
+      { from: 1979, to: 1989 },
+      { from: 1990, to: 1995 },
+    ]);
+  });
   it('handles a single year and reversed input', () => {
     expect(yearSlices(1985, 1985, 1)).toEqual([{ from: 1985, to: 1985 }]);
     expect(yearSlices(1999, 1990, 1)).toEqual([{ from: 1990, to: 1999 }]);

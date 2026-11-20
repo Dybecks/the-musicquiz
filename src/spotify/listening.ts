@@ -4,7 +4,7 @@
  * (one request lists them all). The result is kept in this browser only.
  */
 import type { Song } from '../game/engine';
-import { spotifyGet, SpotifyError } from './api';
+import { RateLimitError, spotifyGet, SpotifyError } from './api';
 import type { Genre } from '../data/genres';
 import {
   earliestYear,
@@ -36,8 +36,13 @@ const TRACK_PAGE = 100;
 const PAGES_PER_PLAYLIST = 3;
 /** Upper bound on cards, which also bounds the number of year lookups. */
 const MAX_TRACKS = 400;
-/** Requests run this many at a time. */
-const CONCURRENCY = 6;
+/**
+ * Requests are sent one after the other with a short pause, so a list never
+ * comes as a burst; Spotify answers bursts with "too many requests".
+ */
+const PAUSE_MS = 250;
+/** Year checks are many small searches: two at a time. */
+const YEAR_CHECK_CONCURRENCY = 2;
 /** Remembered year lookups, so building again is quick. */
 const CACHE_LIMIT = 8000;
 
@@ -110,13 +115,30 @@ function writeYearCache(years: Record<string, number | null>): void {
 
 // ---- Helpers ----
 
-/** Runs `task` for every item, `CONCURRENCY` at a time. */
-async function eachConcurrently<T>(items: readonly T[], task: (item: T) => Promise<void>): Promise<void> {
+const pause = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/**
+ * Runs `task` for every item, `concurrency` at a time with a pause between
+ * requests. If Spotify says to stop (rate limited), no further items are
+ * started and the error is returned, so the caller can keep what it has.
+ */
+async function paced<T>(items: readonly T[], concurrency: number, task: (item: T) => Promise<void>): Promise<RateLimitError | null> {
   let next = 0;
+  let stopped: RateLimitError | null = null;
   const worker = async () => {
-    while (next < items.length) await task(items[next++]);
+    while (!stopped && next < items.length) {
+      const item = items[next++];
+      try {
+        await task(item);
+      } catch (e) {
+        if (e instanceof RateLimitError) stopped = e;
+        else throw e;
+      }
+      if (!stopped && next < items.length) await pause(PAUSE_MS);
+    }
   };
-  await Promise.all(Array.from({ length: Math.min(CONCURRENCY, items.length) }, worker));
+  await Promise.all(Array.from({ length: Math.min(concurrency, items.length) }, worker));
+  return stopped;
 }
 
 async function searchOriginalYear(track: SpotifyTrack & { id: string }): Promise<number | null> {
@@ -127,7 +149,8 @@ async function searchOriginalYear(track: SpotifyTrack & { id: string }): Promise
       `/search?${new URLSearchParams({ q, type: 'track', limit: '10' })}`,
     );
     return earliestYear(track, body.tracks?.items ?? []);
-  } catch {
+  } catch (e) {
+    if (e instanceof RateLimitError) throw e;
     // The album year is still a reasonable answer.
     return releaseYear(track.album.release_date);
   }
@@ -175,7 +198,7 @@ export async function buildFromGenres(
   from: number,
   to: number,
   onProgress: (p: BuildProgress) => void = () => {},
-): Promise<Song[]> {
+): Promise<{ songs: Song[]; note: string | null }> {
   const genres = SEARCH_GENRES.filter((g) => genreIds.includes(g.id));
   const { slices } = genrePlan(genreIds, from, to);
   const jobs = genres.flatMap((genre) => slices.map((slice) => ({ genre, slice })));
@@ -184,21 +207,29 @@ export async function buildFromGenres(
   let failed = 0;
   let lastError: unknown = null;
   onProgress({ label: 'Searching Spotify', done, total: jobs.length });
-  await eachConcurrently(
+  const limited = await paced(
     jobs.map((job, i) => ({ ...job, i })),
+    1,
     async ({ genre, slice, i }) => {
+      onProgress({ label: `Searching Spotify: ${genre.label}, ${slice.from}–${slice.to}`, done, total: jobs.length });
       try {
         const songs = songsFromSearch(await genreSearch(genre.query, slice), slice);
         results[i] = genre.genre ? songs.map((s) => ({ ...s, genres: [genre.genre!] })) : songs;
       } catch (e) {
+        if (e instanceof RateLimitError) throw e;
         failed++;
         lastError = e;
       }
-      onProgress({ label: `Searching Spotify: ${genre.label}`, done: ++done, total: jobs.length });
+      onProgress({ label: `Searching Spotify: ${genre.label}, ${slice.from}–${slice.to}`, done: ++done, total: jobs.length });
     },
   );
-  if (failed === jobs.length && lastError) throw lastError;
-  return mergeById(results.flat());
+  const songs = mergeById(results.flat());
+  if (songs.length === 0) {
+    if (limited) throw limited;
+    if (failed === jobs.length && lastError) throw lastError;
+  }
+  const note = limited ? `Spotify kept refusing the game, so ${done} of ${jobs.length} searches were made.` : null;
+  return { songs, note };
 }
 
 function mergeById(songs: Song[]): Song[] {
@@ -272,7 +303,7 @@ async function playlistPage(id: string, offset: number): Promise<SpotifyTrack[]>
 export async function buildFromPlaylists(
   playlists: readonly PlaylistSummary[],
   onProgress: (p: BuildProgress) => void = () => {},
-): Promise<{ songs: Song[]; skipped: string[] }> {
+): Promise<{ songs: Song[]; skipped: string[]; note: string | null }> {
   const jobs = playlists.flatMap((p) =>
     Array.from({ length: Math.max(1, Math.min(PAGES_PER_PLAYLIST, Math.ceil(p.tracks / TRACK_PAGE))) }, (_, page) => ({ p, offset: page * TRACK_PAGE })),
   );
@@ -280,12 +311,14 @@ export async function buildFromPlaylists(
   const skipped = new Set<string>();
   let done = 0;
   onProgress({ label: 'Reading playlists', done, total: jobs.length });
-  await eachConcurrently(
+  const limitedReading = await paced(
     jobs.map((job, i) => ({ ...job, i })),
+    1,
     async ({ p, offset, i }) => {
       try {
         pages[i] = await playlistPage(p.id, offset);
-      } catch {
+      } catch (e) {
+        if (e instanceof RateLimitError) throw e;
         // Spotify refuses some playlists (for example its own editorial ones).
         skipped.add(p.name);
       }
@@ -305,7 +338,7 @@ export async function buildFromPlaylists(
   }
   done = 0;
   if (toSearch.length) onProgress({ label: `Checking the original year of ${toSearch.length} remastered songs`, done, total: toSearch.length });
-  await eachConcurrently(toSearch, async (t) => {
+  const limitedChecks = limitedReading ? null : await paced(toSearch, YEAR_CHECK_CONCURRENCY, async (t) => {
     const year = await searchOriginalYear(t);
     years.set(t.id, year);
     cache[t.id] = year;
@@ -318,5 +351,12 @@ export async function buildFromPlaylists(
     const year = years.get(t.id);
     if (year != null) songs.push(trackToSong(t, year));
   }
-  return { songs, skipped: [...skipped] };
+  const limited = limitedReading ?? limitedChecks;
+  if (songs.length === 0 && limited) throw limited;
+  const note = limitedReading
+    ? 'Spotify kept refusing the game, so only part of the playlists was read.'
+    : limitedChecks
+      ? "Spotify kept refusing the game, so some remastered songs whose original year wasn't checked were left out."
+      : null;
+  return { songs, skipped: [...skipped], note };
 }

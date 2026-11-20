@@ -61,8 +61,9 @@ Setup asks one thing per screen, in three steps:
 ### By genre
 
 Pick 1 to 4 genres and a year span. The list is built from Spotify searches such as
-`genre:"rock" year:1980-1989`: one request per genre per decade, all at once, and never
-more than 12 (wider spans search neighbouring decades together). The screen shows the
+`genre:"rock" year:1980-1989`: one request per genre per decade, and never more than 12
+(wider spans search neighbouring decades together, and a stub such as 2010 alone in
+1980–2010 goes with its neighbouring decade). The screen shows the
 number of requests before you build. Searching decade by decade spreads the songs over
 the years. Songs on compilations, "Remastered" albums and the like are skipped, so every
 song is dated by its own album and no further lookups are needed.
@@ -76,6 +77,12 @@ songs per playlist). Songs that look like reissues (a compilation, an album call
 "Remastered" or "Greatest Hits", or a title like "Song - Remastered 2011") get one search
 each for the original year; everything else is dated by its album. Year lookups are
 remembered in the browser. At most 400 songs are kept, spread over the decades.
+
+Requests are sent one after another with a short pause, never as a burst. If Spotify
+still answers "too many requests", every request waits as long as Spotify asks, and the
+loading screen shows a countdown and carries on by itself; nothing needs to be tapped.
+Only if Spotify refuses the same request six times does the game stop, keeping the songs
+it already has.
 
 The list is built in the browser and kept in its `localStorage` only; nothing is uploaded.
 While the game's Spotify app is in development mode, Spotify only lets accounts log in
