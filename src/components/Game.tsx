@@ -9,6 +9,7 @@ import {
   type Playback,
   type PlaybackKind,
 } from '../spotify/playback';
+import { hideNowPlaying, primeNowPlaying, showNowPlaying, unprimeNowPlaying } from '../spotify/nowPlaying';
 import { loadFact, type SongFact } from '../facts';
 import { Timeline } from './Timeline';
 import type { HostRoom } from '../multiplayer/useHostRoom';
@@ -155,6 +156,20 @@ export function Game({ state, mode, onModeChange, onChange, onQuit, host }: Prop
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [songId, songStatus]);
 
+  // Report "Mystery song" to lock screens and AirPlay/Bluetooth receivers while
+  // the song is hidden; their play/pause buttons still control the real song.
+  const playbackRef = useRef<Playback | null>(null);
+  playbackRef.current = playback;
+  const hidden = state.phase === 'guessing' && mode !== 'none' && !!playback && songStatus === 'ready';
+  useEffect(() => {
+    if (!hidden) return showNowPlaying();
+    hideNowPlaying(playing, {
+      play: () => void playbackRef.current?.play().catch(() => {}),
+      pause: () => void playbackRef.current?.pause().catch(() => {}),
+    });
+  }, [hidden, playing, songId]);
+  useEffect(() => () => showNowPlaying(), []);
+
   // Look up the fun fact while the song plays, so it's ready at the reveal.
   useEffect(() => {
     if (songId && state.current) void loadFact(state.current);
@@ -165,11 +180,15 @@ export function Game({ state, mode, onModeChange, onChange, onQuit, host }: Prop
 
   const togglePlay = async () => {
     if (!playback) return;
+    // Start the silent cover inside the click: Safari won't start it later.
+    const priming = !playing && hidden;
+    if (priming) primeNowPlaying();
     try {
       if (playing) await playback.pause();
       else await playback.play();
       if (playback.kind === 'none') setPlaying(!playing);
     } catch (e) {
+      if (priming) unprimeNowPlaying();
       setSongError(message(e));
     }
   };
@@ -199,6 +218,7 @@ export function Game({ state, mode, onModeChange, onChange, onQuit, host }: Prop
 
   const skip = () => {
     void playback?.stop();
+    setPlaying(false);
     setSelectedSlot(null);
     onChange(skipSong(state));
   };
