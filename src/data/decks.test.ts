@@ -1,15 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import { chooseSongs, deckSongs, normalizeDecks, parseSavedDecks } from './decks';
 import { DEFAULT_SONGS, NO_LOGIN_SONGS } from './songs';
-import { GAME_SONGS, MOVIE_SONGS, MUSICAL_SONGS, TV_SONGS } from './soundtracks';
+import { ANIME_SONGS, GAME_SONGS, MOVIE_SONGS, MUSICAL_SONGS, TV_SONGS } from './soundtracks';
 import { mergeSongs, songKey, type PersonalDeck } from '../spotify/personalDeck';
 
-const soundtracks = { movies: MOVIE_SONGS, musicals: MUSICAL_SONGS, tv: TV_SONGS, games: GAME_SONGS };
+const soundtracks = { movies: MOVIE_SONGS, musicals: MUSICAL_SONGS, tv: TV_SONGS, games: GAME_SONGS, anime: ANIME_SONGS };
+const sizes: Record<string, number> = { movies: 50, musicals: 50, tv: 50, games: 50, anime: 200 };
 
 describe('soundtrack decks', () => {
   for (const [name, songs] of Object.entries(soundtracks)) {
     describe(name, () => {
-      it('has 50 songs', () => expect(songs).toHaveLength(50));
+      it(`has ${sizes[name]} songs`, () => expect(songs).toHaveLength(sizes[name]));
       it('says where every song is from, with a plausible year', () => {
         for (const s of songs) {
           expect(s.from, s.title).toBeTruthy();

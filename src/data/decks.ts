@@ -2,11 +2,11 @@ import type { Song } from '../game/engine';
 import type { PlaybackKind } from '../spotify/playback';
 import { mergeSongs, personalSongs, type PersonalDeck } from '../spotify/personalDeck';
 import { DEFAULT_SONGS } from './songs';
-import { GAME_SONGS, MOVIE_SONGS, MUSICAL_SONGS, TV_SONGS } from './soundtracks';
+import { ANIME_SONGS, GAME_SONGS, MOVIE_SONGS, MUSICAL_SONGS, TV_SONGS } from './soundtracks';
 import { filterSongs, NO_FILTER, type DeckFilter } from './genres';
 
 /** The decks a game can be played with. Any combination can be chosen. */
-export type DeckId = 'classic' | 'movies' | 'musicals' | 'tv' | 'games' | 'mine';
+export type DeckId = 'classic' | 'movies' | 'musicals' | 'tv' | 'games' | 'anime' | 'mine';
 
 export interface DeckInfo {
   id: DeckId;
@@ -20,6 +20,7 @@ export const DECKS: DeckInfo[] = [
   { id: 'musicals', title: 'Musicals', detail: 'From Oklahoma! to Hamilton.' },
   { id: 'tv', title: 'TV themes', detail: 'From Peter Gunn to Severance.' },
   { id: 'games', title: 'Video game music', detail: 'From Super Mario Bros. to Baldur’s Gate 3.' },
+  { id: 'anime', title: 'Anime', detail: 'From Mazinger Z to Dandadan.' },
   { id: 'mine', title: 'My Spotify music', detail: 'Songs you actually listen to, from your Spotify account.' },
 ];
 
@@ -29,6 +30,7 @@ const BUILT_IN: Record<Exclude<DeckId, 'mine'>, Song[]> = {
   musicals: MUSICAL_SONGS,
   tv: TV_SONGS,
   games: GAME_SONGS,
+  anime: ANIME_SONGS,
 };
 
 const ALL_IDS = DECKS.map((d) => d.id);

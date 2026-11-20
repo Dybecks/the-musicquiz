@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { FACT_ROWS, writtenFact } from './facts';
 import { DEFAULT_SONGS } from './songs';
-import { GAME_SONGS, MOVIE_SONGS, MUSICAL_SONGS, TV_SONGS } from './soundtracks';
+import { ANIME_SONGS, GAME_SONGS, MOVIE_SONGS, MUSICAL_SONGS, TV_SONGS } from './soundtracks';
 
-const ALL = [...DEFAULT_SONGS, ...MOVIE_SONGS, ...MUSICAL_SONGS, ...TV_SONGS, ...GAME_SONGS];
+const ALL = [...DEFAULT_SONGS, ...MOVIE_SONGS, ...MUSICAL_SONGS, ...TV_SONGS, ...GAME_SONGS, ...ANIME_SONGS];
 
 describe('written facts', () => {
   it('every fact belongs to a song in a built-in deck', () => {

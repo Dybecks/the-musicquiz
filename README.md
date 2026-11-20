@@ -83,11 +83,13 @@ shuffled together, and a song that appears in two decks is only used once.
 | Musicals | 50 | Oklahoma! (1943) to Beetlejuice (2019) |
 | TV themes | 50 | Peter Gunn (1958) to Severance (2022) |
 | Video game music | 50 | Super Mario Bros. (1985) to Baldur's Gate 3 (2023) |
+| Anime | 200 | Mazinger Z (1972) to Dandadan (2024) |
 
-The four soundtrack decks are in `src/data/soundtracks.ts`. They only hold songs written
+The five soundtrack decks are in `src/data/soundtracks.ts`. They only hold songs written
 for the film, show, game or musical, so the year on the card is the year that work first
 came out: the film's release, the show's premiere, the game's first release, or the
-musical's first major production (or concept album, as for Evita). Cards say where the
+musical's first major production (or concept album, as for Evita). Anime openings and
+endings use the year the song was first used, since long series change songs every season. Cards say where the
 song is from. None of these songs has a pinned Spotify id yet, so they are found with the
 Spotify search at play time, which needs a Spotify login. Some video game music, Nintendo's
 in particular, isn't on Spotify; the search may then find a cover, or nothing, and
