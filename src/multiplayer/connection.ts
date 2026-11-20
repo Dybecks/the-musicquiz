@@ -43,6 +43,7 @@ export interface HostHandlers {
 
 export interface HostLink {
   broadcast: (msg: HostMessage) => void;
+  sendTo: (memberId: string, msg: HostMessage) => void;
   close: (reason?: string) => void;
 }
 
@@ -123,6 +124,10 @@ export function openHost(code: string, handlers: HostHandlers): HostLink {
     broadcast(msg) {
       for (const conn of conns.values()) if (conn.open) conn.send(msg);
     },
+    sendTo(memberId, msg) {
+      const conn = conns.get(memberId);
+      if (conn?.open) conn.send(msg);
+    },
     close(reason = 'The host ended the game.') {
       if (closed) return;
       closed = true;
@@ -152,6 +157,8 @@ export type ClientStatus =
 export interface ClientHandlers {
   onStatus: (status: ClientStatus) => void;
   onView: (view: RoomView) => void;
+  /** The host added songs this phone sent. */
+  onSongsAdded?: (added: number) => void;
 }
 
 export interface ClientLink {
@@ -194,6 +201,7 @@ export function joinRoom(code: string, memberId: string, name: string, handlers:
     c.on('data', (data) => {
       const msg = data as HostMessage;
       if (msg?.type === 'state') handlers.onView(msg.view);
+      else if (msg?.type === 'songs-added') handlers.onSongsAdded?.(msg.added);
       else if (msg?.type === 'closed') {
         closed = true;
         handlers.onStatus({ kind: 'closed', reason: msg.reason });

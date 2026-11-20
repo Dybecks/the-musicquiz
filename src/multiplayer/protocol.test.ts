@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { createGame, type GameState, type Song } from '../game/engine';
 import {
+  AVATARS,
   applyMessage,
+  cleanSongs,
+  dropMissingTeams,
+  lobbyTeams,
   clearVotes,
   gameView,
   isValidCode,
@@ -86,7 +90,7 @@ describe('votes', () => {
     room = applyMessage(room, g, 'ann', { type: 'lock', locked: true });
     room = setConnected(room, 'bob', false);
     expect(teamDecision(room, g)).toEqual({ kind: 'place', slot: 1 });
-    expect(votesBySlot(room.members).get(1)).toEqual(['ann']);
+    expect(votesBySlot(room.members).get(1)).toEqual([`${room.members[0].emoji} ann`]);
   });
 
   it('leaves the decision to the host when nobody on the team has joined', () => {
@@ -110,5 +114,54 @@ describe('what phones see', () => {
     expect(JSON.stringify(view)).not.toContain(`"${g.current!.id}"`);
     expect(view).not.toHaveProperty('deck');
     expect(view).not.toHaveProperty('current');
+  });
+});
+
+describe('before the game starts', () => {
+  it('lets people pick a team from the names typed in setup, with the ids the game will use', () => {
+    const teams = lobbyTeams(['Red', ' ', 'Blue']);
+    expect(teams).toEqual([
+      { id: 'p1', name: 'Red' },
+      { id: 'p2', name: 'Blue' },
+    ]);
+    let room: Room = { code: 'ABCD', members: [] };
+    room = applyMessage(room, null, 'ann', { type: 'hello', memberId: 'ann', name: 'Ann' }, teams);
+    room = applyMessage(room, null, 'ann', { type: 'team', teamId: 'p2' }, teams);
+    expect(room.members[0].teamId).toBe('p2');
+    // Same ids as createGame gives the players.
+    const g = createGame({ playerNames: ['Red', 'Blue'], targetCards: 5, songs });
+    expect(g.players.map((p) => p.id)).toEqual(['p1', 'p2']);
+    // The team is removed in setup: choose again.
+    room = dropMissingTeams(room, lobbyTeams(['Red']));
+    expect(room.members[0].teamId).toBeNull();
+  });
+});
+
+describe('profile pictures', () => {
+  it('gives everyone a different emoji, and a new one on request', () => {
+    const g = game();
+    const room = roomWith(g, ['ann', 'p1'], ['bob', 'p1'], ['cid', 'p2']);
+    const emojis = room.members.map((m) => m.emoji);
+    expect(emojis.every((e) => e && AVATARS.includes(e))).toBe(true);
+    expect(new Set(emojis).size).toBe(3);
+    const after = applyMessage(room, g, 'ann', { type: 'reroll' });
+    expect(after.members[0].emoji).not.toBe(emojis[0]);
+    // Reconnecting keeps the picture.
+    const again = applyMessage(after, g, 'ann', { type: 'hello', memberId: 'ann', name: 'Ann' });
+    expect(again.members[0].emoji).toBe(after.members[0].emoji);
+  });
+});
+
+describe('songs from phones', () => {
+  it('keeps only well-formed songs', () => {
+    const out = cleanSongs([
+      { id: 'sp:1', title: 'Song', artist: 'Band', year: 1984, spotifyId: '4uLU6hMCjMI75M1A2tKUQC' },
+      { title: 'No year', artist: 'Band' },
+      { title: 'Bad id', artist: 'Band', year: 1990, spotifyId: '../../x' },
+      'nonsense',
+    ]);
+    expect(out).toHaveLength(2);
+    expect(out[1]).not.toHaveProperty('spotifyId');
+    expect(cleanSongs('nope')).toEqual([]);
   });
 });

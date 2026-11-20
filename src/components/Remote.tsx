@@ -1,6 +1,17 @@
 import { useEffect, useRef, useState } from 'react';
 import { joinRoom, type ClientLink, type ClientStatus } from '../multiplayer/connection';
-import { isValidCode, normalizeCode, votesBySlot, type ClientMessage, type RoomView } from '../multiplayer/protocol';
+import {
+  HOST_ID,
+  isValidCode,
+  label,
+  normalizeCode,
+  votesBySlot,
+  type ClientMessage,
+  type Member,
+  type RoomView,
+} from '../multiplayer/protocol';
+import type { SpotifyProfile } from '../spotify/api';
+import { AddMyMusic } from './AddMyMusic';
 import { Finished, Reveal, Scoreboard } from './Game';
 import { Timeline } from './Timeline';
 
@@ -36,10 +47,12 @@ interface Props {
   /** A code from a join link. */
   initialCode?: string;
   onLeave: () => void;
+  /** This phone's own Spotify login, if any (only for adding songs). */
+  profile: SpotifyProfile | null;
 }
 
 /** A phone following a game hosted on another device: pick a team and vote. */
-export function Remote({ initialCode, onLeave }: Props) {
+export function Remote({ initialCode, onLeave, profile }: Props) {
   const [session, setSession] = useState<Session | null>(() => {
     const saved = savedRemote();
     return saved && (!initialCode || saved.code === initialCode) ? saved : null;
@@ -70,6 +83,7 @@ export function Remote({ initialCode, onLeave }: Props) {
     <Joined
       key={session.code}
       session={session}
+      profile={profile}
       onLeave={leave}
       onNotFound={() => {
         localStorage.removeItem(REMOTE_KEY);
@@ -150,9 +164,20 @@ function statusText(status: ClientStatus): string | null {
   }
 }
 
-function Joined({ session, onLeave, onNotFound }: { session: Session; onLeave: () => void; onNotFound: () => void }) {
+function Joined({
+  session,
+  profile,
+  onLeave,
+  onNotFound,
+}: {
+  session: Session;
+  profile: SpotifyProfile | null;
+  onLeave: () => void;
+  onNotFound: () => void;
+}) {
   const [status, setStatus] = useState<ClientStatus>({ kind: 'connecting' });
   const [view, setView] = useState<RoomView | null>(null);
+  const [added, setAdded] = useState<number | null>(null);
   const link = useRef<ClientLink | null>(null);
   const me = useRef(memberId()).current;
 
@@ -164,6 +189,7 @@ function Joined({ session, onLeave, onNotFound }: { session: Session; onLeave: (
         if (s.kind === 'closed') localStorage.removeItem(REMOTE_KEY);
       },
       onView: setView,
+      onSongsAdded: setAdded,
     });
     link.current = l;
     return () => l.close();
@@ -176,10 +202,19 @@ function Joined({ session, onLeave, onNotFound }: { session: Session; onLeave: (
     onLeave();
   };
 
+  const mine = view?.members.find((m) => m.id === me);
+
   const header = (
     <div className="remote-head">
-      <span>
-        Game <strong>{session.code}</strong> · {session.name}
+      <span className="who">
+        {mine?.emoji && (
+          <button className="avatar-button small" title="Tap for another picture" onClick={() => send({ type: 'reroll' })}>
+            {mine.emoji}
+          </button>
+        )}
+        <span>
+          {session.name} · Game <strong>{session.code}</strong>
+        </span>
       </span>
       <button className="link" onClick={leave}>
         Leave
@@ -203,10 +238,9 @@ function Joined({ session, onLeave, onNotFound }: { session: Session; onLeave: (
   }
 
   const note = statusText(status);
-  const game = view?.game;
-  const mine = view?.members.find((m) => m.id === me);
+  const noteLine = note && <p className="warn center">{note}</p>;
 
-  if (!view || !game || !mine) {
+  if (!view || !mine) {
     return (
       <main className="remote">
         {header}
@@ -215,28 +249,63 @@ function Joined({ session, onLeave, onNotFound }: { session: Session; onLeave: (
     );
   }
 
-  const myTeam = game.players.find((p) => p.id === mine.teamId);
-  const active = game.players[game.currentPlayerIndex];
-  const teamMembers = view.members.filter((m) => m.teamId === active.id && m.connected);
-  const myTurn = !!myTeam && myTeam.id === active.id && game.phase === 'guessing';
+  const game = view.game;
+  const myTeam = view.teams.find((t) => t.id === mine.teamId);
+  const addMusic = <AddMyMusic profile={profile} added={added} onSend={(songs) => send({ type: 'songs', songs })} />;
+
+  const teamPicker = (
+    <>
+      <h2 className="screen-title">{myTeam ? 'Switch team' : 'Which team are you on?'}</h2>
+      <div className="choices">
+        {view.teams.map((t) => {
+          const members = view.members.filter((m) => m.teamId === t.id);
+          return (
+            <button
+              key={t.id}
+              className={`choice team-choice ${t.id === mine.teamId ? 'selected' : ''}`}
+              onClick={() => send({ type: 'team', teamId: t.id })}
+            >
+              <strong>{t.name}</strong>
+              <span>{members.length ? members.map((m) => <Who key={m.id} member={m} />) : 'Nobody yet'}</span>
+            </button>
+          );
+        })}
+      </div>
+    </>
+  );
+
+  // Before the game starts (or between games): pick a team and wait.
+  if (!game) {
+    return (
+      <main className="remote">
+        {header}
+        {noteLine}
+        <section className="panel lobby">
+          <h1>Waiting for the host to start</h1>
+          <p className="hint">
+            {myTeam ? (
+              <>
+                You’re on <strong>{myTeam.name}</strong>. You can still switch.
+              </>
+            ) : (
+              'Pick your team below.'
+            )}
+          </p>
+          {view.pendingSongs > 0 && <p className="hint">{view.pendingSongs} songs from players will be added at the start.</p>}
+        </section>
+        {teamPicker}
+        {addMusic}
+      </main>
+    );
+  }
 
   if (!myTeam) {
     return (
       <main className="remote">
         {header}
-        {note && <p className="warn center">{note}</p>}
-        <h2 className="screen-title">Which team are you on?</h2>
-        <div className="choices">
-          {game.players.map((p) => {
-            const members = view.members.filter((m) => m.teamId === p.id);
-            return (
-              <button key={p.id} className="choice team-choice" onClick={() => send({ type: 'team', teamId: p.id })}>
-                <strong>{p.name}</strong>
-                <span>{members.length ? members.map((m) => m.name).join(', ') : 'Nobody yet'}</span>
-              </button>
-            );
-          })}
-        </div>
+        {noteLine}
+        {teamPicker}
+        {addMusic}
       </main>
     );
   }
@@ -246,14 +315,27 @@ function Joined({ session, onLeave, onNotFound }: { session: Session; onLeave: (
       <main className="remote game">
         {header}
         <Finished state={game} />
+        <p className="hint center">Stay here: the host can start another game with the same code.</p>
       </main>
     );
+  }
+
+  const active = game.players[game.currentPlayerIndex];
+  const teamMembers = view.members.filter((m) => m.teamId === active.id && m.connected);
+  const myTurn = myTeam.id === active.id && game.phase === 'guessing';
+  const host = view.members.find((m) => m.id === HOST_ID);
+
+  // The votes, plus the spot the host has tapped (when the host isn't voting on this team).
+  const votes = game.phase === 'guessing' ? votesBySlot(teamMembers) : undefined;
+  if (votes && view.live.hostPick !== null && host?.teamId !== active.id) {
+    const tag = `${host ? label(host) : 'Host'} (host)`;
+    votes.set(view.live.hostPick, [...(votes.get(view.live.hostPick) ?? []), tag]);
   }
 
   return (
     <main className="remote game">
       {header}
-      {note && <p className="warn center">{note}</p>}
+      {noteLine}
       <Scoreboard state={game} />
       <div className="board">
         <div className="board-main">
@@ -264,23 +346,29 @@ function Joined({ session, onLeave, onNotFound }: { session: Session; onLeave: (
             </h1>
             {game.phase === 'revealed' && game.lastGuess ? (
               <Reveal correct={game.lastGuess.correct} song={game.lastGuess.song} />
-            ) : myTurn ? (
+            ) : (
               <>
-                <p>Listen, then vote for where the song belongs. The guess goes in when everyone on the team has locked in.</p>
+                <div className="now-playing">
+                  <div className={`vinyl mini ${view.live.playing ? 'spinning' : ''}`} aria-hidden>
+                    ?
+                  </div>
+                  <span className="hint">{view.live.playing ? 'The song is playing…' : 'Waiting for the song to play'}</span>
+                </div>
+                {myTurn ? (
+                  <p>Vote for where the song belongs. The guess goes in when everyone on the team has locked in.</p>
+                ) : (
+                  <p className="hint">{active.name} is voting. Listen along and see where they put it.</p>
+                )}
                 <ul className="voters">
                   {teamMembers.map((m) => (
                     <li key={m.id} className={m.locked ? 'locked' : m.vote !== null ? 'voted' : ''}>
-                      {m.name}
+                      <Who member={m} />
                       {m.id === me && ' (you)'}: {m.locked ? 'locked in ✓' : m.vote !== null ? 'voted' : 'thinking…'}
                     </li>
                   ))}
                 </ul>
                 {view.split && <p className="warn">The votes are split. Agree on one spot and lock in again.</p>}
               </>
-            ) : (
-              <p className="hint">
-                {active.name} is voting. Listen along and see where they put it.
-              </p>
             )}
           </section>
 
@@ -311,7 +399,7 @@ function Joined({ session, onLeave, onNotFound }: { session: Session; onLeave: (
             selectable={myTurn}
             selectedSlot={myTurn ? mine.vote : null}
             onSelect={(slot) => send({ type: 'vote', slot: slot === mine.vote ? null : slot })}
-            votes={game.phase === 'guessing' ? votesBySlot(teamMembers) : undefined}
+            votes={votes}
             highlightId={game.phase === 'revealed' && game.lastGuess?.correct ? game.lastGuess.song.id : undefined}
             wrongCard={game.phase === 'revealed' && game.lastGuess && !game.lastGuess.correct ? game.lastGuess.song : undefined}
           />
@@ -323,6 +411,17 @@ function Joined({ session, onLeave, onNotFound }: { session: Session; onLeave: (
           Change team
         </button>
       </p>
+      {addMusic}
     </main>
+  );
+}
+
+function Who({ member }: { member: Member }) {
+  return (
+    <span className={`who-chip ${member.connected ? '' : 'offline'}`}>
+      {member.emoji && <span className="avatar">{member.emoji}</span>}
+      {member.name}
+      {member.id === HOST_ID && ' (host)'}
+    </span>
   );
 }
