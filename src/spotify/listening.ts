@@ -248,7 +248,12 @@ async function genreBatch(plan: Extract<RefillPlan, { kind: 'genres' }>): Promis
     }),
   );
   if (options.length === 0) return { songs: [], plan: null };
-  const { genre, slice, key, offset } = pick(options);
+  // Each search covers one decade, so take turns: search a decade that has
+  // been searched least so far (a random one of those), with a random genre.
+  const timesAsked = (sl: YearSlice) =>
+    genres.reduce((n, g) => n + (plan.asked[`${g.query}|${sl.from}-${sl.to}`]?.length ?? 0), 0);
+  const fewest = Math.min(...options.map((o) => timesAsked(o.slice)));
+  const { genre, slice, key, offset } = pick(options.filter((o) => timesAsked(o.slice) === fewest));
 
   const cache = readSearchCache();
   const cacheKey = `${key}|${offset}`;
@@ -326,14 +331,15 @@ export function fetchBatch(plan: RefillPlan): Promise<Batch> {
 }
 
 /**
- * The game's own classic hits for the chosen genres and years, used when
- * Spotify can't be asked. Songs with a known Spotify link come first, since
- * they play without any further requests.
+ * The game's own classic hits for the chosen genres and years. They are
+ * mixed into a genre list so it needs fewer Spotify requests, and carry it
+ * on their own when Spotify can't be asked. Only songs with a known Spotify
+ * link are used: they play without any request.
  */
 export function builtInForGenres(genreIds: readonly string[], from: number, to: number): Song[] {
   const genres = [...new Set(SEARCH_GENRES.filter((g) => genreIds.includes(g.id) && g.genre).map((g) => g.genre!))];
-  const matching = filterSongs(DEFAULT_SONGS, { genres, fromYear: from, toYear: to });
-  return [...matching.filter((s) => s.spotifyId), ...matching.filter((s) => !s.spotifyId)];
+  if (genres.length === 0) return [];
+  return filterSongs(DEFAULT_SONGS, { genres, fromYear: from, toYear: to }).filter((s) => s.spotifyId);
 }
 
 /**
@@ -347,11 +353,13 @@ export async function startList(
   onProgress: (p: BuildProgress) => void = () => {},
   want = FIRST_BATCH,
 ): Promise<{ songs: Song[]; plan: RefillPlan | null; note: string | null }> {
-  let songs: Song[] = [];
+  // A genre list starts with the game's own songs for those genres and
+  // years (no requests), spread over the decades, plus one Spotify batch.
+  let songs: Song[] = plan.kind === 'genres' ? builtInForGenres(plan.genres, plan.from, plan.to) : [];
   let next: RefillPlan | null = plan;
   let tries = 0;
   const label = plan.kind === 'genres' ? 'Finding songs on Spotify' : 'Reading your playlists';
-  while (next && songs.length < want && tries < 5) {
+  while (next && (tries === 0 || songs.length < want) && tries < 5) {
     onProgress({ label, done: Math.min(songs.length, want), total: want });
     try {
       const batch = await fetchBatch(next);
@@ -362,10 +370,8 @@ export async function startList(
         if (songs.length) break;
         throw e;
       }
-      const builtIn = builtInForGenres(plan.genres, plan.from, plan.to);
-      const all = mergeById([...songs, ...builtIn]);
-      if (all.length === 0) throw e;
-      return { songs: all, plan: null, note: `${e.message} Until then the game uses its own classic hits for these genres and years.` };
+      if (songs.length === 0) throw e;
+      return { songs, plan: null, note: `${e.message} Until then the game uses its own classic hits for these genres and years.` };
     }
     tries++;
     if (next && songs.length < want) await pause(PAUSE_MS);

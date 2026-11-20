@@ -212,7 +212,7 @@ export function skipSong(state: GameState): GameState {
 }
 
 /**
- * Adds freshly fetched songs to the end of the deck in random order,
+ * Adds freshly fetched songs to the deck, spread over the decades,
  * leaving out songs already dealt or waiting in the deck. `refill` replaces
  * the state's refill (undefined when the source has nothing more).
  */
@@ -225,7 +225,9 @@ export function addSongs(state: GameState, songs: readonly Song[], refill: unkno
     seen.add(key);
     fresh.push(s);
   }
-  return { ...state, deck: [...state.deck, ...shuffle(fresh, rng)], refill };
+  // The whole remaining deck is dealt again spread over the decades, so a
+  // batch from one decade doesn't come up all in a row.
+  return { ...state, deck: spreadByDecade([...state.deck, ...fresh], rng), refill };
 }
 
 function finishByMostCards(state: GameState): GameState {

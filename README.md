@@ -70,10 +70,14 @@ with the songs from last time and fetches new ones from where it left off.
 
 ### By genre
 
-Pick 1 to 4 genres and a year span. Each batch is one Spotify search such as
-`genre:"rock" year:1980-1989`, for a random genre, a random decade of the span (wide
-spans with many genres search neighbouring decades together) and a random depth in the
-first 250 results, so the songs are known ones. Songs on compilations, "Remastered"
+Pick 1 to 4 genres and a year span. The list starts with the game's own classic hits for
+those genres and years that have a Spotify link (no requests at all; for pop, rock,
+dance, soul and Swedish), plus one Spotify batch. Each batch is one Spotify search such as
+`genre:"rock" year:1980-1989`: the decades take turns (the one searched least so far, wide
+spans with many genres search neighbouring decades together), with a random genre and a
+random depth in the first 250 results, so the songs are known ones. Whenever songs are
+added, the deck is dealt again spread over the decades, so a batch from one decade
+doesn't come up all in a row. Songs on compilations, "Remastered"
 albums and the like are skipped, so every song is dated by its own album and no further
 lookups are needed. Searches are remembered for a week.
 

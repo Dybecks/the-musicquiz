@@ -111,8 +111,19 @@ describe('addSongs', () => {
     const g = createGame({ playerNames: ['A'], targetCards: 3, songs: songs.slice(0, 3), rng: noShuffle });
     const dealt = g.players[0].timeline[0];
     const next = addSongs(g, [dealt, g.deck[0], song(1955), song(1955, 'other-release')], { more: true }, noShuffle);
-    expect(next.deck.map((s) => s.year)).toEqual([...g.deck.map((s) => s.year), 1955]);
+    expect(next.deck.map((s) => s.year).sort()).toEqual([...g.deck.map((s) => s.year), 1955].sort());
     expect(next.refill).toEqual({ more: true });
+  });
+  it('mixes a batch from one decade in with the rest instead of queueing it at the end', () => {
+    const g = { ...createGame({ playerNames: ['A'], targetCards: 5, songs: [1990, 1991, 1992, 1993, 1994, 1995].map((y) => song(y)) }), deck: [] };
+    const nineties = [1996, 1997, 1998, 1999].map((y) => song(y));
+    const eighties = [1981, 1982, 1983, 1984].map((y) => song(y));
+    let mixedFirstHalf = 0;
+    for (let i = 0; i < 50; i++) {
+      const deck = addSongs(addSongs(g, nineties, undefined), eighties, undefined).deck;
+      if (deck.slice(0, 4).some((s) => s.year < 1990)) mixedFirstHalf++;
+    }
+    expect(mixedFirstHalf).toBeGreaterThan(40);
   });
   it('remembers drawn songs so they are not added again', () => {
     let g = createGame({ playerNames: ['A'], targetCards: 5, songs, rng: noShuffle });

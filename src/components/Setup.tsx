@@ -315,7 +315,7 @@ export function Setup(props: Props) {
       targetCards: target,
       mode,
       songs,
-      spreadDecades: source === 'ready',
+      spreadDecades: true,
       loggedIn: canAsk,
       refill: source === 'own' ? (ownList?.plan as RefillPlan | undefined) : undefined,
     });
