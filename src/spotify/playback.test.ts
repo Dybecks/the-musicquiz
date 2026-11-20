@@ -72,3 +72,15 @@ describe('playing where Spotify plays now', () => {
     await expect(p.play()).rejects.toThrow(/isn't playing anywhere/);
   });
 });
+
+describe('a locked speaker', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('explains that Spotify does not let the game control it', async () => {
+    api.playOnDevice.mockRejectedValueOnce(new SpotifyError('Spotify: Restriction violated', 403));
+    const p = createSpeakerPlayback({ id: '', name: 'Where Spotify plays now' });
+    await p.prepare(song);
+    await expect(p.play()).rejects.toThrow(/locked by Spotify/);
+    expect(api.getDevices).not.toHaveBeenCalled();
+  });
+});

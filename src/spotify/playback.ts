@@ -149,6 +149,8 @@ export interface Speaker {
 export const ACTIVE_SPEAKER: Speaker = { id: '', name: 'Where Spotify plays now' };
 
 const WAKE_HINT = 'Start any song on it from the Spotify app, then press Play again.';
+const RESTRICTED = (name: string) =>
+  `${name} is locked by Spotify: other apps, like this game, can't control it. That often happens when the music was started from the Sonos app. Pick the speaker in the Spotify app's device list (the speaker icon) and try again. If it's still locked, play in this browser and send the sound to the speaker with AirPlay or Bluetooth.`;
 const NOTHING_ACTIVE = `Spotify isn't playing anywhere right now. On your phone, start any song on the speaker in the Spotify app, then press Play again.`;
 
 /**
@@ -172,12 +174,13 @@ export function createSpeakerPlayback(speaker: Speaker): Playback {
       await playOnDevice(deviceId, u);
     } catch (e) {
       if (!(e instanceof SpotifyError)) throw e;
+      // 403 "Restriction violated": Spotify doesn't let apps control this device.
+      if (e.status === 403) throw new Error(RESTRICTED(deviceId ? speaker.name : 'The speaker Spotify plays on'));
       if (!deviceId) {
         // "Where Spotify plays now": there must be something playing (or paused) somewhere.
         if (e.status === 404) throw new Error(NOTHING_ACTIVE);
         throw e;
       }
-      if (e.status === 403) throw new Error(`${speaker.name} won't take orders from the game right now. ${WAKE_HINT}`);
       if (e.status !== 404 && e.status !== 502) throw e;
       // The speaker went to sleep or got a new id: find it by name, wake it, try again.
       const found = (await getDevices()).find((d) => d.id === deviceId || d.name === speaker.name);
