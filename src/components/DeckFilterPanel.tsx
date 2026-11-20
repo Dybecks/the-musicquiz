@@ -5,11 +5,11 @@ interface Props {
   onChange: (filter: DeckFilter) => void;
   presets: Preset[];
   personalPresets: Preset[];
-  /** Whether the host has a deck from their own Spotify music. */
-  hasPersonal: boolean;
   /** Songs left after filtering, and before. */
   count: number;
   total: number;
+  /** Songs that come on top of the count once they are loaded, if any. */
+  pending?: string;
   note?: string;
 }
 
@@ -18,7 +18,7 @@ function parseYear(value: string): number | null {
   return Number.isFinite(n) && n >= 1900 && n <= 2100 ? n : null;
 }
 
-export function DeckFilterPanel({ filter, onChange, presets, personalPresets, hasPersonal, count, total, note }: Props) {
+export function DeckFilterPanel({ filter, onChange, presets, personalPresets, count, total, pending, note }: Props) {
   const toggleGenre = (g: Genre) =>
     onChange({ ...filter, genres: filter.genres.includes(g) ? filter.genres.filter((x) => x !== g) : [...filter.genres, g] });
 
@@ -37,15 +37,14 @@ export function DeckFilterPanel({ filter, onChange, presets, personalPresets, ha
 
   return (
     <section className="panel">
-      <h2>Genres and years</h2>
+      <h2>What kind of songs?</h2>
+      <p className="hint">Choose genres and years first. Only songs that fit are used, and only those are loaded from Spotify.</p>
 
-      {personalPresets.length > 0 ? (
+      {personalPresets.length > 0 && (
         <>
           <p className="hint">Based on your music</p>
           <div className="chips">{personalPresets.map(presetButton)}</div>
         </>
-      ) : (
-        !hasPersonal && <p className="hint">Tick “My Spotify music” under “Which songs?” and build your deck to get suggestions based on what you listen to.</p>
       )}
       <p className="hint">Quick picks</p>
       <div className="chips">{presets.map(presetButton)}</div>
@@ -88,10 +87,16 @@ export function DeckFilterPanel({ filter, onChange, presets, personalPresets, ha
       </div>
 
       {note && <p className="hint">{note}</p>}
-      <p className={count < 20 ? 'warn' : 'hint'}>
-        {count} of {total} songs match.
-        {count < 20 && ' That makes a short game; widen the genres or years for more.'}
-      </p>
+      {pending ? (
+        <p className="hint">
+          {count} of {total} songs match, {pending}.
+        </p>
+      ) : (
+        <p className={count < 20 ? 'warn' : 'hint'}>
+          {count} of {total} songs match.
+          {count < 20 && ' That makes a short game; widen the genres or years for more.'}
+        </p>
+      )}
     </section>
   );
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createGame, insertSorted, isCorrectPlacement, nextTurn, placeCurrent, skipSong, type Song } from './engine';
+import { createGame, insertSorted, isCorrectPlacement, nextTurn, placeCurrent, skipSong, spreadByDecade, type Song } from './engine';
 
 const song = (year: number, id = `s${year}`): Song => ({ id, title: `Song ${year}`, artist: 'Artist', year });
 const songs = [1960, 1970, 1980, 1990, 2000, 2010, 2020].map((y) => song(y));
@@ -87,5 +87,21 @@ describe('default deck', () => {
     expect(NO_LOGIN_SONGS.length).toBeGreaterThanOrEqual(50);
     expect(NO_LOGIN_SONGS.every((s) => /^[0-9A-Za-z]{22}$/.test(s.spotifyId ?? ''))).toBe(true);
     expect(new Set(DEFAULT_SONGS.map((s) => s.id)).size).toBe(DEFAULT_SONGS.length);
+  });
+});
+
+describe('spreadByDecade', () => {
+  it('draws each decade about equally often, however many songs it has', () => {
+    // 90 songs from the 2010s, 10 from the 1970s.
+    const many = [...Array.from({ length: 90 }, (_, i) => song(2010 + (i % 10), `n${i}`)), ...Array.from({ length: 10 }, (_, i) => song(1970 + i, `o${i}`))];
+    let seventies = 0;
+    for (let run = 0; run < 50; run++) seventies += spreadByDecade(many).slice(0, 10).filter((s) => s.year < 1980).length;
+    // A plain shuffle would give about 1 in 10; spreading gives about 5 in 10.
+    expect(seventies / 50).toBeGreaterThan(3);
+  });
+
+  it('keeps every song exactly once', () => {
+    const out = spreadByDecade(songs);
+    expect(out.map((s) => s.id).sort()).toEqual(songs.map((s) => s.id).sort());
   });
 });
