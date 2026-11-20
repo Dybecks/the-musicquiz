@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Song } from '../game/engine';
-import { onSpotifyWait, type SpotifyProfile } from '../spotify/api';
+import { onSpotifyWait, spotifyBlockedUntil, type SpotifyProfile } from '../spotify/api';
 import { BUILT_IN_CLIENT_ID, getClientIdOverride, hasScopes, redirectUri, setClientId } from '../spotify/auth';
 import type { PlaybackKind } from '../spotify/playback';
 import { DECKS, chooseSongs, deckSongs, normalizeDecks, parseSavedDecks, playableSongs, type DeckId } from '../data/decks';
@@ -157,7 +157,11 @@ export function Setup(props: Props) {
   const isPremium = profile?.product === 'premium';
   // The music plays the way step 1 decided: in the browser with a (Premium)
   // login, otherwise through the hidden Spotify player.
-  const mode: PlaybackKind = loggedIn && isPremium ? 'premium' : 'embed';
+  // While Spotify's request limit is used up, play through the hidden player,
+  // which needs no requests for songs with a known Spotify link.
+  const blockedUntil = spotifyBlockedUntil();
+  const canAsk = loggedIn && !blockedUntil;
+  const mode: PlaybackKind = canAsk && isPremium ? 'premium' : 'embed';
   const owner = hostContributor(personal);
   const ownList = owner && profile && owner.userId === profile.id ? owner : undefined;
   const ownSongs = ownList ? personalSongs(personal) : [];
@@ -165,7 +169,7 @@ export function Setup(props: Props) {
 
   const readyDecks = DECKS.filter((d) => d.id !== 'mine');
   const activeDecks = normalizeDecks(decks);
-  const readySongs = chooseSongs({ decks: activeDecks, mode, loggedIn, personal: null });
+  const readySongs = chooseSongs({ decks: activeDecks, mode, loggedIn: canAsk, personal: null });
   const songs = source === 'own' ? ownSongs : readySongs;
 
   const toggleDeck = (id: DeckId) => {
@@ -177,7 +181,7 @@ export function Setup(props: Props) {
 
   const deckCount = (id: DeckId) => {
     const all = deckSongs(id, null).length;
-    const playable = playableSongs(deckSongs(id, null), mode, loggedIn).length;
+    const playable = playableSongs(deckSongs(id, null), mode, canAsk).length;
     return playable === all ? `${all}` : `${playable} of ${all}`;
   };
 
@@ -304,7 +308,7 @@ export function Setup(props: Props) {
     setError(null);
     if (names.length === 0) return setError('Add at least one player or team.');
     if (songs.length < names.length + 1) return setError('Too few songs for this many players. Pick more music, or use fewer players.');
-    props.onStart({ players: names, targetCards: target, mode, songs, spreadDecades: source === 'ready', loggedIn });
+    props.onStart({ players: names, targetCards: target, mode, songs, spreadDecades: source === 'ready', loggedIn: canAsk });
   };
 
   // ---- Shared bits ----
@@ -758,7 +762,9 @@ export function Setup(props: Props) {
         <p className="hint">
           {mode === 'premium'
             ? 'The music plays right here in the browser through your Spotify Premium.'
-            : loggedIn
+            : loggedIn && blockedUntil
+              ? `Spotify's request limit for this game is used up until ${new Date(blockedUntil).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}, so the music plays through a hidden Spotify player meanwhile.`
+              : loggedIn
               ? "Your account isn't Premium, so the music plays through a hidden Spotify player."
               : 'The music plays through a hidden Spotify player: full songs if this browser is signed in to Spotify, otherwise 30-second previews.'}
         </p>

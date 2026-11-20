@@ -61,7 +61,7 @@ Setup asks one thing per screen, in three steps:
 ### By genre
 
 Pick 1 to 4 genres and a year span. The list is built from Spotify searches such as
-`genre:"rock" year:1980-1989`: one request per genre per decade, and never more than 12
+`genre:"rock" year:1980-1989`: one request per genre per decade, and never more than 6
 (wider spans search neighbouring decades together, and a stub such as 2010 alone in
 1980–2010 goes with its neighbouring decade). The screen shows the
 number of requests before you build. Searching decade by decade spreads the songs over
@@ -78,11 +78,18 @@ songs per playlist). Songs that look like reissues (a compilation, an album call
 each for the original year; everything else is dated by its album. Year lookups are
 remembered in the browser. At most 400 songs are kept, spread over the decades.
 
-Requests are sent one after another with a short pause, never as a burst. If Spotify
-still answers "too many requests", every request waits as long as Spotify asks, and the
-loading screen shows a countdown and carries on by itself; nothing needs to be tapped.
-Only if Spotify refuses the same request six times does the game stop, keeping the songs
-it already has.
+Requests are sent one after another with a short pause, never as a burst, and genre
+searches are remembered for a week, so building the same list again costs nothing. If
+Spotify answers "too many requests" with a short pause (up to two minutes), the loading
+screen counts down and carries on by itself.
+
+Spotify also gives Development Mode apps a request quota, shared by all apps of the same
+developer account and not shown in the dashboard. When it is used up, Spotify answers
+`429` with `"reason": "QUOTA_EXCEEDED"` and a `Retry-After` that can be hours. The game
+then stops asking until that time (remembered across reloads) and carries on without
+Spotify: **By genre** fills the list with the game's own classic hits for the same genres
+and years, the music plays through the hidden player, and the setup screen says until
+when. Nothing needs to be tapped.
 
 The list is built in the browser and kept in its `localStorage` only; nothing is uploaded.
 While the game's Spotify app is in development mode, Spotify only lets accounts log in

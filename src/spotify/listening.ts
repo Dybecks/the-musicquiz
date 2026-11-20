@@ -5,7 +5,8 @@
  */
 import type { Song } from '../game/engine';
 import { RateLimitError, spotifyGet, SpotifyError } from './api';
-import type { Genre } from '../data/genres';
+import { filterSongs, type Genre } from '../data/genres';
+import { DEFAULT_SONGS } from '../data/songs';
 import {
   earliestYear,
   needsYearCheck,
@@ -26,7 +27,7 @@ const DECK_KEY = 'mq.personalDeck';
 const CACHE_KEY = 'mq.spotifyCache';
 
 /** The most genre searches one list may cost. */
-export const MAX_GENRE_REQUESTS = 12;
+export const MAX_GENRE_REQUESTS = 6;
 /** How many genres can be picked at once. */
 export const MAX_GENRES = 4;
 /** Playlists listed per request (Spotify's maximum). */
@@ -189,9 +190,54 @@ async function genreSearch(query: string, slice: YearSlice): Promise<SpotifyTrac
   }
 }
 
+// Genre searches are remembered for a week, so building the same list again
+// (or one that shares genres and decades) costs no requests.
+const SEARCH_CACHE_KEY = 'mq.genreSearchCache';
+const SEARCH_CACHE_DAYS = 7;
+const SEARCH_CACHE_LIMIT = 80;
+type SearchCache = Record<string, { at: number; songs: Song[] }>;
+
+function readSearchCache(): SearchCache {
+  try {
+    const c = JSON.parse(localStorage.getItem(SEARCH_CACHE_KEY) ?? 'null');
+    if (c && typeof c === 'object') return c;
+  } catch {
+    /* ignore */
+  }
+  return {};
+}
+
+function writeSearchCache(cache: SearchCache): void {
+  const fresh = Object.entries(cache)
+    .filter(([, v]) => Date.now() - v.at < SEARCH_CACHE_DAYS * 86_400_000)
+    .sort((a, b) => a[1].at - b[1].at)
+    .slice(-SEARCH_CACHE_LIMIT);
+  try {
+    localStorage.setItem(SEARCH_CACHE_KEY, JSON.stringify(Object.fromEntries(fresh)));
+  } catch {
+    /* the cache is only a saving */
+  }
+}
+
+/**
+ * The game's own classic hits for the chosen genres and years, used when
+ * Spotify can't be asked. Songs with a known Spotify link come first, since
+ * they play without any further requests.
+ */
+export function builtInForGenres(genreIds: readonly string[], from: number, to: number): Song[] {
+  const genres = [...new Set(SEARCH_GENRES.filter((g) => genreIds.includes(g.id) && g.genre).map((g) => g.genre!))];
+  const matching = filterSongs(DEFAULT_SONGS, { genres, fromYear: from, toYear: to });
+  return [...matching.filter((s) => s.spotifyId), ...matching.filter((s) => !s.spotifyId)];
+}
+
+/** Below this many songs from Spotify, the game's own songs are added. */
+const ENOUGH_SONGS = 30;
+
 /**
  * Builds a list from genre searches. Songs are dated by their album, so no
- * lookups are needed beyond the searches themselves.
+ * lookups are needed beyond the searches themselves. Searches made in the
+ * last week are reused. If Spotify won't answer, the game's own songs for
+ * the same genres and years fill the list, so the host never has to act.
  */
 export async function buildFromGenres(
   genreIds: readonly string[],
@@ -201,35 +247,42 @@ export async function buildFromGenres(
 ): Promise<{ songs: Song[]; note: string | null }> {
   const genres = SEARCH_GENRES.filter((g) => genreIds.includes(g.id));
   const { slices } = genrePlan(genreIds, from, to);
-  const jobs = genres.flatMap((genre) => slices.map((slice) => ({ genre, slice })));
-  const results: Song[][] = new Array(jobs.length).fill([]);
+  const jobs = genres.flatMap((genre) => slices.map((slice) => ({ genre, slice, key: `${genre.query}|${slice.from}-${slice.to}` })));
+  const cache = readSearchCache();
+  const results: Song[][] = jobs.map((j) => (cache[j.key] && Date.now() - cache[j.key].at < SEARCH_CACHE_DAYS * 86_400_000 ? cache[j.key].songs : []));
+  // Only searches not made in the last week go to Spotify.
+  const toAsk = jobs.map((job, i) => ({ ...job, i })).filter(({ i }) => results[i].length === 0);
   let done = 0;
   let failed = 0;
   let lastError: unknown = null;
-  onProgress({ label: 'Searching Spotify', done, total: jobs.length });
-  const limited = await paced(
-    jobs.map((job, i) => ({ ...job, i })),
-    1,
-    async ({ genre, slice, i }) => {
-      onProgress({ label: `Searching Spotify: ${genre.label}, ${slice.from}–${slice.to}`, done, total: jobs.length });
-      try {
-        const songs = songsFromSearch(await genreSearch(genre.query, slice), slice);
-        results[i] = genre.genre ? songs.map((s) => ({ ...s, genres: [genre.genre!] })) : songs;
-      } catch (e) {
-        if (e instanceof RateLimitError) throw e;
-        failed++;
-        lastError = e;
-      }
-      onProgress({ label: `Searching Spotify: ${genre.label}, ${slice.from}–${slice.to}`, done: ++done, total: jobs.length });
-    },
-  );
-  const songs = mergeById(results.flat());
-  if (songs.length === 0) {
-    if (limited) throw limited;
-    if (failed === jobs.length && lastError) throw lastError;
-  }
-  const note = limited ? `Spotify kept refusing the game, so ${done} of ${jobs.length} searches were made.` : null;
-  return { songs, note };
+  onProgress({ label: 'Searching Spotify', done, total: toAsk.length });
+  const limited = await paced(toAsk, 1, async ({ genre, slice, key, i }) => {
+    onProgress({ label: `Searching Spotify: ${genre.label}, ${slice.from}–${slice.to}`, done, total: toAsk.length });
+    try {
+      const songs = songsFromSearch(await genreSearch(genre.query, slice), slice);
+      results[i] = genre.genre ? songs.map((s) => ({ ...s, genres: [genre.genre!] })) : songs;
+      cache[key] = { at: Date.now(), songs: results[i] };
+    } catch (e) {
+      if (e instanceof RateLimitError) throw e;
+      failed++;
+      lastError = e;
+    }
+    onProgress({ label: `Searching Spotify: ${genre.label}, ${slice.from}–${slice.to}`, done: ++done, total: toAsk.length });
+  });
+  writeSearchCache(cache);
+  const fromSpotify = mergeById(results.flat());
+  if (!limited && (failed === 0 || fromSpotify.length >= ENOUGH_SONGS)) return { songs: fromSpotify, note: null };
+
+  // Spotify couldn't be asked (quota used up) or gave too little: fill up
+  // with the game's own songs for the same genres and years.
+  const builtIn = builtInForGenres(genreIds, from, to);
+  const songs = mergeById([...fromSpotify, ...builtIn]);
+  if (songs.length === 0) throw limited ?? lastError ?? new Error('No songs match these genres and years.');
+  const why = limited ? limited.message : 'Spotify could not be searched just now.';
+  const what = fromSpotify.length
+    ? `${fromSpotify.length} songs came from Spotify and ${songs.length - fromSpotify.length} from the game's own classic hits.`
+    : `The list is made from the game's own classic hits for these genres and years.`;
+  return { songs, note: `${why} ${what}` };
 }
 
 function mergeById(songs: Song[]): Song[] {
