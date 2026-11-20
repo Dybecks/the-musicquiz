@@ -127,55 +127,69 @@ export function Game({ state, mode, onModeChange, onChange, onQuit }: Props) {
       {state.phase === 'finished' ? (
         <Finished state={state} onPlayAgain={onQuit} />
       ) : (
-        <>
-          <section className="panel turn">
-            <h1>
-              {player.name}
-              <span className="muted">’s turn</span>
-            </h1>
+        <div className="board">
+          <div className="board-main">
+            <section className="panel turn">
+              <h1>
+                {player.name}
+                <span className="muted">’s turn</span>
+              </h1>
 
-            {state.phase === 'guessing' ? (
-              <div className="mystery">
-                <div className={`vinyl ${playing ? 'spinning' : ''}`} aria-hidden>
-                  ?
-                </div>
-                <div className="mystery-actions">
-                  {mode !== 'none' && (
-                    <button className="primary" onClick={togglePlay} disabled={!playback || songStatus !== 'ready'}>
-                      {playbackError
-                        ? 'Player unavailable'
-                        : !playback
-                          ? 'Starting player…'
-                          : songStatus === 'loading'
-                            ? 'Finding song…'
-                            : playing
-                              ? '❚❚ Pause'
-                              : '▶ Play song'}
-                    </button>
-                  )}
-                  {mode === 'none' && <p className="hint">No audio mode: play the song your own way, or just guess the year.</p>}
-                  <button className="ghost" onClick={skip}>
-                    Skip song
-                  </button>
-                </div>
-                {playbackError && (
-                  <div className="warn">
-                    <p>{playbackError}</p>
-                    {mode === 'premium' && (
-                      <button className="link" onClick={() => onModeChange('embed')}>
-                        Use the hidden Spotify player instead
+              {state.phase === 'guessing' ? (
+                <div className="mystery">
+                  <div className={`vinyl ${playing ? 'spinning' : ''}`} aria-hidden>
+                    ?
+                  </div>
+                  <div className="mystery-actions">
+                    {mode !== 'none' && (
+                      <button className="primary" onClick={togglePlay} disabled={!playback || songStatus !== 'ready'}>
+                        {playbackError
+                          ? 'Player unavailable'
+                          : !playback
+                            ? 'Starting player…'
+                            : songStatus === 'loading'
+                              ? 'Finding song…'
+                              : playing
+                                ? '❚❚ Pause'
+                                : '▶ Play song'}
                       </button>
                     )}
+                    {mode === 'none' && <p className="hint">No audio mode: play the song your own way, or just guess the year.</p>}
+                    <button className="ghost" onClick={skip}>
+                      Skip song
+                    </button>
                   </div>
-                )}
-                {songError && <p className="warn">{songError}</p>}
-              </div>
-            ) : (
-              state.lastGuess && <Reveal correct={state.lastGuess.correct} song={state.lastGuess.song} />
-            )}
-          </section>
+                  {playbackError && (
+                    <div className="warn">
+                      <p>{playbackError}</p>
+                      {mode === 'premium' && (
+                        <button className="link" onClick={() => onModeChange('embed')}>
+                          Use the hidden Spotify player instead
+                        </button>
+                      )}
+                    </div>
+                  )}
+                  {songError && <p className="warn">{songError}</p>}
+                </div>
+              ) : (
+                state.lastGuess && <Reveal correct={state.lastGuess.correct} song={state.lastGuess.song} />
+              )}
+            </section>
 
-          <section className="panel">
+            <div className="action-bar">
+              {state.phase === 'guessing' ? (
+                <button className="primary big" disabled={selectedSlot === null} onClick={lockIn}>
+                  {selectedSlot === null ? 'Pick a spot on the timeline' : 'Lock in guess'}
+                </button>
+              ) : (
+                <button className="primary big" onClick={next}>
+                  {state.winnerIds.length ? 'See the winner' : `Next: ${nextPlayer.name}`}
+                </button>
+              )}
+            </div>
+          </div>
+
+          <section className="panel board-timeline">
             <h2>
               {player.name}’s timeline{' '}
               <span className="muted">
@@ -194,19 +208,7 @@ export function Game({ state, mode, onModeChange, onChange, onQuit }: Props) {
               wrongCard={state.phase === 'revealed' && state.lastGuess && !state.lastGuess.correct ? state.lastGuess.song : undefined}
             />
           </section>
-
-          <div className="action-bar">
-            {state.phase === 'guessing' ? (
-              <button className="primary big" disabled={selectedSlot === null} onClick={lockIn}>
-                Lock in guess
-              </button>
-            ) : (
-              <button className="primary big" onClick={next}>
-                {state.winnerIds.length ? 'See the winner' : `Next: ${nextPlayer.name}`}
-              </button>
-            )}
-          </div>
-        </>
+        </div>
       )}
 
       {/* The Spotify embed lives here. It stays covered so the title isn't spoiled. */}

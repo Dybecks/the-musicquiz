@@ -45,7 +45,7 @@ export function DeckFilterPanel({ filter, onChange, presets, personalPresets, ha
           <div className="chips">{personalPresets.map(presetButton)}</div>
         </>
       ) : (
-        !hasPersonal && <p className="hint">Tick “My Spotify music” above and build your deck to get suggestions based on what you listen to.</p>
+        !hasPersonal && <p className="hint">Tick “My Spotify music” under “Which songs?” and build your deck to get suggestions based on what you listen to.</p>
       )}
       <p className="hint">Quick picks</p>
       <div className="chips">{presets.map(presetButton)}</div>
