@@ -2,8 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { Song } from '../game/engine';
 import { onSpotifyWait, spotifyBlockedUntil, type SpotifyProfile } from '../spotify/api';
 import { BUILT_IN_CLIENT_ID, getClientIdOverride, hasScopes, redirectUri, setClientId } from '../spotify/auth';
-import type { PlaybackKind, Speaker } from '../spotify/playback';
-import { SpeakerPicker } from './SpeakerPicker';
+import type { PlaybackKind } from '../spotify/playback';
 import { DECKS, chooseSongs, deckSongs, normalizeDecks, parseSavedDecks, playableSongs, type DeckId } from '../data/decks';
 import {
   MAX_GENRES,
@@ -31,8 +30,6 @@ export interface SetupValues {
   loggedIn: boolean;
   /** Where to fetch more songs from while playing (own lists). */
   refill?: RefillPlan;
-  /** A Spotify Connect speaker to play on (Premium); null plays in this browser. */
-  speaker: Speaker | null;
 }
 
 interface Props {
@@ -52,8 +49,6 @@ interface Props {
   onPlayersChange: (names: string[]) => void;
   /** Inviting phones (the share panel), shown with the players. */
   invite: ReactNode;
-  /** The speaker chosen last time. */
-  speaker: Speaker | null;
 }
 
 /** Whether the host plays with a Spotify login. */
@@ -121,7 +116,6 @@ export function Setup(props: Props) {
   const [buildReturn, setBuildReturn] = useState<Step>('own');
   const buildId = useRef(0);
   const [waitUntil, setWaitUntil] = useState(0);
-  const [speaker, setSpeaker] = useState<Speaker | null>(props.speaker);
 
   const [now, setNow] = useState(() => Date.now());
 
@@ -335,7 +329,6 @@ export function Setup(props: Props) {
       spreadDecades: true,
       loggedIn: canAsk,
       refill: source === 'own' ? (ownList?.plan as RefillPlan | undefined) : undefined,
-      speaker: mode === 'premium' ? speaker : null,
     });
   };
 
@@ -787,15 +780,8 @@ export function Setup(props: Props) {
           <span>Cards needed to win</span>
           <input type="number" min={3} max={30} value={target} onChange={(e) => setTarget(Math.max(3, Math.min(30, Number(e.target.value) || 10)))} />
         </label>
-        {mode === 'premium' && (
-          <SpeakerPicker speaker={speaker} onChange={setSpeaker} />
-        )}
         <p className="hint">
-          {mode === 'premium' && speaker && !speaker.id
-            ? 'The music plays on whatever the Spotify app is playing on (your Sonos, phone…) through your Spotify Premium.'
-            : mode === 'premium' && speaker
-            ? `The music plays on ${speaker.name} through your Spotify Premium.`
-            : mode === 'premium'
+          {mode === 'premium'
             ? 'The music plays right here in the browser through your Spotify Premium.'
             : loggedIn && blockedUntil
               ? `Spotify's request limit for this game is used up until ${new Date(blockedUntil).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}, so the music plays through a hidden Spotify player meanwhile.`

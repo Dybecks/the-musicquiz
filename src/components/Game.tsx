@@ -1,14 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { addSongs, currentPlayer, nextTurn, placeCurrent, skipSong, type GameState } from '../game/engine';
 import { builtInForGenres, fetchBatch, type RefillPlan } from '../spotify/listening';
-import { RateLimitError } from '../spotify/api';
+import { RateLimitError, findTrackUri } from '../spotify/api';
 import {
   createEmbedPlayback,
   createPremiumPlayback,
   createSilentPlayback,
-  createSpeakerPlayback,
   type Playback,
-  type Speaker,
   type PlaybackKind,
 } from '../spotify/playback';
 import { loadFact, type SongFact } from '../facts';
@@ -16,15 +14,11 @@ import { Timeline } from './Timeline';
 import type { HostRoom } from '../multiplayer/useHostRoom';
 import { HOST_ID, activeVoters, votesBySlot } from '../multiplayer/protocol';
 import { SharePanel } from './SharePanel';
-import { SpeakerPicker } from './SpeakerPicker';
 
 interface Props {
   state: GameState;
   mode: PlaybackKind;
   onModeChange: (mode: PlaybackKind) => void;
-  /** A Spotify Connect speaker to play on (Premium), instead of this browser. */
-  speaker: Speaker | null;
-  onSpeakerChange: (speaker: Speaker | null) => void;
   onChange: (state: GameState) => void;
   onQuit: () => void;
   /** Phones following the game (see useHostRoom). */
@@ -76,7 +70,7 @@ function useRefill(state: GameState, onChange: (s: GameState) => void): string |
   return note;
 }
 
-export function Game({ state, mode, onModeChange, speaker, onSpeakerChange, onChange, onQuit, host }: Props) {
+export function Game({ state, mode, onModeChange, onChange, onQuit, host }: Props) {
   const refillNote = useRefill(state, onChange);
   const votes = host.room && state.phase === 'guessing' ? votesBySlot(activeVoters(host.room, state)) : undefined;
   // The host on the team whose turn it is votes like everyone else on it.
@@ -90,7 +84,6 @@ export function Game({ state, mode, onModeChange, speaker, onSpeakerChange, onCh
   const [playing, setPlaying] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
   const [showPlayer, setShowPlayer] = useState(false);
-  const [pickSpeaker, setPickSpeaker] = useState(false);
 
   // Create the player for the chosen mode.
   useEffect(() => {
@@ -99,9 +92,7 @@ export function Game({ state, mode, onModeChange, speaker, onSpeakerChange, onCh
     setPlayback(null);
     setPlaybackError(null);
     const make =
-      mode === 'premium' && speaker
-        ? Promise.resolve(createSpeakerPlayback(speaker))
-        : mode === 'premium'
+      mode === 'premium'
         ? createPremiumPlayback()
         : mode === 'embed'
           ? createEmbedPlayback(embedHost.current!)
@@ -118,7 +109,7 @@ export function Game({ state, mode, onModeChange, speaker, onSpeakerChange, onCh
       cancelled = true;
       created?.destroy();
     };
-  }, [mode, speaker?.id]);
+  }, [mode]);
 
   // Load each new song as it is drawn.
   const songId = state.phase === 'guessing' ? state.current?.id : undefined;
@@ -143,6 +134,26 @@ export function Game({ state, mode, onModeChange, speaker, onSpeakerChange, onCh
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [playback, songId]);
+
+  // A link that opens the song in the Spotify app, to play it on any speaker
+  // the app can reach. Songs found by search reuse the lookup the player made.
+  const [spotifyUrl, setSpotifyUrl] = useState<string | null>(null);
+  useEffect(() => {
+    setSpotifyUrl(null);
+    const song = state.current;
+    if (!song || state.phase !== 'guessing') return;
+    let cancelled = false;
+    const toUrl = (uri: string | null) => uri && `https://open.spotify.com/track/${uri.split(':').pop()}`;
+    if (song.spotifyId) setSpotifyUrl(toUrl(`spotify:track:${song.spotifyId}`));
+    else if (songStatus === 'ready' && mode !== 'none')
+      void findTrackUri(song)
+        .then((uri) => !cancelled && setSpotifyUrl(toUrl(uri)))
+        .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [songId, songStatus]);
 
   // Look up the fun fact while the song plays, so it's ready at the reveal.
   useEffect(() => {
@@ -240,6 +251,21 @@ export function Game({ state, mode, onModeChange, speaker, onSpeakerChange, onCh
                       Skip song
                     </button>
                   </div>
+                  {spotifyUrl && (
+                    <p className="hint open-spotify">
+                      <a
+                        href={spotifyUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={() => {
+                          if (playing) void playback?.pause().catch(() => {});
+                        }}
+                      >
+                        Open in Spotify ↗
+                      </a>{' '}
+                      to play it on any speaker, like a Sonos. Spotify shows the title, so let someone who isn’t guessing tap it.
+                    </p>
+                  )}
                   {playbackError && (
                     <div className="warn">
                       <p>{playbackError}</p>
@@ -250,17 +276,7 @@ export function Game({ state, mode, onModeChange, speaker, onSpeakerChange, onCh
                       )}
                     </div>
                   )}
-                  {songError && (
-                    <div className="warn">
-                      <p>{songError}</p>
-                      {mode === 'premium' && speaker && songStatus === 'ready' && (
-                        <button className="link" onClick={() => onSpeakerChange(null)}>
-                          Play in this browser instead
-                        </button>
-                      )}
-                    </div>
-                  )}
-                  {mode === 'premium' && speaker && !songError && <p className="hint">{speaker.id ? `Playing on ${speaker.name}.` : 'Playing where the Spotify app plays.'}</p>}
+                  {songError && <p className="warn">{songError}</p>}
                 </div>
               ) : (
                 state.lastGuess && <Reveal correct={state.lastGuess.correct} song={state.lastGuess.song} />
@@ -369,27 +385,10 @@ export function Game({ state, mode, onModeChange, speaker, onSpeakerChange, onCh
         <span className="muted">
           Round {state.round} · {state.refill ? 'more songs on the way' : `${state.deck.length} songs left`}
         </span>
-        {mode === 'premium' && (
-          <button className="link" onClick={() => setPickSpeaker(!pickSpeaker)}>
-            🔊 {speaker ? (speaker.id ? speaker.name : 'Spotify app') : 'This browser'}
-          </button>
-        )}
         <button className="link" onClick={quit}>
           End game
         </button>
       </footer>
-      {pickSpeaker && mode === 'premium' && (
-        <section className="panel">
-          <SpeakerPicker
-            speaker={speaker}
-            testable={false}
-            onChange={(s) => {
-              onSpeakerChange(s);
-              setPickSpeaker(false);
-            }}
-          />
-        </section>
-      )}
     </main>
   );
 }

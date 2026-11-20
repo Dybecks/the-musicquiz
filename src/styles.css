@@ -302,9 +302,6 @@ input:focus { outline: 2px solid var(--accent); border-color: transparent; }
 .voters { list-style: none; padding: 0; margin: 0 0 8px; display: grid; gap: 4px; font-size: 0.92rem; color: var(--muted); }
 .voters li.voted { color: var(--text); }
 .voters li.locked { color: var(--good); }
-.speakers { margin-top: 6px; }
-.speakers h2 { font-size: 1rem; margin-bottom: 8px; }
-.test-sound { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
 .avatar { display: inline-block; margin-right: 4px; }
 .avatar-button { font-size: 2rem; width: 56px; height: 56px; padding: 0; border-radius: 50%; background: var(--panel-2); line-height: 1; flex: none; }
 .avatar-button.small { font-size: 1.3rem; width: 38px; height: 38px; min-height: 38px; }
@@ -323,3 +320,5 @@ input:focus { outline: 2px solid var(--accent); border-color: transparent; }
 .add-music .info, .add-music .progress { margin-bottom: 10px; }
 .lobby h1 { font-size: 1.25rem; }
 .voters .who-chip { margin-right: 0; }
+.open-spotify { text-align: center; margin-top: 10px; }
+.open-spotify a { color: var(--accent-2); font-weight: 600; }
