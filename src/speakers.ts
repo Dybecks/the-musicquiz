@@ -1,4 +1,5 @@
 import { parseSonosChoice, type SonosChoice } from './sonos/bridge';
+import { msg } from './i18n';
 
 /**
  * Where the music plays, when not in this browser:
@@ -23,4 +24,4 @@ export const sameSpeaker = (a: SpeakerChoice | null, b: SpeakerChoice | null): b
 /** A key that changes when the player has to be made again. */
 export const speakerKey = (c: SpeakerChoice | null) => (!c ? '' : c.kind === 'sonos' ? `sonos:${c.code}:${c.speaker.id}` : c.kind);
 
-export const speakerLabel = (c: SpeakerChoice | null) => (!c ? 'This device' : c.kind === 'sonos' ? c.speaker.name : 'Spotify app');
+export const speakerLabel = (c: SpeakerChoice | null) => (!c ? msg().speakers.thisDevice : c.kind === 'sonos' ? c.speaker.name : msg().speakers.spotifyApp);

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { connectBridge, isBridgeCode, normalizeBridgeCode, type BridgeLink, type SonosSpeaker } from '../sonos/bridge';
 import { SPOTIFY_APP, type SpeakerChoice } from '../speakers';
 import { isLoggedIn } from '../spotify/auth';
+import { msg, useT } from '../i18n';
 
 const CODE_KEY = 'mq.sonosCode';
 
@@ -20,6 +21,7 @@ function savedCode(): string {
  * it plays wherever it plays), or a Sonos speaker through the Sonos bridge.
  */
 export function SpeakerPicker({ choice, onChange }: { choice: SpeakerChoice | null; onChange: (c: SpeakerChoice | null) => void }) {
+  const t = useT().speakers;
   const sonosChoice = choice?.kind === 'sonos' ? choice : null;
   const [code, setCode] = useState(() => sonosChoice?.code ?? savedCode());
   const [speakers, setSpeakers] = useState<SonosSpeaker[] | null>(null);
@@ -48,7 +50,7 @@ export function SpeakerPicker({ choice, onChange }: { choice: SpeakerChoice | nu
       const found = await l.list();
       setSpeakers(found);
       setFoundWith(code);
-      if (found.length === 0) setNote('The bridge found no Sonos speakers. Is its computer on the same Wi-Fi as the speakers?');
+      if (found.length === 0) setNote(msg().speakers.noSonos);
     } catch (e) {
       setSpeakers(null);
       setNote(message(e));
@@ -62,10 +64,10 @@ export function SpeakerPicker({ choice, onChange }: { choice: SpeakerChoice | nu
 
   return (
     <div className="speakers">
-      <h2>Play the music on</h2>
-      <div className="chips" role="radiogroup" aria-label="Play the music on">
+      <h2>{t.playOn}</h2>
+      <div className="chips" role="radiogroup" aria-label={t.playOn}>
         <button role="radio" aria-checked={!choice} className={`chip ${!choice ? 'selected' : ''}`} onClick={() => onChange(null)}>
-          This device
+          {t.thisDevice}
         </button>
         <button
           role="radio"
@@ -74,7 +76,7 @@ export function SpeakerPicker({ choice, onChange }: { choice: SpeakerChoice | nu
           disabled={!loggedIn}
           onClick={() => onChange(SPOTIFY_APP)}
         >
-          Spotify app
+          {t.spotifyApp}
         </button>
         {shown.map((s) => (
           <button
@@ -91,17 +93,16 @@ export function SpeakerPicker({ choice, onChange }: { choice: SpeakerChoice | nu
       <p className="hint">
         {loggedIn ? (
           <>
-            <strong>Spotify app:</strong> the game steers the Spotify app, and the music plays wherever the app plays: the phone, or a speaker you pick in the app
-            (the speaker icon), like a Sonos or a TV. Start any song there first. Needs Spotify Premium. The app shows the title, so keep it out of sight.
+            <strong>{t.appHintTitle}</strong> {t.appHint}
           </>
         ) : (
           <>
-            <strong>Spotify app</strong> needs the Spotify login (Premium): end the game and choose “Log in with Spotify” in setup.
+            <strong>{t.appNeedsLoginTitle}</strong> {t.appNeedsLogin}
           </>
         )}
       </p>
       <details className="sonos-bridge" open={!!sonosChoice || undefined}>
-        <summary>Sonos through the Sonos bridge</summary>
+        <summary>{t.sonosBridge}</summary>
         <form
           className="sonos-code"
           onSubmit={(e) => {
@@ -110,7 +111,7 @@ export function SpeakerPicker({ choice, onChange }: { choice: SpeakerChoice | nu
           }}
         >
           <label>
-            Sonos bridge code
+            {t.bridgeCode}
             <input
               className="code-input"
               value={code}
@@ -123,14 +124,11 @@ export function SpeakerPicker({ choice, onChange }: { choice: SpeakerChoice | nu
             />
           </label>
           <button type="submit" className="ghost" disabled={busy || !isBridgeCode(code)}>
-            {busy ? 'Looking…' : speakers ? '↻ Look again' : 'Find Sonos speakers'}
+            {busy ? t.looking : speakers ? t.lookAgain : t.findSonos}
           </button>
         </form>
         {note && <p className="warn">{note}</p>}
-        <p className="hint">
-          For a Sonos the Spotify app can’t steer. Needs the Sonos bridge running on a computer on this Wi-Fi (see “Playing on a Sonos” in the README); it shows the
-          code when it starts.
-        </p>
+        <p className="hint">{t.sonosHint}</p>
       </details>
     </div>
   );

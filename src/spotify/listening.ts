@@ -5,6 +5,7 @@
  */
 import type { Song } from '../game/engine';
 import { RateLimitError, spotifyGet, SpotifyError } from './api';
+import { msg } from '../i18n';
 import { filterSongs, type Genre } from '../data/genres';
 import { DEFAULT_SONGS } from '../data/songs';
 import {
@@ -54,24 +55,32 @@ const CACHE_LIMIT = 8000;
 export const PLAYLIST_SCOPES = ['playlist-read-private', 'playlist-read-collaborative'];
 
 /** Genres the host can build a list from, with the Spotify genre each one searches. */
-export const SEARCH_GENRES: { id: string; label: string; query: string; genre?: Genre }[] = [
-  { id: 'pop', label: 'Pop', query: 'pop', genre: 'pop' },
-  { id: 'rock', label: 'Rock', query: 'rock', genre: 'rock' },
-  { id: 'hiphop', label: 'Hip-hop', query: 'hip hop', genre: 'hiphop' },
-  { id: 'rnb', label: 'R&B', query: 'r&b', genre: 'hiphop' },
-  { id: 'soul', label: 'Soul', query: 'soul', genre: 'soul' },
-  { id: 'disco', label: 'Disco & funk', query: 'disco', genre: 'soul' },
-  { id: 'dance', label: 'Dance', query: 'dance', genre: 'dance' },
-  { id: 'country', label: 'Country', query: 'country' },
-  { id: 'metal', label: 'Metal', query: 'metal', genre: 'rock' },
-  { id: 'indie', label: 'Indie', query: 'indie', genre: 'rock' },
-  { id: 'schlager', label: 'Schlager', query: 'schlager', genre: 'swedish' },
-  { id: 'swedishpop', label: 'Swedish pop', query: 'swedish pop', genre: 'swedish' },
-  { id: 'jazz', label: 'Jazz', query: 'jazz', genre: 'soul' },
-  { id: 'reggae', label: 'Reggae', query: 'reggae' },
-  { id: 'latin', label: 'Latin', query: 'latin' },
-  { id: 'punk', label: 'Punk', query: 'punk', genre: 'rock' },
-];
+/** The label is in the current language (searchGenres in src/i18n). */
+export const SEARCH_GENRES: { id: string; readonly label: string; query: string; genre?: Genre }[] = (
+  [
+    { id: 'pop', query: 'pop', genre: 'pop' },
+    { id: 'rock', query: 'rock', genre: 'rock' },
+    { id: 'hiphop', query: 'hip hop', genre: 'hiphop' },
+    { id: 'rnb', query: 'r&b', genre: 'hiphop' },
+    { id: 'soul', query: 'soul', genre: 'soul' },
+    { id: 'disco', query: 'disco', genre: 'soul' },
+    { id: 'dance', query: 'dance', genre: 'dance' },
+    { id: 'country', query: 'country' },
+    { id: 'metal', query: 'metal', genre: 'rock' },
+    { id: 'indie', query: 'indie', genre: 'rock' },
+    { id: 'schlager', query: 'schlager', genre: 'swedish' },
+    { id: 'swedishpop', query: 'swedish pop', genre: 'swedish' },
+    { id: 'jazz', query: 'jazz', genre: 'soul' },
+    { id: 'reggae', query: 'reggae' },
+    { id: 'latin', query: 'latin' },
+    { id: 'punk', query: 'punk', genre: 'rock' },
+  ] as { id: string; query: string; genre?: Genre }[]
+).map((g) => ({
+  ...g,
+  get label() {
+    return msg().searchGenres[g.id] ?? g.id;
+  },
+}));
 
 // ---- The saved list ----
 
@@ -358,7 +367,7 @@ export async function startList(
   let songs: Song[] = plan.kind === 'genres' ? builtInForGenres(plan.genres, plan.from, plan.to) : [];
   let next: RefillPlan | null = plan;
   let tries = 0;
-  const label = plan.kind === 'genres' ? 'Finding songs on Spotify' : 'Reading your playlists';
+  const label = plan.kind === 'genres' ? msg().errors.findingSongs : msg().errors.readingPlaylists;
   while (next && (tries === 0 || songs.length < want) && tries < 5) {
     onProgress({ label, done: Math.min(songs.length, want), total: want });
     try {
@@ -371,7 +380,7 @@ export async function startList(
         throw e;
       }
       if (songs.length === 0) throw e;
-      return { songs, plan: null, note: `${e.message} Until then the game uses its own classic hits for these genres and years.` };
+      return { songs, plan: null, note: msg().game.refillFallback(e.message) };
     }
     tries++;
     if (next && songs.length < want) await pause(PAUSE_MS);
@@ -416,7 +425,7 @@ export async function fetchPlaylists(offset = 0): Promise<{ playlists: PlaylistS
     .filter((p): p is RawPlaylist => !!p?.id)
     .map((p) => ({
       id: p.id,
-      name: p.name || 'Untitled playlist',
+      name: p.name || msg().errors.untitledPlaylist,
       owner: p.owner?.display_name || p.owner?.id || '',
       // The smallest cover that still looks sharp.
       image: [...(p.images ?? [])].sort((a, b) => (a.width ?? 999) - (b.width ?? 999)).find((i) => (i.width ?? 999) >= 60)?.url ?? p.images?.[0]?.url ?? null,

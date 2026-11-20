@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { HostRoom } from '../multiplayer/useHostRoom';
 import { HOST_ID, type Member } from '../multiplayer/protocol';
+import { useT } from '../i18n';
 
 /** The link a phone opens to join this game. */
 export const joinLink = (code: string) => `${new URL(import.meta.env.BASE_URL, window.location.origin)}?join=${code}`;
@@ -10,6 +11,8 @@ export const joinLink = (code: string) => `${new URL(import.meta.env.BASE_URL, w
  * which team they are on, and the host's own name and team.
  */
 export function SharePanel({ host, lobby }: { host: HostRoom; lobby?: boolean }) {
+  const tt = useT();
+  const t = tt.share;
   const [copied, setCopied] = useState(false);
   const { room, status, teams } = host;
   const me = room?.members.find((m) => m.id === HOST_ID);
@@ -22,14 +25,10 @@ export function SharePanel({ host, lobby }: { host: HostRoom; lobby?: boolean })
   if (!room) {
     return (
       <section className="panel share">
-        <h2>{lobby ? 'Invite players to their phones' : 'Play together on phones'}</h2>
-        <p className="hint">
-          Share a code so everyone can follow the game on their own phone or computer, join a team and vote for the spot
-          before the team locks in together. They can also add songs from their own Spotify if they like. The music
-          still plays here.
-        </p>
+        <h2>{lobby ? t.inviteTitle : t.playTogether}</h2>
+        <p className="hint">{t.intro}</p>
         <button className="ghost" onClick={host.share}>
-          Share a game code
+          {t.shareCode}
         </button>
       </section>
     );
@@ -37,7 +36,7 @@ export function SharePanel({ host, lobby }: { host: HostRoom; lobby?: boolean })
 
   const link = joinLink(room.code);
   const shareLink = async () => {
-    const data = { title: 'The Music Quiz', text: `Join the game with code ${room.code}`, url: link };
+    const data = { title: tt.app.name, text: t.shareText(room.code), url: link };
     try {
       if (navigator.share) await navigator.share(data);
       else {
@@ -56,31 +55,31 @@ export function SharePanel({ host, lobby }: { host: HostRoom; lobby?: boolean })
     <section className="panel share">
       <div className="share-head">
         <div>
-          <p className="hint">Game code</p>
-          <p className="room-code" aria-label={`Game code ${room.code.split('').join(' ')}`}>
+          <p className="hint">{t.gameCode}</p>
+          <p className="room-code" aria-label={t.gameCodeSpelled(room.code)}>
             {room.code}
           </p>
         </div>
         <button className="ghost" onClick={shareLink}>
-          {copied ? 'Link copied' : 'Share link'}
+          {copied ? t.linkCopied : t.shareLink}
         </button>
       </div>
       <p className="hint">
         {status?.kind === 'open'
-          ? 'On a phone or computer, open the game, choose “Join a game” and type the code, or open the link.'
+          ? t.howToJoin
           : status?.kind === 'error'
             ? status.message
-            : 'Opening the room…'}
+            : t.opening}
       </p>
 
       <div className="host-me">
         {me?.emoji && (
-          <button className="avatar-button" title="Tap for another picture" onClick={() => host.act({ type: 'reroll' })}>
+          <button className="avatar-button" title={t.anotherPicture} onClick={() => host.act({ type: 'reroll' })}>
             {me.emoji}
           </button>
         )}
         <label className="field">
-          <span>Your name on this device</span>
+          <span>{t.yourName}</span>
           <input
             value={name}
             maxLength={24}
@@ -88,7 +87,7 @@ export function SharePanel({ host, lobby }: { host: HostRoom; lobby?: boolean })
             onBlur={() => name.trim() && host.act({ type: 'hello', memberId: HOST_ID, name })}
           />
         </label>
-        <p className="hint">Your team (you vote here, on this screen):</p>
+        <p className="hint">{t.yourTeam}</p>
         <div className="chips">
           {teams.map((t) => (
             <button
@@ -105,7 +104,7 @@ export function SharePanel({ host, lobby }: { host: HostRoom; lobby?: boolean })
             aria-pressed={!me?.teamId}
             onClick={() => host.act({ type: 'team', teamId: null })}
           >
-            Just running the game
+            {t.justRunning}
           </button>
         </div>
       </div>
@@ -116,13 +115,13 @@ export function SharePanel({ host, lobby }: { host: HostRoom; lobby?: boolean })
           return (
             <li key={t.id}>
               <strong>{t.name}</strong>
-              <span>{members.length ? members.map((m) => <MemberName key={m.id} member={m} />) : <span className="muted">nobody yet</span>}</span>
+              <span>{members.length ? members.map((m) => <MemberName key={m.id} member={m} />) : <span className="muted">{tt.share.nobodyYet}</span>}</span>
             </li>
           );
         })}
         {unassigned.length > 0 && (
           <li>
-            <strong className="muted">Choosing a team</strong>
+            <strong className="muted">{t.choosingTeam}</strong>
             <span>
               {unassigned.map((m) => (
                 <MemberName key={m.id} member={m} />
@@ -131,22 +130,23 @@ export function SharePanel({ host, lobby }: { host: HostRoom; lobby?: boolean })
           </li>
         )}
       </ul>
-      {pending > 0 && <p className="hint">{pending} songs from players’ Spotify will be added when the game starts.</p>}
-      <button className="link" onClick={() => host.stop('The host stopped sharing the game.')}>
-        Stop sharing
+      {pending > 0 && <p className="hint">{t.pending(pending)}</p>}
+      <button className="link" onClick={() => host.stop('stopped')}>
+        {t.stop}
       </button>
     </section>
   );
 }
 
 function MemberName({ member }: { member: Member }) {
+  const t = useT().share;
   return (
-    <span className={`member ${member.connected ? '' : 'offline'}`} title={member.connected ? undefined : 'Not connected'}>
+    <span className={`member ${member.connected ? '' : 'offline'}`} title={member.connected ? undefined : t.notConnected}>
       {member.emoji && <span className="avatar">{member.emoji}</span>}
       {member.name}
-      {member.id === HOST_ID && ' (host)'}
+      {member.id === HOST_ID && t.host}
       {member.locked && ' ✓'}
-      {member.songs ? <span className="muted"> · {member.songs} songs</span> : null}
+      {member.songs ? <span className="muted">{t.memberSongs(member.songs)}</span> : null}
     </span>
   );
 }

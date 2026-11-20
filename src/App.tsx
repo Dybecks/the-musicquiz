@@ -13,6 +13,8 @@ import { isValidCode, lobbyTeams, normalizeCode } from './multiplayer/protocol';
 import { useHostRoom } from './multiplayer/useHostRoom';
 import { SharePanel } from './components/SharePanel';
 import { mergeSongs } from './spotify/personalDeck';
+import { msg, useT } from './i18n';
+import { LanguagePicker } from './i18n/LanguagePicker';
 
 const GAME_KEY = 'mq.game';
 const MODE_KEY = 'mq.mode';
@@ -59,6 +61,7 @@ function codeFromLink(): string | null {
 }
 
 export function App() {
+  const t = useT();
   // Joining someone else's game: from a link, or carrying on after a reload.
   const [remote, setRemote] = useState<{ code?: string } | null>(() => {
     const code = codeFromLink();
@@ -86,7 +89,7 @@ export function App() {
   const [personal, setPersonal] = useState<PersonalDeck | null>(loadPersonalDeck);
   const [returnedFromLogin, setReturnedFromLogin] = useState(false);
   // The teams typed in setup, so phones can join a team before the game starts.
-  const [teamNames, setTeamNames] = useState<string[]>(() => loadJson<string[]>('mq.players') ?? ['Team 1', 'Team 2']);
+  const [teamNames, setTeamNames] = useState<string[]>(() => loadJson<string[]>('mq.players') ?? [msg().app.defaultTeam(1), msg().app.defaultTeam(2)]);
   const lobby = useMemo(() => lobbyTeams(teamNames), [teamNames]);
   const host = useHostRoom(game, setGame, lobby);
 
@@ -136,7 +139,8 @@ export function App() {
   return (
     <div className="app">
       <header className="brand">
-        <span className="brand-mark">♪</span> The Music Quiz
+        <span className="brand-mark">♪</span> <span className="brand-name">{t.app.name}</span>
+        <LanguagePicker />
       </header>
       {remote ? (
         <Remote initialCode={remote.code} onLeave={() => setRemote(null)} profile={profile} />
@@ -155,7 +159,7 @@ export function App() {
           host={host}
         />
       ) : !authChecked ? (
-        <p className="hint center">Checking Spotify login…</p>
+        <p className="hint center">{t.app.checkingLogin}</p>
       ) : (
         <Setup
           profile={profile}

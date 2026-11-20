@@ -1,5 +1,6 @@
 import { Fragment } from 'react';
 import type { Song } from '../game/engine';
+import { msg, useT } from '../i18n';
 
 interface Props {
   cards: Song[];
@@ -16,13 +17,15 @@ interface Props {
 }
 
 function slotLabel(cards: Song[], slot: number): string {
-  if (cards.length === 0) return 'Place here';
-  if (slot === 0) return `Before ${cards[0].year}`;
-  if (slot === cards.length) return `After ${cards[cards.length - 1].year}`;
-  return `Between ${cards[slot - 1].year} and ${cards[slot].year}`;
+  const t = msg().timeline;
+  if (cards.length === 0) return t.placeHere;
+  if (slot === 0) return t.before(cards[0].year);
+  if (slot === cards.length) return t.after(cards[cards.length - 1].year);
+  return t.between(cards[slot - 1].year, cards[slot].year);
 }
 
 export function Timeline({ cards, selectable, selectedSlot, onSelect, highlightId, wrongCard, compact, votes }: Props) {
+  const t = useT();
   // Where the wrong card really belongs (first card with a later year).
   let wrongIndex = -1;
   if (wrongCard) {
@@ -46,7 +49,7 @@ export function Timeline({ cards, selectable, selectedSlot, onSelect, highlightI
           {slotLabel(cards, i)}
         </span>
         {voters && (
-          <span className="votes" aria-label={`Votes: ${voters.join(', ')}`}>
+          <span className="votes" aria-label={t.timeline.votes(voters)}>
             {voters.map((name, j) => (
               <span key={j} className="vote-chip">
                 {name}
@@ -81,11 +84,12 @@ export function Timeline({ cards, selectable, selectedSlot, onSelect, highlightI
 }
 
 function WrongCard({ song }: { song: Song }) {
+  const t = useT();
   return (
-    <li className="song-card ghost-card" aria-label="Where the song really belongs">
+    <li className="song-card ghost-card" aria-label={t.timeline.wrongPlace}>
       <span className="year">{song.year}</span>
       <span className="title">{song.title}</span>
-      <span className="artist">belonged here</span>
+      <span className="artist">{t.timeline.belongedHere}</span>
     </li>
   );
 }

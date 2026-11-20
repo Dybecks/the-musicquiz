@@ -1,7 +1,9 @@
 import type { Song } from '../game/engine';
+import { msg, type Lang } from '../i18n';
 
 /**
- * Fun facts for the reveal screen, read live from English Wikipedia.
+ * Fun facts for the reveal screen, read live from Wikipedia in the game's
+ * language (English or Swedish Wikipedia).
  *
  * Wikipedia's API allows calls straight from the browser (`origin=*`) and needs
  * no key, so it works on the static site and for any song, including the
@@ -30,10 +32,29 @@ export interface WikiPage {
   pageprops?: { disambiguation?: string };
 }
 
-const API = 'https://en.wikipedia.org/w/api.php';
 const MAX_CHARS = 300;
 
-export function searchUrl(query: string): string {
+const host = (lang: Lang) => `https://${lang}.wikipedia.org`;
+
+/** Words for searching and matching, per Wikipedia language. */
+const WORDS: Record<Lang, { song: string; artist: string; music: RegExp; songPage: RegExp }> = {
+  en: {
+    song: 'song',
+    artist: 'musician OR band OR singer',
+    music:
+      /\b(singer|band|musician|rapper|songwriter|group|duo|trio|composer|dj|producer|vocalist|guitarist|pianist|orchestra|recording artist)\b/i,
+    songPage: /\((.* )?(song|single|album)\)\s*$/i,
+  },
+  sv: {
+    song: 'låt',
+    artist: 'musiker OR band OR sångare',
+    music:
+      /(sångar|sångerska|band|musiker|rappar|låtskrivar|grupp|duo|trio|kompositör|dj|producent|vokalist|gitarrist|pianist|orkester|artist)/i,
+    songPage: /\((.* )?(sång|låt|singel|album)\)\s*$/i,
+  },
+};
+
+export function searchUrl(query: string, lang: Lang = 'en'): string {
   const params = new URLSearchParams({
     action: 'query',
     format: 'json',
@@ -50,11 +71,11 @@ export function searchUrl(query: string): string {
     exlimit: 'max',
     redirects: '1',
   });
-  return `${API}?${params}`;
+  return `${host(lang)}/w/api.php?${params}`;
 }
 
-export function articleUrl(title: string): string {
-  return `https://en.wikipedia.org/wiki/${encodeURIComponent(title.replace(/ /g, '_'))}`;
+export function articleUrl(title: string, lang: Lang = 'en'): string {
+  return `${host(lang)}/wiki/${encodeURIComponent(title.replace(/ /g, '_'))}`;
 }
 
 /** Lowercase, drop accents, punctuation and "the", for loose title matching. */
@@ -119,22 +140,20 @@ export function pickSongPage(pages: WikiPage[], song: Pick<Song, 'title' | 'arti
   );
 }
 
-const MUSIC_WORDS =
-  /\b(singer|band|musician|rapper|songwriter|group|duo|trio|composer|dj|producer|vocalist|guitarist|pianist|orchestra|recording artist)\b/i;
-
 /**
  * The artist's article: its title matches the artist, it isn't about a song or
  * album, and its first sentence says it's about a musician. That last check
  * keeps "Prince" from picking the article about royalty.
  */
-export function pickArtistPage(pages: WikiPage[], artist: string): WikiPage | null {
+export function pickArtistPage(pages: WikiPage[], artist: string, lang: Lang = 'en'): WikiPage | null {
+  const words = WORDS[lang];
   const ranked = sortByRank(pages);
   for (const name of artistNames(artist)) {
     const hit = ranked.find((p) => {
       if (!usable(p) || normalize(baseTitle(p.title)) !== name) return false;
-      if (/\((.* )?(song|single|album)\)\s*$/i.test(p.title)) return false;
+      if (words.songPage.test(p.title)) return false;
       const firstSentence = p.extract!.split(/\.\s/)[0];
-      return MUSIC_WORDS.test(firstSentence);
+      return words.music.test(firstSentence);
     });
     if (hit) return hit;
   }
@@ -165,28 +184,29 @@ export function shorten(extract: string, maxChars = MAX_CHARS): string {
   return out;
 }
 
-function toFact(page: WikiPage, about: SongFact['about']): SongFact {
-  return { text: shorten(page.extract!), about, title: page.title, url: articleUrl(page.title) };
+function toFact(page: WikiPage, about: SongFact['about'], lang: Lang): SongFact {
+  return { text: shorten(page.extract!), about, title: page.title, url: articleUrl(page.title, lang) };
 }
 
 type Fetcher = (url: string) => Promise<{ ok: boolean; json(): Promise<unknown> }>;
 
-async function search(query: string, fetcher: Fetcher): Promise<WikiPage[]> {
-  const res = await fetcher(searchUrl(query));
-  if (!res.ok) throw new Error(`Wikipedia search failed (${query})`);
+async function search(query: string, fetcher: Fetcher, lang: Lang): Promise<WikiPage[]> {
+  const res = await fetcher(searchUrl(query, lang));
+  if (!res.ok) throw new Error(msg().errors.wikipediaFailed(query));
   const body = (await res.json()) as { query?: { pages?: WikiPage[] } };
   return body.query?.pages ?? [];
 }
 
 /** Look up a fact for a song: its own article, else its artist's. Null when neither is found. */
-export async function findFact(song: Song, fetcher: Fetcher = (url) => fetch(url)): Promise<SongFact | null> {
+export async function findFact(song: Song, fetcher: Fetcher = (url) => fetch(url), lang: Lang = 'en'): Promise<SongFact | null> {
   const title = cleanSongTitle(song.title).replace(/"/g, '');
   const artist = song.artist.replace(/"/g, '');
-  const songPage = pickSongPage(await search(`"${title}" ${artist} ${song.from ?? 'song'}`, fetcher), song);
-  if (songPage) return toFact(songPage, 'song');
+  const words = WORDS[lang];
+  const songPage = pickSongPage(await search(`"${title}" ${artist} ${song.from ?? words.song}`, fetcher, lang), song);
+  if (songPage) return toFact(songPage, 'song', lang);
   // Soundtrack songs credited to a composer or cast (John Williams, a musical's
   // cast) are better served by nothing than by a long composer biography.
   if (song.from) return null;
-  const artistPage = pickArtistPage(await search(`${artist} musician OR band OR singer`, fetcher), song.artist);
-  return artistPage ? toFact(artistPage, 'artist') : null;
+  const artistPage = pickArtistPage(await search(`${artist} ${words.artist}`, fetcher, lang), song.artist, lang);
+  return artistPage ? toFact(artistPage, 'artist', lang) : null;
 }

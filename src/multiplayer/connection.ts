@@ -1,5 +1,6 @@
 import type { DataConnection, Peer, PeerOptions } from 'peerjs';
 import { peerIdFor, type ClientMessage, type HostMessage, type RoomView } from './protocol';
+import { msg } from '../i18n';
 
 /**
  * The connections between the host device and the phones. They are direct
@@ -66,7 +67,7 @@ export function openHost(code: string, handlers: HostHandlers): HostLink {
     try {
       p = await makePeer(peerIdFor(roomCode));
     } catch (e) {
-      handlers.onStatus({ kind: 'error', message: `Couldn’t load the connection code: ${String(e)}` });
+      handlers.onStatus({ kind: 'error', message: msg().errors.connectionCode(String(e)) });
       return;
     }
     if (closed) return p.destroy();
@@ -109,11 +110,11 @@ export function openHost(code: string, handlers: HostHandlers): HostLink {
         if (++tries > 3) handlers.onStatus({ kind: 'taken' });
         else timer = setTimeout(() => void start(roomCode), RETRY_MS);
       } else if (['network', 'server-error', 'socket-error', 'socket-closed'].includes(err.type)) {
-        handlers.onStatus({ kind: 'error', message: 'Can’t reach the connection server. Retrying…' });
+        handlers.onStatus({ kind: 'error', message: msg().errors.serverRetrying });
         p.destroy();
         timer = setTimeout(() => void start(roomCode), RETRY_MS * 2);
       } else if (err.type === 'browser-incompatible') {
-        handlers.onStatus({ kind: 'error', message: 'This browser can’t share the game (no WebRTC).' });
+        handlers.onStatus({ kind: 'error', message: msg().errors.noWebRtcShare });
       }
     });
   };
@@ -128,7 +129,9 @@ export function openHost(code: string, handlers: HostHandlers): HostLink {
       const conn = conns.get(memberId);
       if (conn?.open) conn.send(msg);
     },
-    close(reason = 'The host ended the game.') {
+    // Phones show the reason in their own language: 'ended' and 'stopped'
+    // are codes for the texts in src/i18n (remote.hostEnded, remote.hostStopped).
+    close(reason = 'ended') {
       if (closed) return;
       closed = true;
       clearTimeout(timer);
@@ -217,7 +220,7 @@ export function joinRoom(code: string, memberId: string, name: string, handlers:
     try {
       p = await makePeer();
     } catch (e) {
-      handlers.onStatus({ kind: 'error', message: `Couldn’t load the connection code: ${String(e)}` });
+      handlers.onStatus({ kind: 'error', message: msg().errors.connectionCode(String(e)) });
       return;
     }
     if (closed) return p.destroy();
@@ -232,7 +235,7 @@ export function joinRoom(code: string, memberId: string, name: string, handlers:
         p.destroy();
       } else if (err.type === 'browser-incompatible') {
         closed = true;
-        handlers.onStatus({ kind: 'error', message: 'This browser can’t join (no WebRTC).' });
+        handlers.onStatus({ kind: 'error', message: msg().errors.noWebRtcJoin });
       } else if (p.destroyed) {
         // This peer is gone for good: start over with a new one.
         handlers.onStatus({ kind: 'reconnecting' });

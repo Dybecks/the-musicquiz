@@ -14,6 +14,8 @@ import type { SpotifyProfile } from '../spotify/api';
 import { AddMyMusic } from './AddMyMusic';
 import { Finished, Reveal, Scoreboard } from './Game';
 import { Timeline } from './Timeline';
+import { msg, useT } from '../i18n';
+import { Rich } from '../i18n/Rich';
 
 /** The game this phone joined last, so a reload carries on. */
 const REMOTE_KEY = 'mq.remote';
@@ -87,7 +89,7 @@ export function Remote({ initialCode, onLeave, profile }: Props) {
       onLeave={leave}
       onNotFound={() => {
         localStorage.removeItem(REMOTE_KEY);
-        setNotice(`There is no game with code ${session.code} right now. Check the code, and that the host has shared the game.`);
+        setNotice(msg().remote.notFound(session.code));
         setSession(null);
       }}
     />
@@ -105,6 +107,7 @@ function JoinForm({
   onJoin: (s: Session) => void;
   onBack: () => void;
 }) {
+  const t = useT().remote;
   const [code, setCode] = useState(initialCode ?? '');
   const [name, setName] = useState(() => localStorage.getItem(NAME_KEY) ?? '');
   const ok = isValidCode(code) && name.trim().length > 0;
@@ -112,10 +115,10 @@ function JoinForm({
     <main className="setup flow remote">
       <p>
         <button className="link" onClick={onBack}>
-          ← Host a game instead
+          {t.hostInstead}
         </button>
       </p>
-      <h2 className="screen-title">Join a game</h2>
+      <h2 className="screen-title">{t.joinGame}</h2>
       <form
         className="panel"
         onSubmit={(e) => {
@@ -124,7 +127,7 @@ function JoinForm({
         }}
       >
         <label className="field">
-          <span>Game code (on the host’s screen)</span>
+          <span>{t.codeLabel}</span>
           <input
             className="code-input"
             value={code}
@@ -134,19 +137,19 @@ function JoinForm({
             spellCheck={false}
             inputMode="text"
             placeholder="ABCD"
-            aria-label="Game code"
+            aria-label={t.codeAria}
           />
         </label>
         <label className="field">
-          <span>Your name</span>
-          <input value={name} maxLength={24} onChange={(e) => setName(e.target.value)} autoComplete="nickname" placeholder="Alex" />
+          <span>{t.yourName}</span>
+          <input value={name} maxLength={24} onChange={(e) => setName(e.target.value)} autoComplete="nickname" placeholder={t.namePlaceholder} />
         </label>
         {notice && <p className="warn">{notice}</p>}
         <button className="primary big" type="submit" disabled={!ok}>
-          Join
+          {t.join}
         </button>
       </form>
-      <p className="hint center">The music plays on the host’s device. Your phone shows the game and lets you vote.</p>
+      <p className="hint center">{t.joinHint}</p>
     </main>
   );
 }
@@ -154,9 +157,9 @@ function JoinForm({
 function statusText(status: ClientStatus): string | null {
   switch (status.kind) {
     case 'connecting':
-      return 'Connecting…';
+      return msg().remote.connecting;
     case 'reconnecting':
-      return 'Lost the connection to the host. Reconnecting…';
+      return msg().remote.reconnecting;
     case 'error':
       return status.message;
     default:
@@ -175,6 +178,8 @@ function Joined({
   onLeave: () => void;
   onNotFound: () => void;
 }) {
+  const tt = useT();
+  const t = tt.remote;
   const [status, setStatus] = useState<ClientStatus>({ kind: 'connecting' });
   const [view, setView] = useState<RoomView | null>(null);
   const [added, setAdded] = useState<number | null>(null);
@@ -208,16 +213,16 @@ function Joined({
     <div className="remote-head">
       <span className="who">
         {mine?.emoji && (
-          <button className="avatar-button small" title="Tap for another picture" onClick={() => send({ type: 'reroll' })}>
+          <button className="avatar-button small" title={tt.share.anotherPicture} onClick={() => send({ type: 'reroll' })}>
             {mine.emoji}
           </button>
         )}
         <span>
-          {session.name} · Game <strong>{session.code}</strong>
+          {session.name} · {t.gameLabel} <strong>{session.code}</strong>
         </span>
       </span>
       <button className="link" onClick={leave}>
-        Leave
+        {t.leave}
       </button>
     </div>
   );
@@ -226,11 +231,11 @@ function Joined({
     return (
       <main className="remote">
         <section className="panel center">
-          <h1>Game over</h1>
-          <p>{status.reason}</p>
+          <h1>{t.gameOver}</h1>
+          <p>{closedReason(status.reason)}</p>
           {view?.game && view.game.phase === 'finished' && <Finished state={view.game} />}
           <button className="primary big" onClick={onLeave}>
-            Back
+            {t.back}
           </button>
         </section>
       </main>
@@ -244,7 +249,7 @@ function Joined({
     return (
       <main className="remote">
         {header}
-        <p className="hint center">{note ?? 'Joining…'}</p>
+        <p className="hint center">{note ?? t.joining}</p>
       </main>
     );
   }
@@ -255,7 +260,7 @@ function Joined({
 
   const teamPicker = (
     <>
-      <h2 className="screen-title">{myTeam ? 'Switch team' : 'Which team are you on?'}</h2>
+      <h2 className="screen-title">{myTeam ? t.switchTeam : t.whichTeam}</h2>
       <div className="choices">
         {view.teams.map((t) => {
           const members = view.members.filter((m) => m.teamId === t.id);
@@ -266,7 +271,7 @@ function Joined({
               onClick={() => send({ type: 'team', teamId: t.id })}
             >
               <strong>{t.name}</strong>
-              <span>{members.length ? members.map((m) => <Who key={m.id} member={m} />) : 'Nobody yet'}</span>
+              <span>{members.length ? members.map((m) => <Who key={m.id} member={m} />) : tt.remote.nobodyYet}</span>
             </button>
           );
         })}
@@ -281,17 +286,17 @@ function Joined({
         {header}
         {noteLine}
         <section className="panel lobby">
-          <h1>Waiting for the host to start</h1>
+          <h1>{t.waitingStart}</h1>
           <p className="hint">
             {myTeam ? (
               <>
-                You’re on <strong>{myTeam.name}</strong>. You can still switch.
+                <Rich text={t.onTeam(myTeam.name)} /> {t.canSwitch}
               </>
             ) : (
-              'Pick your team below.'
+              t.pickTeam
             )}
           </p>
-          {view.pendingSongs > 0 && <p className="hint">{view.pendingSongs} songs from players will be added at the start.</p>}
+          {view.pendingSongs > 0 && <p className="hint">{t.pendingSongs(view.pendingSongs)}</p>}
         </section>
         {teamPicker}
         {addMusic}
@@ -315,7 +320,7 @@ function Joined({
       <main className="remote game">
         {header}
         <Finished state={game} />
-        <p className="hint center">Stay here: the host can start another game with the same code.</p>
+        <p className="hint center">{t.stayHere}</p>
       </main>
     );
   }
@@ -328,7 +333,7 @@ function Joined({
   // The votes, plus the spot the host has tapped (when the host isn't voting on this team).
   const votes = game.phase === 'guessing' ? votesBySlot(teamMembers) : undefined;
   if (votes && view.live.hostPick !== null && host?.teamId !== active.id) {
-    const tag = `${host ? label(host) : 'Host'} (host)`;
+    const tag = t.hostTag(host ? label(host) : tt.app.defaultHost);
     votes.set(view.live.hostPick, [...(votes.get(view.live.hostPick) ?? []), tag]);
   }
 
@@ -342,7 +347,7 @@ function Joined({
           <section className="panel turn">
             <h1>
               {active.name}
-              <span className="muted">’s turn</span>
+              <span className="muted">{tt.game.turnSuffix(active.name)}</span>
             </h1>
             {game.phase === 'revealed' && game.lastGuess ? (
               <Reveal correct={game.lastGuess.correct} song={game.lastGuess.song} />
@@ -352,22 +357,22 @@ function Joined({
                   <div className={`vinyl mini ${view.live.playing ? 'spinning' : ''}`} aria-hidden>
                     ?
                   </div>
-                  <span className="hint">{view.live.playing ? 'The song is playing…' : 'Waiting for the song to play'}</span>
+                  <span className="hint">{view.live.playing ? t.playing : t.waitingSong}</span>
                 </div>
                 {myTurn ? (
-                  <p>Vote for where the song belongs. The guess goes in when everyone on the team has locked in.</p>
+                  <p>{t.voteHint}</p>
                 ) : (
-                  <p className="hint">{active.name} is voting. Listen along and see where they put it.</p>
+                  <p className="hint">{t.otherVoting(active.name)}</p>
                 )}
                 <ul className="voters">
                   {teamMembers.map((m) => (
                     <li key={m.id} className={m.locked ? 'locked' : m.vote !== null ? 'voted' : ''}>
                       <Who member={m} />
-                      {m.id === me && ' (you)'}: {m.locked ? 'locked in ✓' : m.vote !== null ? 'voted' : 'thinking…'}
+                      {m.id === me && t.you}: {m.locked ? t.lockedIn : m.vote !== null ? t.voted : t.thinking}
                     </li>
                   ))}
                 </ul>
-                {view.split && <p className="warn">The votes are split. Agree on one spot and lock in again.</p>}
+                {view.split && <p className="warn">{tt.game.split}</p>}
               </>
             )}
           </section>
@@ -376,11 +381,11 @@ function Joined({
             <div className="action-bar">
               {mine.locked ? (
                 <button className="ghost big" onClick={() => send({ type: 'lock', locked: false })}>
-                  Locked in · tap to change
+                  {tt.game.lockedTapToChange}
                 </button>
               ) : (
                 <button className="primary big" disabled={mine.vote === null} onClick={() => send({ type: 'lock', locked: true })}>
-                  {mine.vote === null ? 'Tap a spot to vote' : 'Lock in my vote'}
+                  {mine.vote === null ? tt.game.tapToVote : tt.game.lockMyVote}
                 </button>
               )}
             </div>
@@ -389,7 +394,7 @@ function Joined({
 
         <section className="panel board-timeline">
           <h2>
-            {active.name}’s timeline{' '}
+            {tt.game.timeline(active.name)}{' '}
             <span className="muted">
               ({active.timeline.length}/{game.targetCards})
             </span>
@@ -406,9 +411,9 @@ function Joined({
         </section>
       </div>
       <p className="hint center">
-        You’re on <strong>{myTeam.name}</strong>.{' '}
+        <Rich text={t.onTeam(myTeam.name)} />{' '}
         <button className="link" onClick={() => send({ type: 'team', teamId: null })}>
-          Change team
+          {t.changeTeam}
         </button>
       </p>
       {addMusic}
@@ -416,12 +421,19 @@ function Joined({
   );
 }
 
+/** Why the game ended. Hosts send a code (see connection.ts); older hosts sent English text. */
+function closedReason(reason: string): string {
+  const t = msg().remote;
+  return reason === 'ended' ? t.hostEnded : reason === 'stopped' ? t.hostStopped : reason;
+}
+
 function Who({ member }: { member: Member }) {
+  const t = useT();
   return (
     <span className={`who-chip ${member.connected ? '' : 'offline'}`}>
       {member.emoji && <span className="avatar">{member.emoji}</span>}
       {member.name}
-      {member.id === HOST_ID && ' (host)'}
+      {member.id === HOST_ID && t.share.host}
     </span>
   );
 }

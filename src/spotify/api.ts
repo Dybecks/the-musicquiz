@@ -1,5 +1,6 @@
 import type { Song } from '../game/engine';
 import { getAccessToken, getClientId } from './auth';
+import { locale, msg } from '../i18n';
 
 export class SpotifyError extends Error {
   constructor(
@@ -26,15 +27,15 @@ const blockedKey = () => `mq.spotifyBlockedUntil:${getClientId()}`;
  */
 export class RateLimitError extends SpotifyError {
   constructor(public until: number) {
-    super(`Spotify's request limit for this game is used up until ${formatTime(until)}.`, 429);
+    super(msg().errors.rateLimit(formatTime(until)), 429);
   }
 }
 
 function formatTime(ms: number): string {
   const d = new Date(ms);
   const sameDay = d.toDateString() === new Date().toDateString();
-  const time = d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
-  return sameDay ? `${time} today` : `${d.toLocaleDateString(undefined, { weekday: 'long' })} ${time}`;
+  const time = d.toLocaleTimeString(locale(), { hour: '2-digit', minute: '2-digit' });
+  return sameDay ? msg().errors.today(time) : `${d.toLocaleDateString(locale(), { weekday: 'long' })} ${time}`;
 }
 
 /**
@@ -88,7 +89,7 @@ async function waitForGate(): Promise<void> {
 async function spotifyFetch(path: string, init: RequestInit = {}, attempt = 0): Promise<Response> {
   await waitForGate();
   const token = await getAccessToken();
-  if (!token) throw new SpotifyError('Not logged in to Spotify.', 401);
+  if (!token) throw new SpotifyError(msg().errors.notLoggedIn, 401);
   const res = await fetch(`https://api.spotify.com/v1${path}`, {
     ...init,
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json', ...init.headers },
@@ -112,7 +113,7 @@ async function spotifyFetch(path: string, init: RequestInit = {}, attempt = 0): 
     return spotifyFetch(path, init, attempt + 1);
   }
   if (!res.ok) {
-    let message = `Spotify request failed (${res.status}).`;
+    let message = msg().errors.requestFailed(res.status);
     try {
       const body = await res.json();
       if (body?.error?.message) message = `Spotify: ${body.error.message}`;

@@ -1,5 +1,6 @@
 import { getDevices, pauseDevice, playOnDevice, resumeDevice, SpotifyError, type SpotifyDevice } from './api';
 import { uriFor, type Playback } from './playback';
+import { msg } from '../i18n';
 
 /**
  * Steers the Spotify app instead of playing here: each song is started on
@@ -11,13 +12,9 @@ import { uriFor, type Playback } from './playback';
  * isn't seen here.
  */
 
-const NOTHING_ACTIVE =
-  'The Spotify app isn’t open anywhere Spotify can see. Open the Spotify app, pick the speaker (the speaker icon at the bottom of a playing song), start any song, then press Play here again.';
-
-const restricted = (d: SpotifyDevice) =>
-  `Spotify won’t let other apps control “${d.name}”. If it’s a Sonos, pick it in the Spotify app’s device list (the speaker icon), not in the Sonos app, start a song there and try again. Otherwise choose another speaker under 🔊.`;
-
-const premiumNeeded = 'Steering the Spotify app needs Spotify Premium.';
+const nothingActive = () => msg().errors.appNotOpen;
+const restricted = (d: SpotifyDevice) => msg().errors.appRestricted(d.name);
+const premiumNeeded = () => msg().errors.appPremium;
 
 /** The game's own in-browser player. Spotify keeps listing it for a while after it's gone. */
 const OWN_PLAYER = 'The Music Quiz';
@@ -37,7 +34,7 @@ export function chooseDevice(all: SpotifyDevice[]): SpotifyDevice {
   const pick = usable.find((d) => d.type === 'Smartphone') ?? usable[0];
   if (pick) return pick;
   const locked = devices.find((d) => d.is_restricted);
-  throw new Error(locked ? restricted(locked) : NOTHING_ACTIVE);
+  throw new Error(locked ? restricted(locked) : nothingActive());
 }
 
 async function activeDevice(): Promise<SpotifyDevice> {
@@ -48,9 +45,9 @@ function explain(e: unknown, device: SpotifyDevice | null): never {
   if (e instanceof SpotifyError) {
     // Spotify's own words help when the guess below is wrong.
     const why = ` (${e.message.replace(/^Spotify: /, '')})`;
-    if (e.status === 404) throw new Error(NOTHING_ACTIVE + why);
+    if (e.status === 404) throw new Error(nothingActive() + why);
     if (e.status === 403) {
-      if (/premium/i.test(e.message) || !device) throw new Error(premiumNeeded + why);
+      if (/premium/i.test(e.message) || !device) throw new Error(premiumNeeded() + why);
       throw new Error(restricted(device) + why);
     }
   }

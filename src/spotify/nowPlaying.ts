@@ -1,3 +1,4 @@
+import { msg } from '../i18n';
 /**
  * Keep the mystery song's title off lock screens, Control Center, car displays
  * and AirPlay/Bluetooth receivers (a Sonos app shows what the sender reports).
@@ -122,8 +123,8 @@ export function hideNowPlaying(playing: boolean, ctrl: MysteryControls): void {
   const ms = mediaSession();
   if (ms && typeof MediaMetadata !== 'undefined') {
     ms.metadata = new MediaMetadata({
-      title: 'Mystery song',
-      artist: 'The Music Quiz',
+      title: msg().errors.mysterySong,
+      artist: msg().app.name,
       artwork: [192, 512].map((s) => ({
         src: new URL(`${import.meta.env.BASE_URL}icons/icon-${s}.png`, location.origin).href,
         sizes: `${s}x${s}`,

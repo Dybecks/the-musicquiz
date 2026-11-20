@@ -11,6 +11,8 @@ import {
   type PlaylistSummary,
   type RefillPlan,
 } from '../spotify/listening';
+import { msg, useT } from '../i18n';
+import { Rich } from '../i18n/Rich';
 
 /** Songs sent per tap: a few batches from the chosen playlists. */
 const SEND_AT_ONCE = 40;
@@ -30,6 +32,8 @@ interface Props {
  * from your own playlists into the game. Nothing here is needed to play.
  */
 export function AddMyMusic({ profile, onSend, added }: Props) {
+  const tt = useT();
+  const t = tt.addMusic;
   const loggedIn = !!profile && isLoggedIn();
   const canRead = loggedIn && hasScopes(PLAYLIST_SCOPES);
   const [open, setOpen] = useState(canRead);
@@ -50,12 +54,12 @@ export function AddMyMusic({ profile, onSend, added }: Props) {
   if (!open) {
     return (
       <section className="panel add-music">
-        <h2>Add your own music? <span className="muted">(optional)</span></h2>
-        <p className="hint">
-          Log in to Spotify to put songs from your playlists into the game. You can play without it.
-        </p>
+        <h2>
+          {t.title} <span className="muted">{t.optional}</span>
+        </h2>
+        <p className="hint">{t.intro}</p>
         <button className="ghost" onClick={() => setOpen(true)}>
-          Add songs from my Spotify
+          {t.open}
         </button>
       </section>
     );
@@ -63,26 +67,22 @@ export function AddMyMusic({ profile, onSend, added }: Props) {
 
   const close = (
     <button className="link" onClick={() => setOpen(false)}>
-      Not now
+      {t.notNow}
     </button>
   );
 
   if (!canRead) {
     return (
       <section className="panel add-music">
-        <h2>Add songs from your Spotify</h2>
-        <p className="hint">
-          You’ll come straight back here after logging in. Only your playlists are read, and the songs go to this game
-          only. While the game’s Spotify app is in development mode, your account must be added to it by the person
-          who runs it.
-        </p>
+        <h2>{t.heading}</h2>
+        <p className="hint">{t.loginHint}</p>
         {error && <p className="warn">{error}</p>}
         <div className="row-actions">
           <button
             className="spotify"
             onClick={() => login({ extraScopes: PLAYLIST_SCOPES, afterLogin: 'contribute' }).catch((e) => setError(message(e)))}
           >
-            Log in with Spotify
+            {t.login}
           </button>
           {close}
         </div>
@@ -97,7 +97,7 @@ export function AddMyMusic({ profile, onSend, added }: Props) {
       const { songs, plan: next } = await startList(start, setProgress, SEND_AT_ONCE);
       setPlan(next);
       setProgress(null);
-      if (songs.length === 0) return setError('No songs with a release year were found in those playlists.');
+      if (songs.length === 0) return setError(msg().addMusic.noYear);
       onSend(songs);
       setSent((n) => n + songs.length);
     } catch (e) {
@@ -108,9 +108,9 @@ export function AddMyMusic({ profile, onSend, added }: Props) {
 
   return (
     <section className="panel add-music">
-      <h2>Add songs from your Spotify</h2>
+      <h2>{t.heading}</h2>
       <p className="hint">
-        Logged in as <strong>{profile?.display_name}</strong>.{' '}
+        <Rich text={tt.setup.loggedInAs(profile?.display_name ?? '')} />{' '}
         <button
           className="link"
           onClick={() => {
@@ -119,13 +119,13 @@ export function AddMyMusic({ profile, onSend, added }: Props) {
             setPlaylists(null);
           }}
         >
-          Log out
+          {tt.setup.logOut}
         </button>
       </p>
       {!plan && (
         <>
-          {!playlists && !error && <p className="hint">Reading your playlists…</p>}
-          {playlists && playlists.length === 0 && <p className="hint">No playlists with songs were found.</p>}
+          {!playlists && !error && <p className="hint">{t.reading}</p>}
+          {playlists && playlists.length === 0 && <p className="hint">{t.noPlaylists}</p>}
           {playlists && playlists.length > 0 && (
             <div className="sources pick-playlists">
               {playlists.map((p) => (
@@ -142,7 +142,7 @@ export function AddMyMusic({ profile, onSend, added }: Props) {
                   />
                   <span>
                     {p.name}
-                    <small>{p.tracks} songs</small>
+                    <small>{t.songs(p.tracks)}</small>
                   </span>
                 </label>
               ))}
@@ -158,17 +158,17 @@ export function AddMyMusic({ profile, onSend, added }: Props) {
       )}
       {added !== null && sent > 0 && (
         <p className="info">
-          {added > 0 ? `${added} new songs were added to the game.` : 'Those songs were already in the game.'}
+          {added > 0 ? t.added(added) : t.alreadyIn}
         </p>
       )}
       {error && <p className="warn">{error}</p>}
       <div className="row-actions">
         <button className="primary" disabled={!!progress || (!plan && chosen.size === 0)} onClick={send}>
-          {plan ? 'Send more songs' : chosen.size ? `Send songs from ${chosen.size} playlist${chosen.size > 1 ? 's' : ''}` : 'Pick playlists'}
+          {plan ? t.sendMore : chosen.size ? t.sendFrom(chosen.size) : t.pickPlaylists}
         </button>
         {plan && (
           <button className="link" onClick={() => setPlan(null)}>
-            Pick other playlists
+            {t.pickOther}
           </button>
         )}
         {close}

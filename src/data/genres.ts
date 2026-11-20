@@ -2,17 +2,17 @@
  * Genres and year spans for narrowing down the deck. Pure functions only.
  */
 import type { Song } from '../game/engine';
+import { msg, type Messages } from '../i18n';
 
 export type Genre = 'pop' | 'rock' | 'hiphop' | 'dance' | 'soul' | 'swedish';
 
-export const GENRES: { id: Genre; label: string }[] = [
-  { id: 'pop', label: 'Pop' },
-  { id: 'rock', label: 'Rock' },
-  { id: 'hiphop', label: 'Hip-hop & R&B' },
-  { id: 'dance', label: 'Dance & electronic' },
-  { id: 'soul', label: 'Soul, funk & disco' },
-  { id: 'swedish', label: 'Swedish artists' },
-];
+/** The labels are in the current language (src/i18n). */
+export const GENRES: { id: Genre; readonly label: string }[] = (['pop', 'rock', 'hiphop', 'dance', 'soul', 'swedish'] as const).map((id) => ({
+  id,
+  get label() {
+    return msg().genres[id];
+  },
+}));
 
 export const genreLabel = (g: Genre) => GENRES.find((x) => x.id === g)?.label ?? g;
 
@@ -66,19 +66,33 @@ export function filterSongs(songs: readonly Song[], f: DeckFilter): Song[] {
 
 export interface Preset {
   id: string;
-  label: string;
-  detail: string;
+  readonly label: string;
+  readonly detail: string;
   filter: DeckFilter;
 }
 
+type StandardPreset = Exclude<keyof Messages['presets'], 'myEra' | 'myEraDetail' | 'myGenres' | 'and'>;
+
+/** A preset whose texts follow the current language. */
+const preset = (id: StandardPreset, filter: DeckFilter): Preset => ({
+  id,
+  filter,
+  get label() {
+    return msg().presets[id].label;
+  },
+  get detail() {
+    return msg().presets[id].detail;
+  },
+});
+
 export const STANDARD_PRESETS: Preset[] = [
-  { id: 'all', label: 'Everything', detail: 'All genres and years', filter: NO_FILTER },
-  { id: 'pre80', label: 'Golden oldies', detail: 'Up to 1979', filter: { genres: [], fromYear: null, toYear: 1979 } },
-  { id: '80s90s', label: '80s & 90s', detail: '1980–1999', filter: { genres: [], fromYear: 1980, toYear: 1999 } },
-  { id: 'modern', label: 'This century', detail: '2000 and later', filter: { genres: [], fromYear: 2000, toYear: null } },
-  { id: 'rock', label: 'Rock night', detail: 'Rock, all years', filter: { genres: ['rock'], fromYear: null, toYear: null } },
-  { id: 'party', label: 'Party', detail: 'Pop, dance and disco', filter: { genres: ['pop', 'dance', 'soul'], fromYear: null, toYear: null } },
-  { id: 'swedish', label: 'Swedish', detail: 'Swedish artists only', filter: { genres: ['swedish'], fromYear: null, toYear: null } },
+  preset('all', NO_FILTER),
+  preset('pre80', { genres: [], fromYear: null, toYear: 1979 }),
+  preset('80s90s', { genres: [], fromYear: 1980, toYear: 1999 }),
+  preset('modern', { genres: [], fromYear: 2000, toYear: null }),
+  preset('rock', { genres: ['rock'], fromYear: null, toYear: null }),
+  preset('party', { genres: ['pop', 'dance', 'soul'], fromYear: null, toYear: null }),
+  preset('swedish', { genres: ['swedish'], fromYear: null, toYear: null }),
 ];
 
 function percentile(sorted: number[], p: number): number {
@@ -99,8 +113,8 @@ export function personalPresets(songs: readonly Song[]): Preset[] {
   if (to > from) {
     presets.push({
       id: 'my-era',
-      label: 'Your era',
-      detail: `${from}–${to}, where most of your music is from`,
+      label: msg().presets.myEra,
+      detail: msg().presets.myEraDetail(from, to),
       filter: { genres: [], fromYear: from, toYear: to },
     });
   }
@@ -115,8 +129,8 @@ export function personalPresets(songs: readonly Song[]): Preset[] {
   if (top.length) {
     presets.push({
       id: 'my-genres',
-      label: 'Your genres',
-      detail: top.map(genreLabel).join(' and '),
+      label: msg().presets.myGenres,
+      detail: top.map(genreLabel).join(msg().presets.and),
       filter: { genres: top, fromYear: null, toYear: null },
     });
   }

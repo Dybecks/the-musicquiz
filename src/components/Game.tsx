@@ -19,6 +19,8 @@ import { SpeakerPicker } from './SpeakerPicker';
 import { createSonosPlayback } from '../sonos/playback';
 import { createSpotifyAppPlayback } from '../spotify/remote';
 import { sameSpeaker, speakerKey, speakerLabel, type SpeakerChoice } from '../speakers';
+import { msg, useLang, useT } from '../i18n';
+import { SongNotFoundError } from '../spotify/playback';
 
 interface Props {
   state: GameState;
@@ -61,10 +63,10 @@ function useRefill(state: GameState, onChange: (s: GameState) => void): string |
       .then(({ songs, plan: next }) => onChange(addSongs(latest.current, songs, next ?? undefined)))
       .catch((e) => {
         if (e instanceof RateLimitError && plan.kind === 'genres') {
-          setNote(`${e.message} Until then the game uses its own classic hits for these genres and years.`);
+          setNote(msg().game.refillFallback(e.message));
           onChange(addSongs(latest.current, builtInForGenres(plan.genres, plan.from, plan.to), undefined));
         } else {
-          setNote(`No more songs could be fetched: ${message(e)}`);
+          setNote(msg().game.refillFailed(message(e)));
           onChange({ ...latest.current, refill: undefined });
         }
       })
@@ -79,6 +81,8 @@ function useRefill(state: GameState, onChange: (s: GameState) => void): string |
 }
 
 export function Game({ state, mode, onModeChange, speaker, onSpeakerChange, onChange, onQuit, host }: Props) {
+  const t = useT();
+  const tg = t.game;
   const refillNote = useRefill(state, onChange);
   const votes = host.room && state.phase === 'guessing' ? votesBySlot(activeVoters(host.room, state)) : undefined;
   // The host on the team whose turn it is votes like everyone else on it.
@@ -89,6 +93,8 @@ export function Game({ state, mode, onModeChange, speaker, onSpeakerChange, onCh
   const [playbackError, setPlaybackError] = useState<string | null>(null);
   const [songStatus, setSongStatus] = useState<SongStatus>('loading');
   const [songError, setSongError] = useState<string | null>(null);
+  /** The song isn't on Spotify: another speaker won't help, skipping will. */
+  const [songMissing, setSongMissing] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
   const [showPlayer, setShowPlayer] = useState(false);
@@ -139,6 +145,7 @@ export function Game({ state, mode, onModeChange, speaker, onSpeakerChange, onCh
     let cancelled = false;
     setSongStatus('loading');
     setSongError(null);
+    setSongMissing(false);
     setPlaying(false);
     setShowPlayer(false);
     playback
@@ -152,6 +159,7 @@ export function Game({ state, mode, onModeChange, speaker, onSpeakerChange, onCh
         if (cancelled) return;
         setSongStatus('error');
         setSongError(message(e));
+        setSongMissing(e instanceof SongNotFoundError);
       });
     return () => {
       cancelled = true;
@@ -272,7 +280,7 @@ export function Game({ state, mode, onModeChange, speaker, onSpeakerChange, onCh
   };
 
   const quit = () => {
-    if (state.phase === 'finished' || window.confirm('End this game? Progress will be lost.')) {
+    if (state.phase === 'finished' || window.confirm(tg.confirmEnd)) {
       void playback?.stop();
       onQuit();
     }
@@ -292,7 +300,7 @@ export function Game({ state, mode, onModeChange, speaker, onSpeakerChange, onCh
             <section className="panel turn">
               <h1>
                 {player.name}
-                <span className="muted">’s turn</span>
+                <span className="muted">{tg.turnSuffix(player.name)}</span>
               </h1>
 
               {state.phase === 'guessing' ? (
@@ -304,21 +312,21 @@ export function Game({ state, mode, onModeChange, speaker, onSpeakerChange, onCh
                     {mode !== 'none' && (
                       <button className="primary" onClick={togglePlay} disabled={!playback || songStatus !== 'ready' || starting}>
                         {playbackError
-                          ? 'Player unavailable'
+                          ? tg.playerUnavailable
                           : !playback
-                            ? 'Starting player…'
+                            ? tg.startingPlayer
                             : songStatus === 'loading'
-                              ? 'Finding song…'
+                              ? tg.findingSong
                               : starting
-                                ? 'One moment…'
+                                ? tg.oneMoment
                                 : playing
-                                ? '❚❚ Pause'
-                                : '▶ Play song'}
+                                ? tg.pause
+                                : tg.play}
                       </button>
                     )}
-                    {mode === 'none' && <p className="hint">No audio mode: play the song your own way, or just guess the year.</p>}
+                    {mode === 'none' && <p className="hint">{tg.noAudio}</p>}
                     <button className="ghost" onClick={skip}>
-                      Skip song
+                      {tg.skip}
                     </button>
                   </div>
                   {spotifyUrl && !remote && (
@@ -331,9 +339,9 @@ export function Game({ state, mode, onModeChange, speaker, onSpeakerChange, onCh
                           if (playing) void playback?.pause().catch(() => {});
                         }}
                       >
-                        Open in Spotify ↗
+                        {tg.openInSpotify}
                       </a>{' '}
-                      to play it on any speaker, like a Sonos. Spotify shows the title, so let someone who isn’t guessing tap it.
+                      {tg.openInSpotifyHint}
                     </p>
                   )}
                   {playbackError && (
@@ -341,32 +349,32 @@ export function Game({ state, mode, onModeChange, speaker, onSpeakerChange, onCh
                       <p>{playbackError}</p>
                       {mode === 'premium' && (
                         <button className="link" onClick={() => onModeChange('embed')}>
-                          Use the hidden Spotify player instead
+                          {tg.useHiddenPlayer}
                         </button>
                       )}
                     </div>
                   )}
                   {songError && <p className="warn">{songError}</p>}
-                  {remote && (playbackError || (songError && !/found on Spotify/.test(songError))) && songStatus !== 'loading' && (
+                  {remote && (playbackError || (songError && !songMissing)) && songStatus !== 'loading' && (
                     <p>
                       {songStatus === 'error' && (
                         <>
                           <button className="link" onClick={() => setAttempt((n) => n + 1)}>
-                            Try again
+                            {tg.tryAgain}
                           </button>{' '}
                           ·{' '}
                         </>
                       )}
                       <button className="link" onClick={() => onSpeakerChange(null)}>
-                        Play on this device instead
+                        {tg.playHere}
                       </button>
                     </p>
                   )}
                   {remote && !playbackError && !songError && (
                     <p className="hint">
                       {remote.kind === 'sonos'
-                        ? `Playing on ${remote.speaker.name} (Sonos).`
-                        : 'Playing in the Spotify app, wherever it plays. It shows the title, so keep it out of sight.'}
+                        ? tg.playingOnSonos(remote.speaker.name)
+                        : tg.playingInApp}
                     </p>
                   )}
                 </div>
@@ -380,7 +388,7 @@ export function Game({ state, mode, onModeChange, speaker, onSpeakerChange, onCh
                 <>
                   {hostMember.locked ? (
                     <button className="ghost big" onClick={() => host.act({ type: 'lock', locked: false })}>
-                      Locked in · tap to change
+                      {tg.lockedTapToChange}
                     </button>
                   ) : (
                     <button
@@ -388,16 +396,16 @@ export function Game({ state, mode, onModeChange, speaker, onSpeakerChange, onCh
                       disabled={hostMember.vote === null}
                       onClick={() => host.act({ type: 'lock', locked: true })}
                     >
-                      {hostMember.vote === null ? 'Tap a spot to vote' : 'Lock in my vote'}
+                      {hostMember.vote === null ? tg.tapToVote : tg.lockMyVote}
                     </button>
                   )}
                   {host.decision.kind === 'waiting' && (
                     <p className="hint center vote-status">
-                      Team: {host.decision.locked} of {host.decision.total} locked in
+                      {tg.teamLocked(host.decision.locked, host.decision.total)}
                     </p>
                   )}
                   {host.decision.kind === 'split' && (
-                    <p className="warn center vote-status">The votes are split. Agree on one spot and lock in again.</p>
+                    <p className="warn center vote-status">{tg.split}</p>
                   )}
                 </>
               ) : state.phase === 'guessing' ? (
@@ -405,22 +413,22 @@ export function Game({ state, mode, onModeChange, speaker, onSpeakerChange, onCh
                   <button className="primary big" disabled={selectedSlot === null} onClick={lockIn}>
                     {selectedSlot === null
                       ? host.decision.kind === 'none'
-                        ? 'Pick a spot on the timeline'
-                        : 'Waiting for the team’s votes'
-                      : 'Lock in guess'}
+                        ? tg.pickSpot
+                        : tg.waitingVotes
+                      : tg.lockGuess}
                   </button>
                   {host.decision.kind === 'waiting' && (
                     <p className="hint center vote-status">
-                      Phones: {host.decision.locked} of {host.decision.total} locked in
+                      {tg.phonesLocked(host.decision.locked, host.decision.total)}
                     </p>
                   )}
                   {host.decision.kind === 'split' && (
-                    <p className="warn center vote-status">The votes are split. Agree on one spot and lock in again.</p>
+                    <p className="warn center vote-status">{tg.split}</p>
                   )}
                 </>
               ) : (
                 <button className="primary big" onClick={next}>
-                  {state.winnerIds.length ? 'See the winner' : `Next: ${nextPlayer.name}`}
+                  {state.winnerIds.length ? tg.seeWinner : tg.next(nextPlayer.name)}
                 </button>
               )}
             </div>
@@ -428,7 +436,7 @@ export function Game({ state, mode, onModeChange, speaker, onSpeakerChange, onCh
 
           <section className="panel board-timeline">
             <h2>
-              {player.name}’s timeline{' '}
+              {tg.timeline(player.name)}{' '}
               <span className="muted">
                 ({player.timeline.length}/{state.targetCards})
               </span>
@@ -436,10 +444,10 @@ export function Game({ state, mode, onModeChange, speaker, onSpeakerChange, onCh
             {state.phase === 'guessing' ? (
               <p className="hint">
                 {hostVoting
-                  ? 'Vote for where the song belongs. The guess goes in when everyone on the team has locked in.'
+                  ? tg.hintVote
                   : host.decision.kind === 'none'
-                    ? 'Tap where the song belongs, then lock in your guess.'
-                    : 'The team votes on their phones. Tap a spot here to decide for them.'}
+                    ? tg.hintTap
+                    : tg.hintPhones}
               </p>
             ) : null}
             <Timeline
@@ -464,9 +472,9 @@ export function Game({ state, mode, onModeChange, speaker, onSpeakerChange, onCh
       {/* The Spotify embed lives here. It stays covered so the title isn't spoiled. */}
       <section className={`embed-wrap ${mode === 'embed' && !remote && state.phase !== 'finished' ? '' : 'hidden'}`}>
         <div className={`embed-cover ${showPlayer || state.phase === 'revealed' ? 'off' : ''}`}>
-          <span>Spotify player hidden so the song isn’t spoiled.</span>
+          <span>{tg.playerHidden}</span>
           <button className="link" onClick={() => setShowPlayer(true)}>
-            Show it (if the Play button doesn’t work)
+            {tg.showPlayer}
           </button>
         </div>
         <div ref={embedHost} className="embed-host" />
@@ -475,7 +483,7 @@ export function Game({ state, mode, onModeChange, speaker, onSpeakerChange, onCh
       {refillNote && <p className="hint center">{refillNote}</p>}
       <footer className="game-footer">
         <span className="muted">
-          Round {state.round} · {state.refill ? 'more songs on the way' : `${state.deck.length} songs left`}
+          {tg.round(state.round)} · {state.refill ? tg.moreOnTheWay : tg.songsLeft(state.deck.length)}
         </span>
         {mode !== 'none' && (
           <button className="link" onClick={() => setPickSpeaker(!pickSpeaker)}>
@@ -483,7 +491,7 @@ export function Game({ state, mode, onModeChange, speaker, onSpeakerChange, onCh
           </button>
         )}
         <button className="link" onClick={quit}>
-          End game
+          {tg.endGame}
         </button>
       </footer>
       {pickSpeaker && mode !== 'none' && (
@@ -521,15 +529,16 @@ export function Scoreboard({ state }: { state: Pick<GameState, 'players' | 'curr
 }
 
 export function Reveal({ correct, song }: { correct: boolean; song: GameState['deck'][number] }) {
+  const t = useT();
   return (
     <div className={`reveal ${correct ? 'right' : 'wrong'}`}>
-      <p className="verdict">{correct ? 'Correct! The card is yours.' : 'Not quite. The card is discarded.'}</p>
+      <p className="verdict">{correct ? t.game.correct : t.game.wrong}</p>
       <div className="song-card big-card">
         <span className="year">{song.year}</span>
         <span className="title">{song.title}</span>
         <span className="artist">
           {song.artist}
-          {song.from && <span className="from"> · from {song.from}</span>}
+          {song.from && <span className="from">{t.game.fromWork(song.from)}</span>}
         </span>
       </div>
       <FunFact song={song} />
@@ -539,23 +548,25 @@ export function Reveal({ correct, song }: { correct: boolean; song: GameState['d
 
 /** A fun fact about the song (written for its deck, or from Wikipedia). Shows nothing until found, or if none is. */
 function FunFact({ song }: { song: GameState['deck'][number] }) {
-  const [fact, setFact] = useState<{ id: string; fact: SongFact | null } | null>(null);
+  const t = useT();
+  const lang = useLang();
+  const [fact, setFact] = useState<{ id: string; lang: string; fact: SongFact | null } | null>(null);
   useEffect(() => {
     let live = true;
-    loadFact(song).then((f) => live && setFact({ id: song.id, fact: f }));
+    loadFact(song).then((f) => live && setFact({ id: song.id, lang, fact: f }));
     return () => {
       live = false;
     };
-  }, [song]);
-  if (!fact || fact.id !== song.id || !fact.fact) return null;
+  }, [song, lang]);
+  if (!fact || fact.id !== song.id || fact.lang !== lang || !fact.fact) return null;
   const { text, about, title, url } = fact.fact;
   return (
     <aside className="fun-fact">
-      <p className="fun-fact-label">{!url ? 'Did you know?' : about === 'song' ? 'About the song' : 'About the artist'}</p>
+      <p className="fun-fact-label">{!url ? t.game.didYouKnow : about === 'song' ? t.game.aboutSong : t.game.aboutArtist}</p>
       <p>{text}</p>
       {url && (
         <a href={url} target="_blank" rel="noreferrer">
-          {title} on Wikipedia
+          {t.game.onWikipedia(title ?? '')}
         </a>
       )}
     </aside>
@@ -569,21 +580,22 @@ export function Finished({
   state: Pick<GameState, 'players' | 'winnerIds'>;
   onPlayAgain?: () => void;
 }) {
+  const t = useT();
   const winners = state.players.filter((p) => state.winnerIds.includes(p.id));
   return (
     <section className="panel finished">
-      <h1>🏆 {winners.map((w) => w.name).join(' & ')} {winners.length > 1 ? 'win' : 'wins'}!</h1>
+      <h1>{t.game.wins(winners.map((w) => w.name))}</h1>
       {state.players.map((p) => (
         <div key={p.id} className="final-timeline">
           <h2>
-            {p.name} <span className="muted">({p.timeline.length} cards)</span>
+            {p.name} <span className="muted">{t.game.cards(p.timeline.length)}</span>
           </h2>
           <Timeline cards={p.timeline} selectable={false} selectedSlot={null} onSelect={() => {}} compact />
         </div>
       ))}
       {onPlayAgain && (
         <button className="primary big" onClick={onPlayAgain}>
-          Play again
+          {t.game.playAgain}
         </button>
       )}
     </section>
