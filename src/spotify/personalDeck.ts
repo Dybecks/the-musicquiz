@@ -290,6 +290,11 @@ export function yearSlices(from: number, to: number, genreCount: number, maxRequ
   for (let start = from; start <= to; start = Math.floor(start / 10) * 10 + 10) {
     decades.push({ from: start, to: Math.min(to, Math.floor(start / 10) * 10 + 9) });
   }
+  // A stub of a decade at either end (2010 alone in 1980–2010) isn't worth
+  // a request of its own: search it with its neighbour.
+  const span = (d: YearSlice) => d.to - d.from + 1;
+  if (decades.length > 1 && span(decades[decades.length - 1]) < 3) decades.splice(-2, 2, { from: decades[decades.length - 2].from, to });
+  if (decades.length > 1 && span(decades[0]) < 3) decades.splice(0, 2, { from, to: decades[1].to });
   const most = Math.max(1, Math.floor(maxRequests / Math.max(1, genreCount)));
   if (decades.length <= most) return decades;
   const out: YearSlice[] = [];
