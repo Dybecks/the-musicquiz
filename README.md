@@ -162,6 +162,10 @@ Spotify or Sonos app, play something on it once, then tap **Look again**. Or pic
 **Where Spotify plays now**: the game then plays on whatever device the Spotify app is
 using (no device id needed), so start any song on the Sonos from the app first.
 
+**Test sound** plays a few seconds of a song on the chosen device before the game starts.
+During the game, the 🔊 button in the footer switches the device; the current song then
+plays on the new one.
+
 The list is Spotify Connect, not Bluetooth: phones show up because they run the Spotify app.
 
 Songs with a Spotify id in `SPOTIFY_IDS` (`src/data/songs.ts`) play without a login.

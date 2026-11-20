@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Song } from '../game/engine';
-import { getDevices, onSpotifyWait, spotifyBlockedUntil, type SpotifyProfile } from '../spotify/api';
+import { onSpotifyWait, spotifyBlockedUntil, type SpotifyProfile } from '../spotify/api';
 import { BUILT_IN_CLIENT_ID, getClientIdOverride, hasScopes, redirectUri, setClientId } from '../spotify/auth';
-import { ACTIVE_SPEAKER, type PlaybackKind, type Speaker } from '../spotify/playback';
+import type { PlaybackKind, Speaker } from '../spotify/playback';
+import { SpeakerPicker } from './SpeakerPicker';
 import { DECKS, chooseSongs, deckSongs, normalizeDecks, parseSavedDecks, playableSongs, type DeckId } from '../data/decks';
 import {
   MAX_GENRES,
@@ -115,9 +116,7 @@ export function Setup(props: Props) {
   const buildId = useRef(0);
   const [waitUntil, setWaitUntil] = useState(0);
   const [speaker, setSpeaker] = useState<Speaker | null>(props.speaker);
-  const [speakers, setSpeakers] = useState<Speaker[] | null>(null);
-  const [speakerBusy, setSpeakerBusy] = useState(false);
-  const [speakerNote, setSpeakerNote] = useState<string | null>(null);
+
   const [now, setNow] = useState(() => Date.now());
 
   // When Spotify asks the game to pause, the loading screen counts down and
@@ -311,28 +310,6 @@ export function Setup(props: Props) {
     setYears([from, to]);
     saveJson(YEARS_KEY, [from, to]);
   };
-
-  // ---- Speakers ----
-
-  // Asked only when the host taps, so it costs one request.
-  const findSpeakers = async () => {
-    setSpeakerBusy(true);
-    setSpeakerNote(null);
-    try {
-      const found = (await getDevices()).map((d) => ({ id: d.id, name: d.name }));
-      setSpeakers(found);
-      if (found.length === 0) setSpeakerNote('Spotify listed no speakers. Pick “Where Spotify plays now” instead, or start a song on the speaker from the Spotify app and look again.');
-    } catch (e) {
-      setSpeakerNote(e instanceof Error ? e.message : String(e));
-    } finally {
-      setSpeakerBusy(false);
-    }
-  };
-  const speakerChoices: Speaker[] = [
-    ACTIVE_SPEAKER,
-    ...(speaker?.id && !speakers?.some((d) => d.id === speaker.id) ? [speaker] : []),
-    ...(speakers ?? []),
-  ];
 
   // ---- Start ----
 
@@ -795,33 +772,7 @@ export function Setup(props: Props) {
           <input type="number" min={3} max={30} value={target} onChange={(e) => setTarget(Math.max(3, Math.min(30, Number(e.target.value) || 10)))} />
         </label>
         {mode === 'premium' && (
-          <div className="speakers">
-            <h2>Play the music on</h2>
-            <div className="chips" role="radiogroup" aria-label="Play the music on">
-              <button role="radio" aria-checked={!speaker} className={`chip ${!speaker ? 'selected' : ''}`} onClick={() => setSpeaker(null)}>
-                This browser
-              </button>
-              {speakerChoices.map((d) => (
-                <button
-                  key={d.id || 'active'}
-                  role="radio"
-                  aria-checked={speaker?.id === d.id}
-                  className={`chip ${speaker?.id === d.id ? 'selected' : ''}`}
-                  onClick={() => setSpeaker(d)}
-                >
-                  {d.name}
-                </button>
-              ))}
-              <button className="chip" onClick={findSpeakers} disabled={speakerBusy}>
-                {speakerBusy ? 'Looking…' : speakers ? '↻ Look again' : '+ Find speakers (Sonos…)'}
-              </button>
-            </div>
-            {speakerNote && <p className="warn">{speakerNote}</p>}
-            <p className="hint">
-              Spotify only lists a speaker (like a Sonos) for a while after it played Spotify. Not there? Pick “Where Spotify plays now” and start any song on the
-              speaker from the Spotify app, and the game takes over from there.
-            </p>
-          </div>
+          <SpeakerPicker speaker={speaker} onChange={setSpeaker} />
         )}
         <p className="hint">
           {mode === 'premium' && speaker && !speaker.id
