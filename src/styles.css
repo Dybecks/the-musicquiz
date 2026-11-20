@@ -276,3 +276,5 @@ input:focus { outline: 2px solid var(--accent); border-color: transparent; }
 .info.warn-info { background: #2c2614; border-color: #5c4b1d; color: #f3dfa6; }
 .music-summary { display: flex; justify-content: space-between; align-items: center; gap: 10px; background: var(--panel); border-radius: 12px; padding: 12px 14px; margin-bottom: 14px; }
 .setup.flow .decades { margin: 0 0 14px; }
+.speakers { margin-top: 6px; }
+.speakers h2 { font-size: 1rem; margin-bottom: 8px; }
