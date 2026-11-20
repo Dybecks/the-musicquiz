@@ -58,31 +58,49 @@ Setup asks one thing per screen, in three steps:
      **Use my last list** to play the list built last time again without any requests.
 3. **Players & play:** players or teams, cards needed to win, and **Start game**.
 
+### Fetched a few songs at a time
+
+Your own lists aren't loaded up front. **Build my list** / **Use N playlists** fetch one
+batch (one request, a dozen or more songs) and the game starts; whenever only a few songs
+are left in the deck, the next batch is fetched in the background. A short game therefore
+costs two or three requests. Each batch is a random pick, so the songs stay random within
+what you chose, and a page that was fetched once is not fetched again. Where to fetch the
+next batch from is saved with the game, so a reload carries on. **Use my last list** starts
+with the songs from last time and fetches new ones from where it left off.
+
 ### By genre
 
-Pick 1 to 4 genres and a year span. The list is built from Spotify searches such as
-`genre:"rock" year:1980-1989`: one request per genre per decade, and never more than 12
-(wider spans search neighbouring decades together, and a stub such as 2010 alone in
-1980–2010 goes with its neighbouring decade). The screen shows the
-number of requests before you build. Searching decade by decade spreads the songs over
-the years. Songs on compilations, "Remastered" albums and the like are skipped, so every
-song is dated by its own album and no further lookups are needed.
+Pick 1 to 4 genres and a year span. The list starts with the game's own classic hits for
+those genres and years that have a Spotify link (no requests at all; for pop, rock,
+dance, soul and Swedish), plus one Spotify batch. Each batch is one Spotify search such as
+`genre:"rock" year:1980-1989`: the decades take turns (the one searched least so far, wide
+spans with many genres search neighbouring decades together), with a random genre and a
+random depth in the first 250 results, so the songs are known ones. Whenever songs are
+added, the deck is dealt again spread over the decades, so a batch from one decade
+doesn't come up all in a row. Songs on compilations, "Remastered"
+albums and the like are skipped, so every song is dated by its own album and no further
+lookups are needed. Searches are remembered for a week.
 
 ### From my playlists
 
 Opening the screen makes ONE request (`/me/playlists`) that lists up to 50 playlists with
 name, cover and number of songs; **Show more** fetches the next 50 only when tapped. Tick
-the playlists to use. Each one is then read with one request per 100 songs (at most 300
-songs per playlist). Songs that look like reissues (a compilation, an album called
-"Remastered" or "Greatest Hits", or a title like "Song - Remastered 2011") get one search
-each for the original year; everything else is dated by its album. Year lookups are
-remembered in the browser. At most 400 songs are kept, spread over the decades.
+the playlists to use. Each batch is one random page of 50 songs from one of them (bigger
+playlists are picked more often). Songs that look like reissues (a compilation, an album
+called "Remastered" or "Greatest Hits", or a title like "Song - Remastered 2011") need a
+search for the original year; at most three are checked per batch, and everything else is
+dated by its album. Year lookups are remembered in the browser.
 
-Requests are sent one after another with a short pause, never as a burst. If Spotify
-still answers "too many requests", every request waits as long as Spotify asks, and the
-loading screen shows a countdown and carries on by itself; nothing needs to be tapped.
-Only if Spotify refuses the same request six times does the game stop, keeping the songs
-it already has.
+If Spotify answers "too many requests" with a short pause (up to two minutes), the loading
+screen counts down and carries on by itself.
+
+Spotify also gives Development Mode apps a request quota, shared by all apps of the same
+developer account and not shown in the dashboard. When it is used up, Spotify answers
+`429` with `"reason": "QUOTA_EXCEEDED"` and a `Retry-After` that can be hours. The game
+then stops asking until that time (remembered across reloads) and carries on without
+Spotify: **By genre** fills the list (or the rest of the game) with the game's own classic hits for the same genres
+and years, the music plays through the hidden player, and the setup screen says until
+when. Nothing needs to be tapped.
 
 The list is built in the browser and kept in its `localStorage` only; nothing is uploaded.
 While the game's Spotify app is in development mode, Spotify only lets accounts log in
@@ -136,7 +154,7 @@ Other songs are looked up with the Spotify search API, which needs the login.
 
 ### Spotify setup (only for "Log in with Spotify")
 
-The game ships with its own Spotify app (Client ID `5a008c63808c47478e4edcc99db34a87` in
+The game ships with its own Spotify app (Client ID `a96f51d734d240cdbe07ab7ae00fd959` in
 `src/spotify/auth.ts`). A Client ID is public; the PKCE login uses no secret. The app's
 owner manages it in the [Spotify dashboard](https://developer.spotify.com/dashboard):
 its Redirect URIs must include `https://dybecks.github.io/the-musicquiz/` (and the

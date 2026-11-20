@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Song } from '../game/engine';
-import { onSpotifyWait, type SpotifyProfile } from '../spotify/api';
+import { onSpotifyWait, spotifyBlockedUntil, type SpotifyProfile } from '../spotify/api';
 import { BUILT_IN_CLIENT_ID, getClientIdOverride, hasScopes, redirectUri, setClientId } from '../spotify/auth';
 import type { PlaybackKind } from '../spotify/playback';
 import { DECKS, chooseSongs, deckSongs, normalizeDecks, parseSavedDecks, playableSongs, type DeckId } from '../data/decks';
@@ -8,10 +8,11 @@ import {
   MAX_GENRES,
   PLAYLIST_SCOPES,
   SEARCH_GENRES,
-  buildFromGenres,
-  buildFromPlaylists,
+  newGenrePlan,
+  newPlaylistPlan,
+  startList,
+  type RefillPlan,
   fetchPlaylists,
-  genrePlan,
   savePersonalDeck,
   type BuildProgress,
   type PlaylistSummary,
@@ -27,6 +28,8 @@ export interface SetupValues {
   spreadDecades: boolean;
   /** Whether the game may use the Spotify login (search, Premium playback). */
   loggedIn: boolean;
+  /** Where to fetch more songs from while playing (own lists). */
+  refill?: RefillPlan;
 }
 
 interface Props {
@@ -157,7 +160,11 @@ export function Setup(props: Props) {
   const isPremium = profile?.product === 'premium';
   // The music plays the way step 1 decided: in the browser with a (Premium)
   // login, otherwise through the hidden Spotify player.
-  const mode: PlaybackKind = loggedIn && isPremium ? 'premium' : 'embed';
+  // While Spotify's request limit is used up, play through the hidden player,
+  // which needs no requests for songs with a known Spotify link.
+  const blockedUntil = spotifyBlockedUntil();
+  const canAsk = loggedIn && !blockedUntil;
+  const mode: PlaybackKind = canAsk && isPremium ? 'premium' : 'embed';
   const owner = hostContributor(personal);
   const ownList = owner && profile && owner.userId === profile.id ? owner : undefined;
   const ownSongs = ownList ? personalSongs(personal) : [];
@@ -165,7 +172,7 @@ export function Setup(props: Props) {
 
   const readyDecks = DECKS.filter((d) => d.id !== 'mine');
   const activeDecks = normalizeDecks(decks);
-  const readySongs = chooseSongs({ decks: activeDecks, mode, loggedIn, personal: null });
+  const readySongs = chooseSongs({ decks: activeDecks, mode, loggedIn: canAsk, personal: null });
   const songs = source === 'own' ? ownSongs : readySongs;
 
   const toggleDeck = (id: DeckId) => {
@@ -177,7 +184,7 @@ export function Setup(props: Props) {
 
   const deckCount = (id: DeckId) => {
     const all = deckSongs(id, null).length;
-    const playable = playableSongs(deckSongs(id, null), mode, loggedIn).length;
+    const playable = playableSongs(deckSongs(id, null), mode, canAsk).length;
     return playable === all ? `${all}` : `${playable} of ${all}`;
   };
 
@@ -190,6 +197,7 @@ export function Setup(props: Props) {
     from: Step,
     sources: PersonalDeck['contributors'][number]['sources'],
     note: string | null,
+    plan: RefillPlan | null,
   ) => {
     if (id !== buildId.current) return; // cancelled
     setProgress(null);
@@ -206,6 +214,7 @@ export function Setup(props: Props) {
       builtAt: new Date().toISOString(),
       label,
       songs: built,
+      plan: plan ?? undefined,
     });
     props.onPersonalChange(deck);
     setSource('own');
@@ -227,8 +236,8 @@ export function Setup(props: Props) {
     const label = `${SEARCH_GENRES.filter((g) => genres.includes(g.id)).map((g) => g.label).join(', ')} · ${decadesLabel(from, to)}`;
     setBuildReturn('genres');
     go('building');
-    buildFromGenres(genres, from, to, setProgress).then(
-      ({ songs: built, note }) => finishBuild(id, built, label, 'genres', [], note),
+    startList(newGenrePlan(genres, Math.min(from, to), Math.max(from, to)), setProgress).then(
+      ({ songs: built, plan, note }) => finishBuild(id, built, label, 'genres', [], note, plan),
       (e) => failBuild(id, e, 'genres'),
     );
   };
@@ -240,11 +249,8 @@ export function Setup(props: Props) {
     const label = chosenPlaylists.map((p) => p.name).join(', ');
     setBuildReturn('playlists');
     go('building');
-    buildFromPlaylists(chosenPlaylists, setProgress).then(
-      ({ songs: built, skipped, note }) => {
-        const skippedNote = skipped.length ? `Spotify didn't share ${skipped.join(', ')}, so those were skipped.` : null;
-        finishBuild(id, built, label, 'playlists', ['playlists'], [note, skippedNote].filter(Boolean).join(' ') || null);
-      },
+    startList(newPlaylistPlan(chosenPlaylists), setProgress).then(
+      ({ songs: built, plan, note }) => finishBuild(id, built, label, 'playlists', ['playlists'], note, plan),
       (e) => failBuild(id, e, 'playlists'),
     );
   };
@@ -304,7 +310,15 @@ export function Setup(props: Props) {
     setError(null);
     if (names.length === 0) return setError('Add at least one player or team.');
     if (songs.length < names.length + 1) return setError('Too few songs for this many players. Pick more music, or use fewer players.');
-    props.onStart({ players: names, targetCards: target, mode, songs, spreadDecades: source === 'ready', loggedIn });
+    props.onStart({
+      players: names,
+      targetCards: target,
+      mode,
+      songs,
+      spreadDecades: true,
+      loggedIn: canAsk,
+      refill: source === 'own' ? (ownList?.plan as RefillPlan | undefined) : undefined,
+    });
   };
 
   // ---- Shared bits ----
@@ -517,7 +531,6 @@ export function Setup(props: Props) {
 
   if (step === 'genres') {
     const [from, to] = years;
-    const plan = genrePlan(genres, Math.min(from, to), Math.max(from, to));
     return (
       <main className="setup flow">
         {stepBar}
@@ -582,10 +595,8 @@ export function Setup(props: Props) {
           <p className="info">
             <span aria-hidden="true">⚡</span>
             <span>
-              <strong>
-                {plan.requests} Spotify request{plan.requests === 1 ? '' : 's'}
-              </strong>{' '}
-              ({genres.length} genre{genres.length === 1 ? '' : 's'} × {plan.slices.length} year span{plan.slices.length === 1 ? '' : 's'}).
+              Songs are fetched a few at a time while you play: <strong>1 Spotify request</strong> to start, then about one
+              more per 20 songs played. Each is a random pick from these genres and years.
             </span>
           </p>
         )}
@@ -599,7 +610,6 @@ export function Setup(props: Props) {
 
   if (step === 'playlists') {
     const songsPicked = chosenPlaylists.reduce((n, p) => n + p.tracks, 0);
-    const requests = chosenPlaylists.reduce((n, p) => n + Math.max(1, Math.min(3, Math.ceil(p.tracks / 100))), 0);
     return (
       <main className="setup flow">
         {stepBar}
@@ -647,11 +657,8 @@ export function Setup(props: Props) {
               <p className="info warn-info">
                 <span aria-hidden="true">ℹ️</span>
                 <span>
-                  Reading {chosenPlaylists.length} playlist{chosenPlaylists.length === 1 ? '' : 's'} takes{' '}
-                  <strong>
-                    {requests} request{requests === 1 ? '' : 's'}
-                  </strong>
-                  . Songs without a clear original year get one quick check each.
+                  Songs are read a few at a time while you play, in random order from the playlists you picked: about{' '}
+                  <strong>1 request</strong> per 20 songs.
                 </span>
               </p>
             )}
@@ -708,12 +715,13 @@ export function Setup(props: Props) {
       {stepBar}
       <div className="music-summary">
         <span>
-          <strong>{songs.length} songs</strong> · {what}
+          <strong>{source === 'own' && ownList?.plan ? `${songs.length} songs to start` : `${songs.length} songs`}</strong> · {what}
         </span>
         <button className="link" onClick={() => go(source === 'own' ? 'own' : 'source')}>
           Change
         </button>
       </div>
+      {source === 'own' && ownList?.plan ? <p className="hint">More songs are fetched from Spotify while you play.</p> : null}
       {source === 'own' && summary.decades.length > 1 && (
         <ul className="decades" aria-label="Songs per decade">
           {summary.decades.map(([decade, count]) => (
@@ -758,7 +766,9 @@ export function Setup(props: Props) {
         <p className="hint">
           {mode === 'premium'
             ? 'The music plays right here in the browser through your Spotify Premium.'
-            : loggedIn
+            : loggedIn && blockedUntil
+              ? `Spotify's request limit for this game is used up until ${new Date(blockedUntil).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}, so the music plays through a hidden Spotify player meanwhile.`
+              : loggedIn
               ? "Your account isn't Premium, so the music plays through a hidden Spotify player."
               : 'The music plays through a hidden Spotify player: full songs if this browser is signed in to Spotify, otherwise 30-second previews.'}
         </p>

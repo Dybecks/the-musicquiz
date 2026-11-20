@@ -45,7 +45,17 @@ export interface GameState {
   lastGuess: LastGuess | null;
   winnerIds: string[];
   round: number;
+  /**
+   * Where more songs come from when the deck runs low (a list fetched a few
+   * songs at a time). Opaque to the engine; missing means the deck is all there is.
+   */
+  refill?: unknown;
+  /** Songs already dealt (as `songKey`s), so songs fetched later don't repeat them. */
+  used?: string[];
 }
+
+/** Identifies a song across releases: same title and artist. */
+export const songKeyOf = (s: Pick<Song, 'title' | 'artist'>) => `${s.title}|${s.artist}`.toLowerCase();
 
 export type Rng = () => number;
 
@@ -119,6 +129,7 @@ export function createGame({ playerNames, targetCards, songs, order = 'random', 
     lastGuess: null,
     winnerIds: [],
     round: 1,
+    used: [...players.map((p) => songKeyOf(p.timeline[0])), ...(current ? [songKeyOf(current)] : [])],
   };
 }
 
@@ -183,6 +194,7 @@ function drawForNextPlayer(state: GameState): GameState {
     ...state,
     deck,
     current,
+    used: [...(state.used ?? []), songKeyOf(current)],
     currentPlayerIndex: nextIndex,
     round: nextIndex === 0 ? state.round + 1 : state.round,
     phase: 'guessing',
@@ -196,7 +208,26 @@ export function skipSong(state: GameState): GameState {
   const deck = state.deck.slice();
   const current = deck.shift() ?? null;
   if (!current) return finishByMostCards(state);
-  return { ...state, deck, current };
+  return { ...state, deck, current, used: [...(state.used ?? []), songKeyOf(current)] };
+}
+
+/**
+ * Adds freshly fetched songs to the deck, spread over the decades,
+ * leaving out songs already dealt or waiting in the deck. `refill` replaces
+ * the state's refill (undefined when the source has nothing more).
+ */
+export function addSongs(state: GameState, songs: readonly Song[], refill: unknown, rng: Rng = Math.random): GameState {
+  const seen = new Set([...(state.used ?? []), ...state.deck.map(songKeyOf), ...state.players.flatMap((p) => p.timeline.map(songKeyOf))]);
+  const fresh: Song[] = [];
+  for (const s of songs) {
+    const key = songKeyOf(s);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    fresh.push(s);
+  }
+  // The whole remaining deck is dealt again spread over the decades, so a
+  // batch from one decade doesn't come up all in a row.
+  return { ...state, deck: spreadByDecade([...state.deck, ...fresh], rng), refill };
 }
 
 function finishByMostCards(state: GameState): GameState {

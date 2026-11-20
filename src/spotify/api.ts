@@ -1,5 +1,5 @@
 import type { Song } from '../game/engine';
-import { getAccessToken } from './auth';
+import { getAccessToken, getClientId } from './auth';
 
 export class SpotifyError extends Error {
   constructor(
@@ -14,20 +14,43 @@ const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /** How many times one request is refused before the game gives up on it. */
 const MAX_ATTEMPTS = 6;
+/** Pauses up to this long are waited out on the loading screen; longer ones are not. */
+const MAX_AUTO_WAIT_SECONDS = 120;
+/** Quotas belong to the Spotify app's developer account, so a block is kept per Client ID. */
+const blockedKey = () => `mq.spotifyBlockedUntil:${getClientId()}`;
 
-/** Spotify kept refusing the game, even after waiting as asked. */
+/**
+ * Spotify won't answer for a long while: the game's request quota is used
+ * up (Development Mode apps share one quota per developer account), or it
+ * asked for a pause too long to sit through.
+ */
 export class RateLimitError extends SpotifyError {
-  constructor() {
-    super('Spotify keeps saying the game is asking too often. Try again in a while.', 429);
+  constructor(public until: number) {
+    super(`Spotify's request limit for this game is used up until ${formatTime(until)}.`, 429);
   }
+}
+
+function formatTime(ms: number): string {
+  const d = new Date(ms);
+  const sameDay = d.toDateString() === new Date().toDateString();
+  const time = d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+  return sameDay ? `${time} today` : `${d.toLocaleDateString(undefined, { weekday: 'long' })} ${time}`;
 }
 
 /**
  * When Spotify says "too many requests", every request waits until then,
  * not just the one that was refused: firing the others anyway only makes
- * Spotify wait longer. Screens can listen to show the wait.
+ * Spotify wait longer. A long block is remembered across page loads, so a
+ * reload doesn't knock on Spotify's door again. Screens can listen to show
+ * a short wait.
  */
-let blockedUntil = 0;
+let blockedUntil = (() => {
+  try {
+    return Number(localStorage.getItem(blockedKey())) || 0;
+  } catch {
+    return 0;
+  }
+})();
 const waitListeners = new Set<(until: number) => void>();
 
 /** Calls `fn` with the time (ms since epoch) requests are paused until; returns an unsubscribe function. */
@@ -37,7 +60,28 @@ export function onSpotifyWait(fn: (until: number) => void): () => void {
   return () => void waitListeners.delete(fn);
 }
 
+/** When Spotify can be asked again, if it has asked the game to stop for a long while. */
+export function spotifyBlockedUntil(): number | null {
+  return blockedUntil - Date.now() > MAX_AUTO_WAIT_SECONDS * 1000 ? blockedUntil : null;
+}
+
+function block(until: number): void {
+  if (until <= blockedUntil) return;
+  blockedUntil = until;
+  if (until - Date.now() > MAX_AUTO_WAIT_SECONDS * 1000) {
+    try {
+      localStorage.setItem(blockedKey(), String(until));
+    } catch {
+      /* ignore */
+    }
+  } else {
+    for (const fn of waitListeners) fn(until);
+  }
+}
+
 async function waitForGate(): Promise<void> {
+  const long = spotifyBlockedUntil();
+  if (long) throw new RateLimitError(long);
   while (blockedUntil > Date.now()) await wait(blockedUntil - Date.now());
 }
 
@@ -50,15 +94,20 @@ async function spotifyFetch(path: string, init: RequestInit = {}, attempt = 0): 
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json', ...init.headers },
   });
   if (res.status === 429) {
-    if (attempt + 1 >= MAX_ATTEMPTS) throw new RateLimitError();
-    // Wait as long as Spotify asks. Retry-After may be missing (or hidden
-    // from the browser): then back off 5, 10, 20… seconds.
+    let reason = '';
+    try {
+      reason = (await res.clone().json())?.error?.reason ?? '';
+    } catch {
+      /* no body */
+    }
+    // Retry-After may be missing (or hidden from the browser): then back
+    // off 5, 10, 20… seconds. A used-up quota is not worth retrying soon.
     const header = Number(res.headers.get('Retry-After'));
-    const seconds = header > 0 ? header : 5 * 2 ** attempt;
-    const until = Date.now() + seconds * 1000;
-    if (until > blockedUntil) {
-      blockedUntil = until;
-      for (const fn of waitListeners) fn(until);
+    const fallback = reason === 'QUOTA_EXCEEDED' ? 3600 : 5 * 2 ** attempt;
+    const seconds = header > 0 ? header : fallback;
+    block(Date.now() + seconds * 1000);
+    if (reason === 'QUOTA_EXCEEDED' || seconds > MAX_AUTO_WAIT_SECONDS || attempt + 1 >= MAX_ATTEMPTS) {
+      throw new RateLimitError(Math.max(blockedUntil, Date.now() + seconds * 1000));
     }
     return spotifyFetch(path, init, attempt + 1);
   }

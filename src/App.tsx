@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { createGame, type GameState } from './game/engine';
-import { getProfile, type SpotifyProfile } from './spotify/api';
+import { getProfile, RateLimitError, type SpotifyProfile } from './spotify/api';
 import { handleRedirect, isFriendLogin, isLoggedIn, login, logout, restoreHostLogin, takeAfterLogin } from './spotify/auth';
 import { loadPersonalDeck } from './spotify/listening';
 import type { PersonalDeck } from './spotify/personalDeck';
@@ -10,6 +10,7 @@ import { Game } from './components/Game';
 
 const GAME_KEY = 'mq.game';
 const MODE_KEY = 'mq.mode';
+const PROFILE_KEY = 'mq.profile';
 
 function loadJson<T>(key: string): T | null {
   try {
@@ -51,10 +52,15 @@ export function App() {
       return;
     }
     try {
-      setProfile(await getProfile());
+      const p = await getProfile();
+      localStorage.setItem(PROFILE_KEY, JSON.stringify(p));
+      setProfile(p);
     } catch (e) {
-      setProfile(null);
-      setAuthMessage(e instanceof Error ? e.message : String(e));
+      // While Spotify's request limit is used up, the login still holds:
+      // keep the profile from last time instead of logging the host out.
+      const saved = e instanceof RateLimitError ? loadJson<SpotifyProfile>(PROFILE_KEY) : null;
+      setProfile(saved);
+      if (!saved) setAuthMessage(e instanceof Error ? e.message : String(e));
     }
   }, []);
 
@@ -78,7 +84,7 @@ export function App() {
     setMode(values.mode);
     // Spread the songs over the decades, unless the host chose which years to play.
     const order = values.spreadDecades ? 'decades' : 'random';
-    setGame(createGame({ playerNames: values.players, targetCards: values.targetCards, songs: values.songs, order }));
+    setGame({ ...createGame({ playerNames: values.players, targetCards: values.targetCards, songs: values.songs, order }), refill: values.refill });
   };
 
   return (

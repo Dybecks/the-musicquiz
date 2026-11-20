@@ -5,13 +5,13 @@
  */
 import type { Song } from '../game/engine';
 import { RateLimitError, spotifyGet, SpotifyError } from './api';
-import type { Genre } from '../data/genres';
+import { filterSongs, type Genre } from '../data/genres';
+import { DEFAULT_SONGS } from '../data/songs';
 import {
   earliestYear,
   needsYearCheck,
   releaseYear,
   songsFromSearch,
-  spreadPick,
   trackToSong,
   uniqueTracks,
   withContributor,
@@ -26,23 +26,27 @@ const DECK_KEY = 'mq.personalDeck';
 const CACHE_KEY = 'mq.spotifyCache';
 
 /** The most genre searches one list may cost. */
-export const MAX_GENRE_REQUESTS = 12;
+export const MAX_GENRE_REQUESTS = 6;
 /** How many genres can be picked at once. */
 export const MAX_GENRES = 4;
 /** Playlists listed per request (Spotify's maximum). */
 const PLAYLIST_PAGE = 50;
-/** Tracks per playlist request (Spotify's maximum), and how many requests per playlist at most. */
-const TRACK_PAGE = 100;
-const PAGES_PER_PLAYLIST = 3;
-/** Upper bound on cards, which also bounds the number of year lookups. */
-const MAX_TRACKS = 400;
+/** Tracks per playlist request: one batch. */
+const TRACK_PAGE = 50;
+/**
+ * Genre searches only look this deep into Spotify's results: further down
+ * are songs few people would know.
+ */
+const MAX_SEARCH_OFFSET = 250;
+/** Songs fetched before the game starts; more are fetched while playing. */
+export const FIRST_BATCH = 12;
+/** At most this many original-year searches per batch. */
+const YEAR_CHECKS_PER_BATCH = 3;
 /**
  * Requests are sent one after the other with a short pause, so a list never
  * comes as a burst; Spotify answers bursts with "too many requests".
  */
 const PAUSE_MS = 250;
-/** Year checks are many small searches: two at a time. */
-const YEAR_CHECK_CONCURRENCY = 2;
 /** Remembered year lookups, so building again is quick. */
 const CACHE_LIMIT = 8000;
 
@@ -117,30 +121,6 @@ function writeYearCache(years: Record<string, number | null>): void {
 
 const pause = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-/**
- * Runs `task` for every item, `concurrency` at a time with a pause between
- * requests. If Spotify says to stop (rate limited), no further items are
- * started and the error is returned, so the caller can keep what it has.
- */
-async function paced<T>(items: readonly T[], concurrency: number, task: (item: T) => Promise<void>): Promise<RateLimitError | null> {
-  let next = 0;
-  let stopped: RateLimitError | null = null;
-  const worker = async () => {
-    while (!stopped && next < items.length) {
-      const item = items[next++];
-      try {
-        await task(item);
-      } catch (e) {
-        if (e instanceof RateLimitError) stopped = e;
-        else throw e;
-      }
-      if (!stopped && next < items.length) await pause(PAUSE_MS);
-    }
-  };
-  await Promise.all(Array.from({ length: Math.min(concurrency, items.length) }, worker));
-  return stopped;
-}
-
 async function searchOriginalYear(track: SpotifyTrack & { id: string }): Promise<number | null> {
   const title = track.name.replace(/["]/g, '').replace(/\s+-\s+.*$/, '');
   const q = `track:"${title}" artist:"${track.artists[0].name.replace(/["]/g, '')}"`;
@@ -163,73 +143,241 @@ export interface BuildProgress {
   total: number;
 }
 
+// ---- Fetching a few songs at a time ----
+
+/**
+ * Where a list's songs come from. The game fetches one batch to start with
+ * and another whenever its deck runs low, so a game only costs the requests
+ * it actually needs. Each batch is a random page: a random genre and decade
+ * at a random depth in Spotify's results, or a random part of a random
+ * chosen playlist. Pages already fetched are remembered and not fetched
+ * again. Plain JSON, so it is saved with the game.
+ */
+export type RefillPlan =
+  | { kind: 'genres'; genres: string[]; from: number; to: number; asked: Record<string, number[]>; totals: Record<string, number> }
+  | { kind: 'playlists'; playlists: Pick<PlaylistSummary, 'id' | 'name' | 'tracks'>[]; asked: Record<string, number[]> };
+
+export interface Batch {
+  songs: Song[];
+  /** The plan for the next batch; null when everything has been fetched. */
+  plan: RefillPlan | null;
+}
+
+const pick = <T,>(items: readonly T[]): T => items[Math.floor(Math.random() * items.length)];
+
+/** Offsets (multiples of `page`) below `end` that haven't been fetched yet. */
+function freeOffsets(end: number, page: number, asked: readonly number[] = []): number[] {
+  const out: number[] = [];
+  for (let o = 0; o < end; o += page) if (!asked.includes(o)) out.push(o);
+  return out;
+}
+
 // ---- By genre ----
 
-/** The searches a genre list makes: one per genre per year slice. */
-export function genrePlan(genreIds: readonly string[], from: number, to: number): { slices: YearSlice[]; requests: number } {
-  const slices = yearSlices(from, to, genreIds.length, MAX_GENRE_REQUESTS);
-  return { slices, requests: slices.length * genreIds.length };
+// Genre searches are remembered for a week, so building the same list again
+// (or one that shares genres and decades) costs no requests.
+const SEARCH_CACHE_KEY = 'mq.genreSearchCache';
+const SEARCH_CACHE_DAYS = 7;
+const SEARCH_CACHE_LIMIT = 120;
+type SearchCache = Record<string, { at: number; songs: Song[] }>;
+
+function readSearchCache(): SearchCache {
+  try {
+    const c = JSON.parse(localStorage.getItem(SEARCH_CACHE_KEY) ?? 'null');
+    if (c && typeof c === 'object') return c;
+  } catch {
+    /* ignore */
+  }
+  return {};
+}
+
+function writeSearchCache(cache: SearchCache): void {
+  const fresh = Object.entries(cache)
+    .filter(([, v]) => Date.now() - v.at < SEARCH_CACHE_DAYS * 86_400_000)
+    .sort((a, b) => a[1].at - b[1].at)
+    .slice(-SEARCH_CACHE_LIMIT);
+  try {
+    localStorage.setItem(SEARCH_CACHE_KEY, JSON.stringify(Object.fromEntries(fresh)));
+  } catch {
+    /* the cache is only a saving */
+  }
+}
+
+
+/** The year spans a genre list searches: decades, joined when many genres are chosen. */
+export function genrePlan(genreIds: readonly string[], from: number, to: number): { slices: YearSlice[] } {
+  return { slices: yearSlices(from, to, genreIds.length, MAX_GENRE_REQUESTS) };
+}
+
+export function newGenrePlan(genres: string[], from: number, to: number): RefillPlan {
+  return { kind: 'genres', genres, from, to, asked: {}, totals: {} };
 }
 
 /** Spotify may cap search results lower for some apps; fall back once and remember. */
 let searchLimit = 50;
 
-async function genreSearch(query: string, slice: YearSlice): Promise<SpotifyTrack[]> {
+async function genreSearch(query: string, slice: YearSlice, offset: number): Promise<{ items: SpotifyTrack[]; total: number }> {
   const q = `genre:"${query}" year:${slice.from}-${slice.to}`;
-  const run = (limit: number) =>
-    spotifyGet<{ tracks?: { items: SpotifyTrack[] } }>(`/search?${new URLSearchParams({ q, type: 'track', limit: String(limit) })}`);
+  const run = async (limit: number) => {
+    const body = await spotifyGet<{ tracks?: { items: SpotifyTrack[]; total?: number } }>(
+      `/search?${new URLSearchParams({ q, type: 'track', limit: String(limit), offset: String(offset) })}`,
+    );
+    return { items: body.tracks?.items ?? [], total: body.tracks?.total ?? 0 };
+  };
   try {
-    return (await run(searchLimit)).tracks?.items ?? [];
+    return await run(searchLimit);
   } catch (e) {
     if (e instanceof SpotifyError && e.status === 400 && searchLimit > 10) {
       searchLimit = 10;
-      return (await run(searchLimit)).tracks?.items ?? [];
+      return run(searchLimit);
     }
     throw e;
   }
 }
 
-/**
- * Builds a list from genre searches. Songs are dated by their album, so no
- * lookups are needed beyond the searches themselves.
- */
-export async function buildFromGenres(
-  genreIds: readonly string[],
-  from: number,
-  to: number,
-  onProgress: (p: BuildProgress) => void = () => {},
-): Promise<{ songs: Song[]; note: string | null }> {
-  const genres = SEARCH_GENRES.filter((g) => genreIds.includes(g.id));
-  const { slices } = genrePlan(genreIds, from, to);
-  const jobs = genres.flatMap((genre) => slices.map((slice) => ({ genre, slice })));
-  const results: Song[][] = new Array(jobs.length).fill([]);
-  let done = 0;
-  let failed = 0;
-  let lastError: unknown = null;
-  onProgress({ label: 'Searching Spotify', done, total: jobs.length });
-  const limited = await paced(
-    jobs.map((job, i) => ({ ...job, i })),
-    1,
-    async ({ genre, slice, i }) => {
-      onProgress({ label: `Searching Spotify: ${genre.label}, ${slice.from}–${slice.to}`, done, total: jobs.length });
-      try {
-        const songs = songsFromSearch(await genreSearch(genre.query, slice), slice);
-        results[i] = genre.genre ? songs.map((s) => ({ ...s, genres: [genre.genre!] })) : songs;
-      } catch (e) {
-        if (e instanceof RateLimitError) throw e;
-        failed++;
-        lastError = e;
-      }
-      onProgress({ label: `Searching Spotify: ${genre.label}, ${slice.from}–${slice.to}`, done: ++done, total: jobs.length });
-    },
+/** One random genre search: one request, or none if it was made in the last week. */
+async function genreBatch(plan: Extract<RefillPlan, { kind: 'genres' }>): Promise<Batch> {
+  const genres = SEARCH_GENRES.filter((g) => plan.genres.includes(g.id));
+  const { slices } = genrePlan(plan.genres, plan.from, plan.to);
+  const page = searchLimit;
+  const options = genres.flatMap((genre) =>
+    slices.flatMap((slice) => {
+      const key = `${genre.query}|${slice.from}-${slice.to}`;
+      const end = Math.min(MAX_SEARCH_OFFSET, plan.totals[key] ?? MAX_SEARCH_OFFSET);
+      return freeOffsets(end, page, plan.asked[key]).map((offset) => ({ genre, slice, key, offset }));
+    }),
   );
-  const songs = mergeById(results.flat());
-  if (songs.length === 0) {
-    if (limited) throw limited;
-    if (failed === jobs.length && lastError) throw lastError;
+  if (options.length === 0) return { songs: [], plan: null };
+  // Each search covers one decade, so take turns: search a decade that has
+  // been searched least so far (a random one of those), with a random genre.
+  const timesAsked = (sl: YearSlice) =>
+    genres.reduce((n, g) => n + (plan.asked[`${g.query}|${sl.from}-${sl.to}`]?.length ?? 0), 0);
+  const fewest = Math.min(...options.map((o) => timesAsked(o.slice)));
+  const { genre, slice, key, offset } = pick(options.filter((o) => timesAsked(o.slice) === fewest));
+
+  const cache = readSearchCache();
+  const cacheKey = `${key}|${offset}`;
+  const cached = cache[cacheKey];
+  let songs: Song[];
+  let total = plan.totals[key];
+  if (cached && Date.now() - cached.at < SEARCH_CACHE_DAYS * 86_400_000) {
+    songs = cached.songs;
+  } else {
+    const result = await genreSearch(genre.query, slice, offset);
+    total = result.total;
+    songs = songsFromSearch(result.items, slice);
+    if (genre.genre) songs = songs.map((s) => ({ ...s, genres: [genre.genre!] }));
+    cache[cacheKey] = { at: Date.now(), songs };
+    writeSearchCache(cache);
   }
-  const note = limited ? `Spotify kept refusing the game, so ${done} of ${jobs.length} searches were made.` : null;
-  return { songs, note };
+  const next: RefillPlan = {
+    ...plan,
+    asked: { ...plan.asked, [key]: [...(plan.asked[key] ?? []), offset] },
+    totals: total === undefined ? plan.totals : { ...plan.totals, [key]: total },
+  };
+  return { songs, plan: next };
+}
+
+// ---- From playlists ----
+
+export function newPlaylistPlan(playlists: readonly PlaylistSummary[]): RefillPlan {
+  return { kind: 'playlists', playlists: playlists.map(({ id, name, tracks }) => ({ id, name, tracks })), asked: {} };
+}
+
+/**
+ * One random page of one chosen playlist (bigger playlists are picked more
+ * often). Songs on their original album are dated by it; a few reissues get
+ * a search for their original year, the rest wait for a later batch.
+ */
+async function playlistBatch(plan: Extract<RefillPlan, { kind: 'playlists' }>): Promise<Batch> {
+  const options = plan.playlists.flatMap((p) => freeOffsets(Math.max(p.tracks, 1), TRACK_PAGE, plan.asked[p.id]).map((offset) => ({ p, offset })));
+  if (options.length === 0) return { songs: [], plan: null };
+  const { p, offset } = pick(options);
+  let tracks: (SpotifyTrack & { id: string })[] = [];
+  try {
+    tracks = uniqueTracks(await playlistPage(p.id, offset));
+  } catch (e) {
+    if (e instanceof RateLimitError) throw e;
+    // Spotify refuses some playlists (for example its own editorial ones): skip it.
+    return { songs: [], plan: { ...plan, playlists: plan.playlists.filter((x) => x.id !== p.id) } };
+  }
+  const yearCache = readYearCache();
+  const songs: Song[] = [];
+  const reissues: typeof tracks = [];
+  for (const t of tracks) {
+    if (t.id in yearCache) {
+      const y = yearCache[t.id];
+      if (y != null) songs.push(trackToSong(t, y));
+    } else if (needsYearCheck(t)) reissues.push(t);
+    else {
+      const y = releaseYear(t.album.release_date);
+      if (y != null) songs.push(trackToSong(t, y));
+    }
+  }
+  for (const t of reissues.sort(() => Math.random() - 0.5).slice(0, YEAR_CHECKS_PER_BATCH)) {
+    const y = await searchOriginalYear(t);
+    yearCache[t.id] = y;
+    if (y != null) songs.push(trackToSong(t, y));
+  }
+  writeYearCache(yearCache);
+  return { songs, plan: { ...plan, asked: { ...plan.asked, [p.id]: [...(plan.asked[p.id] ?? []), offset] } } };
+}
+
+// ---- Both ----
+
+/** Fetches the next batch of songs for a list. */
+export function fetchBatch(plan: RefillPlan): Promise<Batch> {
+  return plan.kind === 'genres' ? genreBatch(plan) : playlistBatch(plan);
+}
+
+/**
+ * The game's own classic hits for the chosen genres and years. They are
+ * mixed into a genre list so it needs fewer Spotify requests, and carry it
+ * on their own when Spotify can't be asked. Only songs with a known Spotify
+ * link are used: they play without any request.
+ */
+export function builtInForGenres(genreIds: readonly string[], from: number, to: number): Song[] {
+  const genres = [...new Set(SEARCH_GENRES.filter((g) => genreIds.includes(g.id) && g.genre).map((g) => g.genre!))];
+  if (genres.length === 0) return [];
+  return filterSongs(DEFAULT_SONGS, { genres, fromYear: from, toYear: to }).filter((s) => s.spotifyId);
+}
+
+/**
+ * Fetches the first few songs, one batch (request) after another, until
+ * there are enough to start. If Spotify won't answer (the quota is used up),
+ * a genre list carries on with the game's own songs for the same genres and
+ * years, so the host never has to act.
+ */
+export async function startList(
+  plan: RefillPlan,
+  onProgress: (p: BuildProgress) => void = () => {},
+  want = FIRST_BATCH,
+): Promise<{ songs: Song[]; plan: RefillPlan | null; note: string | null }> {
+  // A genre list starts with the game's own songs for those genres and
+  // years (no requests), spread over the decades, plus one Spotify batch.
+  let songs: Song[] = plan.kind === 'genres' ? builtInForGenres(plan.genres, plan.from, plan.to) : [];
+  let next: RefillPlan | null = plan;
+  let tries = 0;
+  const label = plan.kind === 'genres' ? 'Finding songs on Spotify' : 'Reading your playlists';
+  while (next && (tries === 0 || songs.length < want) && tries < 5) {
+    onProgress({ label, done: Math.min(songs.length, want), total: want });
+    try {
+      const batch = await fetchBatch(next);
+      songs = mergeById([...songs, ...batch.songs]);
+      next = batch.plan;
+    } catch (e) {
+      if (!(e instanceof RateLimitError) || plan.kind !== 'genres') {
+        if (songs.length) break;
+        throw e;
+      }
+      if (songs.length === 0) throw e;
+      return { songs, plan: null, note: `${e.message} Until then the game uses its own classic hits for these genres and years.` };
+    }
+    tries++;
+    if (next && songs.length < want) await pause(PAUSE_MS);
+  }
+  onProgress({ label, done: want, total: want });
+  return { songs, plan: next, note: null };
 }
 
 function mergeById(songs: Song[]): Song[] {
@@ -242,7 +390,7 @@ function mergeById(songs: Song[]): Song[] {
   });
 }
 
-// ---- From playlists ----
+// ---- Listing playlists ----
 
 export interface PlaylistSummary {
   id: string;
@@ -295,68 +443,3 @@ async function playlistPage(id: string, offset: number): Promise<SpotifyTrack[]>
     .filter((t): t is SpotifyTrack & { type?: string } => !!t && (t.type ?? 'track') === 'track');
 }
 
-/**
- * Reads the chosen playlists (one request per 100 songs) and dates every
- * song. Songs on compilations or remasters get one search each for the
- * original year; everything else is dated by its album.
- */
-export async function buildFromPlaylists(
-  playlists: readonly PlaylistSummary[],
-  onProgress: (p: BuildProgress) => void = () => {},
-): Promise<{ songs: Song[]; skipped: string[]; note: string | null }> {
-  const jobs = playlists.flatMap((p) =>
-    Array.from({ length: Math.max(1, Math.min(PAGES_PER_PLAYLIST, Math.ceil(p.tracks / TRACK_PAGE))) }, (_, page) => ({ p, offset: page * TRACK_PAGE })),
-  );
-  const pages: SpotifyTrack[][] = new Array(jobs.length).fill([]);
-  const skipped = new Set<string>();
-  let done = 0;
-  onProgress({ label: 'Reading playlists', done, total: jobs.length });
-  const limitedReading = await paced(
-    jobs.map((job, i) => ({ ...job, i })),
-    1,
-    async ({ p, offset, i }) => {
-      try {
-        pages[i] = await playlistPage(p.id, offset);
-      } catch (e) {
-        if (e instanceof RateLimitError) throw e;
-        // Spotify refuses some playlists (for example its own editorial ones).
-        skipped.add(p.name);
-      }
-      onProgress({ label: `Reading ${p.name}`, done: ++done, total: jobs.length });
-    },
-  );
-
-  const albumYear = (t: SpotifyTrack) => releaseYear(t.album.release_date);
-  const tracks = spreadPick(uniqueTracks(pages.flat()), MAX_TRACKS, albumYear);
-  const cache = readYearCache();
-  const years = new Map<string, number | null>();
-  const toSearch: typeof tracks = [];
-  for (const t of tracks) {
-    if (t.id in cache) years.set(t.id, cache[t.id]);
-    else if (needsYearCheck(t)) toSearch.push(t);
-    else years.set(t.id, albumYear(t));
-  }
-  done = 0;
-  if (toSearch.length) onProgress({ label: `Checking the original year of ${toSearch.length} remastered songs`, done, total: toSearch.length });
-  const limitedChecks = limitedReading ? null : await paced(toSearch, YEAR_CHECK_CONCURRENCY, async (t) => {
-    const year = await searchOriginalYear(t);
-    years.set(t.id, year);
-    cache[t.id] = year;
-    onProgress({ label: `Checking the original year of ${toSearch.length} remastered songs`, done: ++done, total: toSearch.length });
-  });
-  writeYearCache(cache);
-
-  const songs: Song[] = [];
-  for (const t of tracks) {
-    const year = years.get(t.id);
-    if (year != null) songs.push(trackToSong(t, year));
-  }
-  const limited = limitedReading ?? limitedChecks;
-  if (songs.length === 0 && limited) throw limited;
-  const note = limitedReading
-    ? 'Spotify kept refusing the game, so only part of the playlists was read.'
-    : limitedChecks
-      ? "Spotify kept refusing the game, so some remastered songs whose original year wasn't checked were left out."
-      : null;
-  return { songs, skipped: [...skipped], note };
-}

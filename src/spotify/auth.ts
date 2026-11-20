@@ -27,6 +27,8 @@ interface StoredToken {
   expiresAt: number;
   /** Space-separated scopes the user granted. Missing on tokens saved by older versions. */
   scope?: string;
+  /** The Spotify app the login belongs to. Missing on tokens saved by older versions. */
+  clientId?: string;
 }
 
 export function redirectUri(): string {
@@ -38,7 +40,7 @@ export function redirectUri(): string {
  * secret), so it is safe to ship in the site. It can be overridden with
  * VITE_SPOTIFY_CLIENT_ID at build time, or per browser on the setup screen.
  */
-export const BUILT_IN_CLIENT_ID = import.meta.env.VITE_SPOTIFY_CLIENT_ID || '5a008c63808c47478e4edcc99db34a87';
+export const BUILT_IN_CLIENT_ID = import.meta.env.VITE_SPOTIFY_CLIENT_ID || 'a96f51d734d240cdbe07ab7ae00fd959';
 
 /** A Client ID the host typed in to use their own Spotify app, if any. */
 export function getClientIdOverride(): string {
@@ -164,6 +166,7 @@ function saveToken(body: { access_token: string; refresh_token?: string; expires
     refreshToken: body.refresh_token ?? previous?.refreshToken ?? '',
     expiresAt: Date.now() + (body.expires_in - 60) * 1000,
     scope: body.scope ?? previous?.scope,
+    clientId: getClientId(),
   };
   localStorage.setItem(KEYS.token, JSON.stringify(token));
 }
@@ -178,7 +181,8 @@ function readToken(): StoredToken | null {
 }
 
 export function isLoggedIn(): boolean {
-  return readToken() !== null;
+  const token = readToken();
+  return token !== null && token.clientId === getClientId();
 }
 
 /** The permissions the logged-in user granted (empty when logged out). */
@@ -224,6 +228,12 @@ let refreshing: Promise<string | null> | null = null;
 export async function getAccessToken(): Promise<string | null> {
   const token = readToken();
   if (!token) return null;
+  // A login made with another Spotify app (for example before the game's
+  // built-in app changed) can't be refreshed by this one: log in again.
+  if (token.clientId !== getClientId()) {
+    logout();
+    return null;
+  }
   if (Date.now() < token.expiresAt) return token.accessToken;
   if (!token.refreshToken) {
     logout();

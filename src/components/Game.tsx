@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { currentPlayer, nextTurn, placeCurrent, skipSong, type GameState } from '../game/engine';
+import { addSongs, currentPlayer, nextTurn, placeCurrent, skipSong, type GameState } from '../game/engine';
+import { builtInForGenres, fetchBatch, type RefillPlan } from '../spotify/listening';
+import { RateLimitError } from '../spotify/api';
 import {
   createEmbedPlayback,
   createPremiumPlayback,
@@ -22,7 +24,49 @@ type SongStatus = 'loading' | 'ready' | 'error';
 
 const message = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
+/** Fetch more songs when this few are left in the deck. */
+const REFILL_AT = 4;
+
+/**
+ * Keeps the deck topped up for lists that are fetched a few songs at a
+ * time: when it runs low, one more batch (one request) is fetched in the
+ * background. If Spotify's request limit is used up, a genre list carries on
+ * with the game's own songs for its genres and years.
+ */
+function useRefill(state: GameState, onChange: (s: GameState) => void): string | null {
+  const latest = useRef(state);
+  latest.current = state;
+  const busy = useRef(false);
+  const [note, setNote] = useState<string | null>(null);
+  const plan = state.refill as RefillPlan | undefined;
+  const low = !!plan && state.phase !== 'finished' && state.deck.length <= REFILL_AT;
+
+  useEffect(() => {
+    if (!low || !plan || busy.current) return;
+    busy.current = true;
+    fetchBatch(plan)
+      .then(({ songs, plan: next }) => onChange(addSongs(latest.current, songs, next ?? undefined)))
+      .catch((e) => {
+        if (e instanceof RateLimitError && plan.kind === 'genres') {
+          setNote(`${e.message} Until then the game uses its own classic hits for these genres and years.`);
+          onChange(addSongs(latest.current, builtInForGenres(plan.genres, plan.from, plan.to), undefined));
+        } else {
+          setNote(`No more songs could be fetched: ${message(e)}`);
+          onChange({ ...latest.current, refill: undefined });
+        }
+      })
+      .finally(() => {
+        busy.current = false;
+      });
+    // Runs again whenever the deck shrinks or the plan changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [low, state.deck.length, plan]);
+
+  return note;
+}
+
 export function Game({ state, mode, onModeChange, onChange, onQuit }: Props) {
+  const refillNote = useRefill(state, onChange);
   const embedHost = useRef<HTMLDivElement>(null);
   const [playback, setPlayback] = useState<Playback | null>(null);
   const [playbackError, setPlaybackError] = useState<string | null>(null);
@@ -230,9 +274,10 @@ export function Game({ state, mode, onModeChange, onChange, onQuit }: Props) {
         <div ref={embedHost} className="embed-host" />
       </section>
 
+      {refillNote && <p className="hint center">{refillNote}</p>}
       <footer className="game-footer">
         <span className="muted">
-          Round {state.round} · {state.deck.length} songs left
+          Round {state.round} · {state.refill ? 'more songs on the way' : `${state.deck.length} songs left`}
         </span>
         <button className="link" onClick={quit}>
           End game
