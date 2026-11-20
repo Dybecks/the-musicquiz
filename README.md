@@ -185,6 +185,10 @@ sends its sound: its own speaker, headphones, Bluetooth or AirPlay (for example 
 Sonos). Picking a Spotify Connect speaker from the game was tried and dropped: Spotify
 locks a Sonos against control from other apps.
 
+During a song, **Open in Spotify ↗** opens it in the Spotify app instead, which can play
+on any speaker it reaches (Sonos included). Spotify shows the title there, so someone who
+isn't guessing should tap it.
+
 Songs with a Spotify id in `SPOTIFY_IDS` (`src/data/songs.ts`) play without a login.
 Other songs are looked up with the Spotify search API, which needs the login.
 
