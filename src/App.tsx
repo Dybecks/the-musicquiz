@@ -7,6 +7,8 @@ import type { PersonalDeck } from './spotify/personalDeck';
 import type { PlaybackKind, Speaker } from './spotify/playback';
 import { Setup, type SetupValues } from './components/Setup';
 import { Game } from './components/Game';
+import { Remote, savedRemote } from './components/Remote';
+import { isValidCode, normalizeCode } from './multiplayer/protocol';
 
 const GAME_KEY = 'mq.game';
 const MODE_KEY = 'mq.mode';
@@ -38,7 +40,25 @@ function finishLogin() {
   return startup;
 }
 
+/** A `?join=CODE` link opens the join screen; the parameter is then removed from the address. */
+function codeFromLink(): string | null {
+  const params = new URLSearchParams(window.location.search);
+  const raw = params.get('join');
+  if (raw === null) return null;
+  params.delete('join');
+  const query = params.toString();
+  window.history.replaceState(null, '', `${window.location.pathname}${query ? `?${query}` : ''}${window.location.hash}`);
+  const code = normalizeCode(raw);
+  return isValidCode(code) ? code : '';
+}
+
 export function App() {
+  // Joining someone else's game: from a link, or carrying on after a reload.
+  const [remote, setRemote] = useState<{ code?: string } | null>(() => {
+    const code = codeFromLink();
+    if (code !== null) return { code: code || undefined };
+    return savedRemote() ? {} : null;
+  });
   const [game, setGame] = useState<GameState | null>(() => loadJson<GameState>(GAME_KEY));
   const [mode, setMode] = useState<PlaybackKind>(() => loadJson<PlaybackKind>(MODE_KEY) ?? 'embed');
   const [speaker, setSpeaker] = useState<Speaker | null>(() => loadJson<Speaker>(SPEAKER_KEY));
@@ -100,7 +120,9 @@ export function App() {
       <header className="brand">
         <span className="brand-mark">♪</span> The Music Quiz
       </header>
-      {game ? (
+      {remote ? (
+        <Remote initialCode={remote.code} onLeave={() => setRemote(null)} />
+      ) : game ? (
         <Game
           state={game}
           mode={mode}
@@ -132,6 +154,7 @@ export function App() {
           }}
           speaker={speaker}
           onStart={start}
+          onJoin={() => setRemote({})}
         />
       )}
     </div>

@@ -22,6 +22,37 @@ It runs in the browser on a phone, tablet or laptop that everyone gathers around
 Use **Skip song** if a track can't be found or played; it draws a new song
 without using up the turn. The game is saved in the browser, so a reload doesn't lose it.
 
+## Playing together on phones
+
+The host's device plays the music, and everyone else can follow along on their own phone:
+
+1. During a game the host taps **Share a game code**. A four-letter code appears (and
+   **Share link** sends a `?join=CODE` link).
+2. On a phone, open the game, tap **Join a game on this phone**, type the code and a name,
+   or just open the link.
+3. Pick a team. The host's screen lists who is on which team.
+4. When it's your team's turn, tap the spot on the timeline where you think the song
+   belongs. Everyone sees the team's votes as name tags on the spots.
+5. Each team member taps **Lock in my vote**. When everyone on the team who is
+   connected has locked in, the spot with the most votes is the guess. If the votes are
+   split evenly, the team agrees on one spot and locks in again. Changing a vote unlocks it.
+
+Phones never receive the song that is playing, only the timelines, votes and the reveal.
+The host can still tap a spot and lock in for a team, for example when someone's phone
+stops responding. A team with no phones plays on the host's screen as before. Phones
+reconnect by themselves after a reload or a dropped connection, and so does the room
+after the host's page reloads.
+
+The phones talk to the host directly over WebRTC ([PeerJS](https://peerjs.com/)); the
+free public PeerJS server only puts them in touch, so the game still needs no backend.
+Some networks (strict mobile carrier or company NATs) block direct connections; being on
+the same Wi-Fi works best. To use your own PeerJS server, set `VITE_PEER_HOST`
+(and optionally `VITE_PEER_PORT`, `VITE_PEER_PATH`, `VITE_PEER_SECURE=false`).
+
+The code: `src/multiplayer/protocol.ts` (messages, votes and what phones see, tested in
+`protocol.test.ts`), `src/multiplayer/connection.ts` (the connections),
+`src/multiplayer/useHostRoom.ts` (the host side) and `src/components/Remote.tsx` (the phone).
+
 ## Song decks
 
 Under **Which songs?** the host ticks one or more decks; songs from several decks are
