@@ -327,3 +327,5 @@ input:focus { outline: 2px solid var(--accent); border-color: transparent; }
 .speakers h2 { margin-top: 0; }
 .sonos-code { display: grid; gap: 10px; margin-bottom: 8px; }
 .sonos-code label { display: grid; gap: 6px; font-size: 0.9rem; color: var(--muted); }
+.sonos-bridge { margin-top: 12px; }
+.sonos-bridge summary { cursor: pointer; font-weight: 600; margin-bottom: 10px; }

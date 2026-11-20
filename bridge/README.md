@@ -38,7 +38,7 @@ On a Mac:
 
 On the host device (phone, tablet or laptop) during a game:
 
-1. Tap **🔊 This device** at the bottom.
+1. Tap **🔊 This device** at the bottom and open **Sonos through the Sonos bridge**.
 2. Enter the speaker code and tap **Find Sonos speakers**.
 3. Pick a speaker or group.
 
