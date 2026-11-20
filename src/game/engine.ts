@@ -58,20 +58,45 @@ export function shuffle<T>(items: readonly T[], rng: Rng = Math.random): T[] {
   return out;
 }
 
+/**
+ * Orders songs so that every decade comes up about equally often, however
+ * many songs each decade has: each draw picks a random decade among those
+ * left, then a random song from it. Big decades are used up last.
+ */
+export function spreadByDecade(songs: readonly Song[], rng: Rng = Math.random): Song[] {
+  const groups = new Map<number, Song[]>();
+  for (const song of shuffle(songs, rng)) {
+    const decade = Math.floor(song.year / 10) * 10;
+    const group = groups.get(decade);
+    if (group) group.push(song);
+    else groups.set(decade, [song]);
+  }
+  const lists = [...groups.values()];
+  const out: Song[] = [];
+  while (lists.length) {
+    const i = Math.min(lists.length - 1, Math.floor(rng() * lists.length));
+    out.push(lists[i].pop()!);
+    if (lists[i].length === 0) lists.splice(i, 1);
+  }
+  return out;
+}
+
 export interface NewGameOptions {
   playerNames: string[];
   targetCards: number;
   songs: readonly Song[];
+  /** 'decades' spreads the songs evenly over the decades; 'random' (default) is a plain shuffle. */
+  order?: 'random' | 'decades';
   rng?: Rng;
 }
 
-export function createGame({ playerNames, targetCards, songs, rng = Math.random }: NewGameOptions): GameState {
+export function createGame({ playerNames, targetCards, songs, order = 'random', rng = Math.random }: NewGameOptions): GameState {
   const names = playerNames.map((n) => n.trim()).filter(Boolean);
   if (names.length === 0) throw new Error('Add at least one player or team.');
   if (targetCards < 2) throw new Error('The target must be at least 2 cards.');
   if (songs.length < names.length + 1) throw new Error('Not enough songs in the deck.');
 
-  const deck = shuffle(songs, rng);
+  const deck = order === 'decades' ? spreadByDecade(songs, rng) : shuffle(songs, rng);
   // Each player gets one face-up starting card. Try to give everyone a
   // different decade-ish start so the timelines don't all look the same.
   const players: Player[] = names.map((name, i) => ({ id: `p${i + 1}`, name, timeline: [] }));

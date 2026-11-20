@@ -3,6 +3,7 @@
  * cards. No network calls here, so the rules are easy to test.
  */
 import type { Song } from '../game/engine';
+import type { DeckFilter } from '../data/genres';
 
 /** The parts of a Spotify track object the game uses. */
 export interface SpotifyTrack {
@@ -14,21 +15,23 @@ export interface SpotifyTrack {
 }
 
 /** The listening data a person can choose to share. */
-export type ListeningSource = 'top' | 'recent' | 'liked';
+export type ListeningSource = 'top' | 'recent' | 'liked' | 'playlists';
 
 export const SOURCE_SCOPES: Record<ListeningSource, string> = {
   top: 'user-top-read',
   recent: 'user-read-recently-played',
   liked: 'user-library-read',
+  playlists: 'playlist-read-private',
 };
 
 export const SOURCE_LABELS: Record<ListeningSource, { title: string; detail: string }> = {
-  top: { title: 'Top tracks', detail: 'What you play most: last month, last 6 months and the past year.' },
+  top: { title: 'Top tracks', detail: 'What you play most: up to 100 each for last month, last 6 months and the past year.' },
   recent: { title: 'Recently played', detail: 'Your last 50 played tracks.' },
-  liked: { title: 'Liked songs', detail: 'Up to 200 of your saved tracks.' },
+  liked: { title: 'Liked songs', detail: 'Up to 1,000 of your saved tracks.' },
+  playlists: { title: 'Your playlists', detail: 'Songs from up to 20 of your playlists.' },
 };
 
-export const ALL_SOURCES: ListeningSource[] = ['top', 'recent', 'liked'];
+export const ALL_SOURCES: ListeningSource[] = ['top', 'recent', 'liked', 'playlists'];
 
 /**
  * One person's contribution to the deck. The deck holds a list of these so
@@ -36,10 +39,14 @@ export const ALL_SOURCES: ListeningSource[] = ['top', 'recent', 'liked'];
  * most one.
  */
 export interface Contributor {
+  /** 'host' is the person running the game; 'friend' added their music with their own login. Missing means host. */
+  role?: 'host' | 'friend';
   userId: string;
   name: string;
   sources: ListeningSource[];
   builtAt: string;
+  /** The genres and years the songs were picked for. Missing on decks built by older versions (no filter). */
+  filter?: DeckFilter;
   songs: Song[];
 }
 
@@ -126,6 +133,16 @@ export function earliestYear(track: SpotifyTrack, candidates: SpotifyTrack[]): n
   return best;
 }
 
+/**
+ * Whether a track can still fall inside the year span before its original
+ * year is known. The album year is never earlier than the original release,
+ * so an album from before the span rules the song out; a later album doesn't.
+ */
+export function couldMatchYears(track: SpotifyTrack, filter: Pick<DeckFilter, 'fromYear'>): boolean {
+  const year = releaseYear(track.album.release_date);
+  return filter.fromYear === null || year === null || year >= filter.fromYear;
+}
+
 export function trackToSong(track: SpotifyTrack & { id: string }, year: number): Song {
   return {
     id: `sp:${track.id}`,
@@ -150,6 +167,78 @@ export function mergeSongs(...lists: readonly (readonly Song[])[]): Song[] {
     keys.add(key);
     if (song.spotifyId) ids.add(song.spotifyId);
     out.push(song);
+  }
+  return out;
+}
+
+/** The host's own music, if loaded. */
+export function hostContributor(deck: PersonalDeck | null): Contributor | undefined {
+  return deck?.contributors.find((c) => c.role !== 'friend');
+}
+
+export function friendContributors(deck: PersonalDeck | null): Contributor[] {
+  return deck?.contributors.filter((c) => c.role === 'friend') ?? [];
+}
+
+/**
+ * Adds one person's music, replacing what the same Spotify account added
+ * before. There is one host: new host music replaces the old host's.
+ */
+export function withContributor(deck: PersonalDeck | null, contributor: Contributor): PersonalDeck {
+  const role = contributor.role ?? 'host';
+  const others = (deck?.contributors ?? []).filter(
+    (c) => c.userId !== contributor.userId && !(role === 'host' && (c.role ?? 'host') === 'host'),
+  );
+  const contributors = role === 'host' ? [contributor, ...others] : [...others, contributor];
+  return { version: 1, contributors };
+}
+
+export function withoutContributor(deck: PersonalDeck | null, userId: string): PersonalDeck | null {
+  const contributors = (deck?.contributors ?? []).filter((c) => c.userId !== userId);
+  return contributors.length ? { version: 1, contributors } : null;
+}
+
+// Album names that suggest a later release of older songs.
+const REISSUE_WORDS =
+  /\b(remaster(ed)?|deluxe|anniversary|expanded|edition|greatest|best of|hits|collection|essential|anthology|definitive|ultimate|gold|platinum|classics|reissue|live|years|retrospective|complete|the very best)\b/i;
+
+/**
+ * Whether the album year may be later than the song's first release, so the
+ * original year has to be searched for. Songs on their original album or
+ * single are dated by the album, which saves a search per song.
+ */
+export function needsYearCheck(track: SpotifyTrack): boolean {
+  if (track.album.album_type === 'compilation') return true;
+  if (REISSUE_WORDS.test(track.album.name ?? '')) return true;
+  return cleanTitle(track.name) !== track.name.trim();
+}
+
+/**
+ * Picks at most `max` items, spread as evenly as possible over the decades:
+ * one from each decade in turn, keeping the original order within a decade.
+ * Items with no known year form their own group.
+ */
+export function spreadPick<T>(items: readonly T[], max: number, yearOf: (item: T) => number | null): T[] {
+  if (items.length <= max) return items.slice();
+  const groups = new Map<number | null, T[]>();
+  for (const item of items) {
+    const y = yearOf(item);
+    const key = y === null ? null : Math.floor(y / 10) * 10;
+    const group = groups.get(key);
+    if (group) group.push(item);
+    else groups.set(key, [item]);
+  }
+  const lists = [...groups.values()];
+  const out: T[] = [];
+  for (let round = 0; out.length < max; round++) {
+    let added = false;
+    for (const list of lists) {
+      if (round < list.length && out.length < max) {
+        out.push(list[round]);
+        added = true;
+      }
+    }
+    if (!added) break;
   }
   return out;
 }

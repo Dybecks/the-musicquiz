@@ -47,35 +47,71 @@ in particular, isn't on Spotify; the search may then find a cover, or nothing, a
 
 ## Play with your own music
 
-The host can also play with songs they actually listen to. Under **Which songs?** tick
-**My Spotify music** (on its own or with other decks), tick what to share and press
-**Allow access and build my deck**:
+The host can also play with songs they actually listen to. Setup goes in three steps:
+
+1. **Spotify:** choose whether to play with a Spotify login or without one. Nothing
+   happens yet; you are not sent to Spotify at this point.
+2. **Music:** first **What kind of songs?** (genres and years), then the decks (with a
+   login, **My Spotify music**, what to share from it and friends' music), the players,
+   and how the music plays.
+3. **Log in & load:** with a login, **Log in with Spotify and start** is the last step.
+   After the login the game reads your listening, keeps only the songs that match the
+   chosen genres and years, and starts. Without a login, **Start game** starts right away.
+
+Because the music is chosen first, only matching songs are loaded: songs whose album is
+older than the chosen years are dropped before any lookup, with a genre choice the
+artists' genres are looked up first and other genres dropped, and only then are original
+release years settled for at most 600 songs. When there are more, the 600 are spread
+over the decades.
+
+Loading is kept quick: the sources and pages are read in parallel, artist genres come
+50 at a time, and a song is only searched for an older release when it looks like a
+reissue (a compilation, an album called "Remastered", "Greatest Hits" and so on, or a
+title like "Song - Remastered 2011"). Songs on their original album are dated by it.
+Every lookup is remembered in the browser, so loading again with other genres or
+years is faster. The loaded songs are saved together with
+the choices they were loaded for and reused as long as the sources, genres and years stay
+the same; change them and they are loaded again at start.
 
 | Share | Spotify permission | What is read |
 | --- | --- | --- |
-| Top tracks | `user-top-read` | Top 50 tracks for the last month, 6 months and year |
+| Top tracks | `user-top-read` | Up to about 100 top tracks each for the last month, 6 months and year |
 | Recently played | `user-read-recently-played` | The last 50 played tracks |
-| Liked songs | `user-library-read` | Up to 200 saved tracks |
+| Liked songs | `user-library-read` | Up to 1,000 saved tracks |
+| Your playlists | `playlist-read-private` | Up to 100 tracks from each of up to 20 playlists |
 
-Nothing is read until the person opts in, and Spotify shows its own consent screen
-for exactly the permissions ticked. The deck is built in the browser and stored in
-its `localStorage` only; nothing is uploaded. **Delete my Spotify songs** removes it.
+Nothing is read until the person logs in at the last step, and Spotify shows its own
+consent screen for exactly the permissions ticked. The deck is built in the browser and stored in
+its `localStorage` only; nothing is uploaded. **Delete my saved Spotify songs** removes it.
 Logging out keeps the deck, and because every card has a Spotify track id it plays
 with any of the playback options below, including the hidden player.
 
 Spotify dates a track by the album it's on, so a 1975 song on a 2011 remaster says 2011.
 For each track the game searches Spotify for other releases of the same title by the
 same artist and uses the earliest year. Repeats, other versions of the same song and
-local files are dropped, and at most 300 songs are used. The setup screen shows how
+local files are dropped, and at most 600 songs are used. The setup screen shows how
 the songs spread over the decades; a deck of mostly recent songs is hard to place,
 so ticking another deck as well adds spread.
 
 The code: `src/spotify/listening.ts` (reading and storing) and
 `src/spotify/personalDeck.ts` (turning tracks into cards, tested in `personalDeck.test.ts`).
 
-**Phase two, several people:** the stored deck is already a list of contributors
-(`PersonalDeck.contributors`), each with their own songs, so letting more players
-log in one after another and merge their music only needs the login and UI for it.
+### Friends' music
+
+Under **My Spotify music**, **Add a friend's Spotify music** lets other people mix in
+what they listen to. The friend logs in to Spotify on the same device (Spotify shows its
+account picker; "Not you?" switches account) and grants only the read permissions for
+the ticked sources. Their songs are loaded for the genres and years already chosen,
+saved next to the host's, and then the host's own login is put back. Each friend can be
+removed again. While the game's Spotify app is in development mode, Spotify only lets
+accounts log in that are added as users of the app in the Spotify developer dashboard.
+
+## Decades
+
+Unless the host chooses years, the game spreads the songs evenly over the decades: each
+draw picks a decade first and then a song from it, so a deck that is mostly recent
+music still brings up older songs regularly (`spreadByDecade` in `src/game/engine.ts`).
+With years chosen, the songs are simply shuffled.
 
 ## Genres and years
 

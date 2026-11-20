@@ -198,7 +198,7 @@ input:focus { outline: 2px solid var(--accent); border-color: transparent; }
   .app { max-width: 1180px; }
   .setup { columns: 2; column-gap: 14px; }
   .setup > * { break-inside: avoid; }
-  .setup > .intro, .setup > button.big, .setup > .warn { column-span: all; }
+  .setup > .intro, .setup > .intro + .panel, .setup > button.big, .setup > .warn, .setup > .steps, .setup > .steps + p { column-span: all; }
   .setup > button.big { max-width: 420px; display: block; margin: 4px auto 0; }
 }
 
@@ -237,3 +237,18 @@ input:focus { outline: 2px solid var(--accent); border-color: transparent; }
   .vinyl.spinning, .song-card.new { animation: none; }
   button { transition: none; }
 }
+
+/* Setup steps */
+.steps { list-style: none; display: flex; gap: 6px; padding: 0; margin: 0 0 14px; font-size: 0.85rem; color: var(--muted); }
+.steps li { flex: 1; display: flex; align-items: center; gap: 6px; padding: 6px 8px; border-radius: 999px; background: var(--panel); min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.steps .num { flex: none; display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--panel-2); font-weight: 700; font-size: 0.75rem; }
+.steps li.current { color: var(--text); outline: 2px solid var(--accent); }
+.steps li.current .num { background: var(--accent); color: #fff; }
+.steps li.done .num { background: var(--good); color: #062b14; }
+
+/* Friends' music */
+.friends { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--panel-2); }
+.friends h3 { font-size: 0.95rem; margin: 0 0 8px; }
+.friend-list { list-style: none; padding: 0; margin: 0 0 10px; display: grid; gap: 6px; }
+.friend-list li { display: flex; justify-content: space-between; align-items: center; gap: 8px; background: var(--panel-2); border-radius: 12px; padding: 6px 6px 6px 12px; }
+.friend-list button { flex: none; width: 36px; height: 36px; padding: 0; }
