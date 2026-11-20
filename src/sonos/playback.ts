@@ -21,7 +21,9 @@ export function createSonosPlayback(choice: SonosChoice): Playback {
     async prepare(song) {
       if (started) await bridge.pause(speakerId).catch(() => {});
       started = false;
-      uri = await uriFor(song);
+      // Check the bridge now, so a bridge that is off shows up before Play is pressed.
+      const [found] = await Promise.all([uriFor(song), bridge.check()]);
+      uri = found;
     },
     async play() {
       if (!uri) return;

@@ -92,6 +92,10 @@ export function Game({ state, mode, onModeChange, sonos, onSonosChange, onChange
   const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
   const [showPlayer, setShowPlayer] = useState(false);
   const [pickSpeaker, setPickSpeaker] = useState(false);
+  /** Play was tapped and the player hasn't answered yet (a Sonos can take a moment). */
+  const [starting, setStarting] = useState(false);
+  /** Bumped by "Try again" to load the song again. */
+  const [attempt, setAttempt] = useState(0);
   // No audio mode plays nothing, so there's no speaker to choose.
   const onSonos = mode !== 'none' && !!sonos;
 
@@ -146,7 +150,7 @@ export function Game({ state, mode, onModeChange, sonos, onSonosChange, onChange
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [playback, songId]);
+  }, [playback, songId, attempt]);
 
   // A link that opens the song in the Spotify app, to play it on any speaker
   // the app can reach. Songs found by search reuse the lookup the player made.
@@ -195,13 +199,17 @@ export function Game({ state, mode, onModeChange, sonos, onSonosChange, onChange
     // Start the silent cover inside the click: Safari won't start it later.
     const priming = !playing && hidden;
     if (priming) primeNowPlaying();
+    setStarting(true);
     try {
       if (playing) await playback.pause();
       else await playback.play();
       if (playback.kind === 'none') setPlaying(!playing);
+      setSongError(null);
     } catch (e) {
       if (priming) unprimeNowPlaying();
       setSongError(message(e));
+    } finally {
+      setStarting(false);
     }
   };
 
@@ -266,14 +274,16 @@ export function Game({ state, mode, onModeChange, sonos, onSonosChange, onChange
                   </div>
                   <div className="mystery-actions">
                     {mode !== 'none' && (
-                      <button className="primary" onClick={togglePlay} disabled={!playback || songStatus !== 'ready'}>
+                      <button className="primary" onClick={togglePlay} disabled={!playback || songStatus !== 'ready' || starting}>
                         {playbackError
                           ? 'Player unavailable'
                           : !playback
                             ? 'Starting player…'
                             : songStatus === 'loading'
                               ? 'Finding song…'
-                              : playing
+                              : starting
+                                ? 'One moment…'
+                                : playing
                                 ? '❚❚ Pause'
                                 : '▶ Play song'}
                       </button>
@@ -309,10 +319,20 @@ export function Game({ state, mode, onModeChange, sonos, onSonosChange, onChange
                     </div>
                   )}
                   {songError && <p className="warn">{songError}</p>}
-                  {onSonos && (playbackError || songError) && songStatus !== 'loading' && (
-                    <button className="link" onClick={() => onSonosChange(null)}>
-                      Play on this device instead
-                    </button>
+                  {onSonos && (playbackError || (songError && !/found on Spotify/.test(songError))) && songStatus !== 'loading' && (
+                    <p>
+                      {songStatus === 'error' && (
+                        <>
+                          <button className="link" onClick={() => setAttempt((n) => n + 1)}>
+                            Try again
+                          </button>{' '}
+                          ·{' '}
+                        </>
+                      )}
+                      <button className="link" onClick={() => onSonosChange(null)}>
+                        Play on this device instead
+                      </button>
+                    </p>
                   )}
                   {onSonos && !playbackError && !songError && <p className="hint">Playing on {sonos!.speaker.name} (Sonos).</p>}
                 </div>
@@ -437,10 +457,12 @@ export function Game({ state, mode, onModeChange, sonos, onSonosChange, onChange
           <SonosPicker
             choice={sonos}
             onChange={(c) => {
-              void playback?.stop();
+              setPickSpeaker(false);
+              const same = c ? sonos?.code === c.code && sonos?.speaker.id === c.speaker.id : !sonos;
+              if (same) return;
+              // The player for the new choice is made fresh (and loads the song again).
               setPlaying(false);
               onSonosChange(c);
-              setPickSpeaker(false);
             }}
           />
         </section>

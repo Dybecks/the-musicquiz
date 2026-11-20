@@ -7,6 +7,7 @@
  * itself with that account.
  */
 import dgram from 'node:dgram';
+import os from 'node:os';
 
 const SSDP_ADDR = '239.255.255.250';
 const SSDP_PORT = 1900;
@@ -34,19 +35,36 @@ export function discover(timeoutMs = 3000) {
       }
     });
     socket.on('error', () => {});
+    let closed = false;
+    // Ask on every network the computer is on (Wi-Fi, Ethernet, …), not just
+    // the default one, which may be a VPN.
+    const interfaces = Object.values(os.networkInterfaces())
+      .flat()
+      .filter((a) => a && a.family === 'IPv4' && !a.internal)
+      .map((a) => a.address);
+    const send = () => {
+      if (closed) return;
+      for (const addr of interfaces.length ? interfaces : [null]) {
+        try {
+          if (addr) socket.setMulticastInterface(addr);
+          socket.send(msg, SSDP_PORT, SSDP_ADDR, () => {});
+        } catch {
+          /* that interface can't multicast */
+        }
+      }
+    };
     socket.bind(() => {
       try {
-        socket.setBroadcast(true);
         socket.setMulticastTTL(4);
       } catch {
         /* fine without */
       }
-      const send = () => socket.send(msg, SSDP_PORT, SSDP_ADDR, () => {});
       send();
-      setTimeout(send, 400);
-      setTimeout(send, 1200);
+      setTimeout(send, Math.min(400, timeoutMs / 3));
+      setTimeout(send, Math.min(1200, (timeoutMs * 2) / 3));
     });
     setTimeout(() => {
+      closed = true;
       socket.close();
       resolve([...found]);
     }, timeoutMs);
@@ -123,9 +141,12 @@ export async function groups(anyHost) {
   return result.sort((a, b) => a.name.localeCompare(b.name));
 }
 
-/** The Sonos URI and DIDL metadata for a Spotify track. The title shown is ours. */
+/**
+ * The queue URI and DIDL metadata for a Spotify track, in the form SoCo's
+ * share-link plugin (used by Home Assistant) sends. The title shown is ours.
+ */
 export function spotifyTrack(trackUri, region) {
-  const id = /^spotify:track:([A-Za-z0-9]+)$/.exec(trackUri)?.[1];
+  const id = typeof trackUri === 'string' ? /^spotify:track:([A-Za-z0-9]+)$/.exec(trackUri)?.[1] : undefined;
   if (!id) throw new SonosError(`Not a Spotify track: ${trackUri}`);
   const encoded = `spotify%3atrack%3a${id}`;
   const metadata =
@@ -133,9 +154,10 @@ export function spotifyTrack(trackUri, region) {
     'xmlns:r="urn:schemas-rinconnetworks-com:metadata-1-0/" xmlns="urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/">' +
     `<item id="00032020${encoded}" parentID="" restricted="true"><dc:title>Mystery song</dc:title>` +
     '<upnp:class>object.item.audioItem.musicTrack</upnp:class>' +
+    `<res protocolInfo="x-rincon-playlist:*:*:*">${encoded}</res>` +
     `<desc id="cdudn" nameSpace="urn:schemas-rinconnetworks-com:metadata-1-0/">SA_RINCON${region}_X_#Svc${region}-0-Token</desc>` +
     '</item></DIDL-Lite>';
-  return { uri: `x-sonos-spotify:${encoded}`, metadata };
+  return { uri: encoded, metadata };
 }
 
 let workingRegion = null;
@@ -146,6 +168,7 @@ let workingRegion = null;
  */
 export async function playSpotify(group, trackUri) {
   const regions = workingRegion ? [workingRegion, ...SPOTIFY_REGIONS.filter((r) => r !== workingRegion)] : SPOTIFY_REGIONS;
+  spotifyTrack(trackUri, regions[0]); // a bad URI fails before the queue is touched
   let lastError;
   await soap(group.host, 'AVTransport', 'RemoveAllTracksFromQueue', { InstanceID: 0 });
   for (const region of regions) {

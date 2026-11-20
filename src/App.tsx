@@ -5,7 +5,7 @@ import { handleRedirect, isFriendLogin, isLoggedIn, login, logout, restoreHostLo
 import { loadPersonalDeck } from './spotify/listening';
 import type { PersonalDeck } from './spotify/personalDeck';
 import type { PlaybackKind } from './spotify/playback';
-import type { SonosChoice } from './sonos/bridge';
+import { parseSonosChoice, type SonosChoice } from './sonos/bridge';
 import { Setup, type SetupValues } from './components/Setup';
 import { Game } from './components/Game';
 import { Remote, savedRemote } from './components/Remote';
@@ -65,10 +65,14 @@ export function App() {
   });
   const [game, setGame] = useState<GameState | null>(() => loadJson<GameState>(GAME_KEY));
   const [mode, setMode] = useState<PlaybackKind>(() => loadJson<PlaybackKind>(MODE_KEY) ?? 'embed');
-  const [sonos, setSonos] = useState<SonosChoice | null>(() => loadJson<SonosChoice>(SONOS_KEY));
+  const [sonos, setSonos] = useState<SonosChoice | null>(() => parseSonosChoice(loadJson<unknown>(SONOS_KEY)));
   const changeSonos = (c: SonosChoice | null) => {
-    if (c) localStorage.setItem(SONOS_KEY, JSON.stringify(c));
-    else localStorage.removeItem(SONOS_KEY);
+    try {
+      if (c) localStorage.setItem(SONOS_KEY, JSON.stringify(c));
+      else localStorage.removeItem(SONOS_KEY);
+    } catch {
+      /* not remembered */
+    }
     setSonos(c);
   };
   const [profile, setProfile] = useState<SpotifyProfile | null>(null);

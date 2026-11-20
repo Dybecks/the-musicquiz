@@ -20,6 +20,8 @@ function savedCode(): string {
 export function SonosPicker({ choice, onChange }: { choice: SonosChoice | null; onChange: (c: SonosChoice | null) => void }) {
   const [code, setCode] = useState(() => choice?.code ?? savedCode());
   const [speakers, setSpeakers] = useState<SonosSpeaker[] | null>(null);
+  /** The code the listed speakers were found with. */
+  const [foundWith, setFoundWith] = useState(() => choice?.code ?? '');
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
   const link = useRef<BridgeLink | null>(null);
@@ -41,6 +43,7 @@ export function SonosPicker({ choice, onChange }: { choice: SonosChoice | null; 
     try {
       const found = await l.list();
       setSpeakers(found);
+      setFoundWith(code);
       if (found.length === 0) setNote('The bridge found no Sonos speakers. Is its computer on the same Wi-Fi as the speakers?');
     } catch (e) {
       setSpeakers(null);
@@ -65,7 +68,7 @@ export function SonosPicker({ choice, onChange }: { choice: SonosChoice | null; 
             role="radio"
             aria-checked={choice?.speaker.id === s.id}
             className={`chip ${choice?.speaker.id === s.id ? 'selected' : ''}`}
-            onClick={() => onChange({ code, speaker: s })}
+            onClick={() => onChange({ code: speakers?.some((x) => x.id === s.id) ? foundWith : choice!.code, speaker: s })}
           >
             {s.name}
           </button>

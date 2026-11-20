@@ -4,14 +4,19 @@
   "private": true,
   "description": "Plays The Music Quiz's mystery songs on Sonos speakers.",
   "type": "module",
-  "bin": { "the-musicquiz-bridge": "index.js" },
+  "bin": {
+    "the-musicquiz-bridge": "index.js"
+  },
   "scripts": {
     "start": "node index.js",
     "test": "node --test"
   },
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "dependencies": {
     "node-datachannel": "0.33.6",
-    "peerjs": "1.5.5"
+    "peerjs": "1.5.5",
+    "ws": "^8.22.1"
   }
 }

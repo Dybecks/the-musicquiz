@@ -52,16 +52,20 @@ The songs now play on that speaker, and the game remembers the choice. Tap
   guessing should open it.
 - Each group is controlled through its coordinator, so the game plays on the whole
   group as the Sonos app shows it.
-- Anyone who has the speaker code can play songs on your speakers while the
-  bridge runs. To get a new code, delete `~/.the-musicquiz-bridge.json`, or start the
-  bridge with `npm start -- --code ABCDEF`.
+- Anyone who has the speaker code can see your speakers' names and play, pause or
+  replace songs on them while the bridge runs (only Spotify tracks; nothing else on
+  your network). To get a new code, delete `~/.the-musicquiz-bridge.json`, or start the
+  bridge once with `npm start -- --code ABCDEF` (six letters of your choice; it is
+  remembered).
+- If the internet connection drops, the bridge keeps trying to reconnect, and games
+  already connected keep working.
 
 ## When it doesn't work
 
 | What happens | Try |
 | --- | --- |
 | "No Sonos speakers found" | The computer must be on the same Wi-Fi as the speakers. On a Mac, allow Local Network access for Terminal (System Settings → Privacy & Security → Local Network). Or name a speaker directly: `npm start -- --speaker 192.168.1.20` (the IP is in the Sonos app under Settings → System → About My System). |
-| "No Sonos bridge answers to that code" | Check that the bridge is running and the code matches. The bridge and the game must both reach the internet, because the PeerJS server introduces them to each other. |
+| "The Sonos bridge doesn't answer" | Check that the bridge is running and the code matches, then tap **Try again**. The bridge and the game must both reach the internet, because the PeerJS server introduces them to each other. |
 | "…wouldn't take the Spotify song" | Add Spotify in the Sonos app. The bridge tries Sonos's European Spotify service first, then the US one. |
 | A song is found but doesn't play | The song may not be available on Spotify in your country. Skip it. |
 
@@ -73,8 +77,9 @@ The songs now play on that speaker, and the game remembers the choice. Tap
   `the-musicquiz-speaker-<code>`, the same way the phones join a game.
 - **Talking to the speakers:** it uses the speakers' own network control (UPnP, port 1400):
   - it finds them with SSDP and reads the groups with `GetZoneGroupState`;
-  - to play a song, it adds the `x-sonos-spotify:` URI to the group's queue and plays
-    the queue. The track's title in the metadata it sends is "Mystery song".
+  - to play a song, it adds the Spotify track to the group's queue, in the form the
+    [SoCo](https://github.com/SoCo/SoCo) library sends (used by Home Assistant), and
+    plays the queue. The track's title in the metadata it sends is "Mystery song".
 
 The game can't do this from the browser itself: a web page can't reach devices on the
 home network.

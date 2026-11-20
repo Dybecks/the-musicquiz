@@ -24,7 +24,8 @@ test('lists groups by coordinator, leaving out hidden members', async () => {
 
 test('builds the Sonos URI and metadata for a Spotify track, titled Mystery song', () => {
   const { uri, metadata } = sonos.spotifyTrack(TRACK, 2311);
-  assert.equal(uri, 'x-sonos-spotify:spotify%3atrack%3a4uLU6hMCjMI75M1A2tKUQC');
+  assert.equal(uri, 'spotify%3atrack%3a4uLU6hMCjMI75M1A2tKUQC');
+  assert.match(metadata, /<res protocolInfo="x-rincon-playlist:\*:\*:\*">spotify%3atrack%3a4uLU6hMCjMI75M1A2tKUQC<\/res>/);
   assert.match(metadata, /<item id="00032020spotify%3atrack%3a4uLU6hMCjMI75M1A2tKUQC"/);
   assert.match(metadata, /SA_RINCON2311_X_#Svc2311-0-Token/);
   assert.match(metadata, /<dc:title>Mystery song<\/dc:title>/);
@@ -67,6 +68,23 @@ test('falls back to the other Spotify region, and says so when both fail', async
   } finally {
     await bad.close();
   }
+});
+
+test('rejects a bad track before touching the queue', async () => {
+  const s = await fakeSonos();
+  try {
+    const group = (await sonos.groups(s.host))[0];
+    await assert.rejects(sonos.playSpotify(group, undefined), /Not a Spotify track/);
+    await assert.rejects(sonos.playSpotify(group, 'http://example.com/x.mp3'), /Not a Spotify track/);
+    assert.equal(s.calls.filter((c) => c.path === '/MediaRenderer/AVTransport/Control').length, 0);
+  } finally {
+    await s.close();
+  }
+});
+
+test('discovery returns quickly, even with a short timeout', async () => {
+  const found = await sonos.discover(300);
+  assert.ok(Array.isArray(found));
 });
 
 test('reports an unreachable speaker readably', async () => {

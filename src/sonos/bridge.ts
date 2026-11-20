@@ -24,10 +24,23 @@ export const bridgePeerId = (code: string) => `the-musicquiz-speaker-${code.toLo
 export const normalizeBridgeCode = (s: string) => s.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 6);
 export const isBridgeCode = (s: string) => /^[A-Z]{6}$/.test(s);
 
-type Reply = { type: 'reply'; id: number; ok: boolean; error?: string; speakers?: SonosSpeaker[] };
+/** A saved choice, if it has the right shape. */
+export function parseSonosChoice(v: unknown): SonosChoice | null {
+  const c = v as SonosChoice | null;
+  if (!c || typeof c !== 'object' || typeof c.code !== 'string' || !isBridgeCode(c.code)) return null;
+  if (!c.speaker || typeof c.speaker.id !== 'string' || typeof c.speaker.name !== 'string') return null;
+  return { code: c.code, speaker: { id: c.speaker.id, name: c.speaker.name } };
+}
+
+/** The bridge version this game speaks to. */
+const VERSION = 1;
+
+type Reply = { type: 'reply'; id: number; ok: boolean; error?: string; speakers?: SonosSpeaker[]; version?: number };
 type BridgeMessage = Reply | { type: 'state'; speakerId: string; playing: boolean };
 
 export interface BridgeLink {
+  /** Connect (if needed) and check that the bridge answers. */
+  check(): Promise<void>;
   list(): Promise<SonosSpeaker[]>;
   play(speakerId: string, uri: string): Promise<void>;
   resume(speakerId: string): Promise<void>;
@@ -36,10 +49,14 @@ export interface BridgeLink {
   close(): void;
 }
 
-const TIMEOUT_MS = 15000;
-const NOT_FOUND = 'No Sonos bridge answers to that code. Is the bridge running on a computer on this Wi-Fi? It shows the code when it starts.';
+const CONNECT_MS = 12000;
+const REPLY_MS = 15000;
+const NOT_FOUND = 'The Sonos bridge doesn’t answer. Is it running on a computer on this Wi-Fi, with the same code? It shows the code when it starts.';
 
-const message = (e: unknown) => (e instanceof Error ? e.message : String(e));
+interface Pending {
+  resolve: (r: Reply) => void;
+  reject: (e: Error) => void;
+}
 
 /**
  * Connect to the bridge with `code`. Each request waits for the connection,
@@ -47,43 +64,68 @@ const message = (e: unknown) => (e instanceof Error ? e.message : String(e));
  */
 export function connectBridge(code: string): BridgeLink {
   let peer: Peer | null = null;
-  let conn: Promise<DataConnection> | null = null;
+  let peerReady: Promise<Peer> | null = null;
+  /** The current connection, and the requests waiting for its replies. */
+  let current: { conn: Promise<DataConnection>; pending: Map<number, Pending> } | null = null;
   let closed = false;
   let nextId = 1;
-  const pending = new Map<number, { resolve: (r: Reply) => void; reject: (e: Error) => void }>();
   let stateListener: (speakerId: string, playing: boolean) => void = () => {};
 
-  const failAll = (e: Error) => {
+  const failAll = (pending: Map<number, Pending>, e: Error) => {
     for (const p of pending.values()) p.reject(e);
     pending.clear();
   };
 
-  const open = (): Promise<DataConnection> =>
-    new Promise((resolve, reject) => {
-      void (async () => {
-        try {
-          if (!peer || peer.destroyed) {
-            peer = await makePeer();
-            await new Promise<void>((ok, fail) => {
-              peer!.once('open', () => ok());
-              peer!.once('error', (err) => fail(new Error(`Can’t reach the connection server (${err.type}).`)));
-            });
-          }
-          const p = peer;
+  /** A peer that is connected to the PeerJS server. A dropped one is replaced. */
+  const getPeer = (): Promise<Peer> => {
+    if (peer && !peer.destroyed && !peer.disconnected && peerReady) return peerReady;
+    peer?.destroy();
+    peer = null;
+    peerReady = (async () => {
+      const p = await makePeer();
+      peer = p;
+      await new Promise<void>((ok, fail) => {
+        const timer = setTimeout(() => fail(new Error('Can’t reach the connection server.')), CONNECT_MS);
+        p.once('open', () => {
+          clearTimeout(timer);
+          ok();
+        });
+        p.once('error', (err) => {
+          clearTimeout(timer);
+          fail(new Error(`Can’t reach the connection server (${err.type}).`));
+        });
+      });
+      return p;
+    })();
+    peerReady.catch(() => {
+      peerReady = null;
+    });
+    return peerReady;
+  };
+
+  const open = (pending: Map<number, Pending>): Promise<DataConnection> =>
+    getPeer().then(
+      (p) =>
+        new Promise<DataConnection>((resolve, reject) => {
           const c = p.connect(bridgePeerId(code), { reliable: true, serialization: 'json' });
-          const timer = setTimeout(() => reject(new Error(NOT_FOUND)), TIMEOUT_MS);
-          const onPeerError = (err: { type: string }) => {
-            if (err.type === 'peer-unavailable') {
-              clearTimeout(timer);
-              reject(new Error(NOT_FOUND));
-            }
-          };
-          p.on('error', onPeerError);
-          c.on('open', () => {
+          if (!c) return reject(new Error('Can’t reach the connection server.'));
+          let settled = false;
+          const finish = (err?: Error) => {
+            if (settled) return;
+            settled = true;
             clearTimeout(timer);
             p.off('error', onPeerError);
-            resolve(c);
-          });
+            if (err) {
+              c.close();
+              reject(err);
+            } else resolve(c);
+          };
+          const timer = setTimeout(() => finish(new Error(NOT_FOUND)), CONNECT_MS);
+          const onPeerError = (err: { type: string }) => {
+            if (err.type === 'peer-unavailable') finish(new Error(NOT_FOUND));
+          };
+          p.on('error', onPeerError);
+          c.on('open', () => finish());
           c.on('data', (data) => {
             const msg = data as BridgeMessage;
             if (msg?.type === 'reply') {
@@ -93,30 +135,34 @@ export function connectBridge(code: string): BridgeLink {
             } else if (msg?.type === 'state') stateListener(msg.speakerId, msg.playing);
           });
           const lost = () => {
-            conn = null;
-            failAll(new Error('Lost the connection to the Sonos bridge.'));
+            finish(new Error('Lost the connection to the Sonos bridge.'));
+            // Only forget the connection if it is still the current one.
+            if (current?.pending === pending) current = null;
+            failAll(pending, new Error('Lost the connection to the Sonos bridge.'));
           };
           c.on('close', lost);
           c.on('error', lost);
-        } catch (e) {
-          reject(e instanceof Error ? e : new Error(message(e)));
-        }
-      })();
-    });
+        }),
+    );
 
   const request = async (msg: Record<string, unknown>): Promise<Reply> => {
     if (closed) throw new Error('The Sonos bridge connection is closed.');
-    conn ??= open().catch((e) => {
-      conn = null;
-      throw e;
-    });
+    if (!current) {
+      const pending = new Map<number, Pending>();
+      const entry = { conn: open(pending), pending };
+      current = entry;
+      entry.conn.catch(() => {
+        if (current === entry) current = null;
+      });
+    }
+    const { conn, pending } = current;
     const c = await conn;
     const id = nextId++;
     const reply = new Promise<Reply>((resolve, reject) => {
       pending.set(id, { resolve, reject });
       setTimeout(() => {
         if (pending.delete(id)) reject(new Error('The Sonos bridge didn’t answer in time.'));
-      }, TIMEOUT_MS);
+      }, REPLY_MS);
     });
     c.send({ ...msg, id });
     const r = await reply;
@@ -125,6 +171,12 @@ export function connectBridge(code: string): BridgeLink {
   };
 
   return {
+    async check() {
+      const r = await request({ type: 'hello' });
+      if (typeof r.version === 'number' && r.version > VERSION) {
+        throw new Error('The Sonos bridge is newer than this game. Reload the game to update it.');
+      }
+    },
     async list() {
       return (await request({ type: 'list' })).speakers ?? [];
     },
@@ -142,7 +194,8 @@ export function connectBridge(code: string): BridgeLink {
     },
     close() {
       closed = true;
-      failAll(new Error('The Sonos bridge connection is closed.'));
+      if (current) failAll(current.pending, new Error('The Sonos bridge connection is closed.'));
+      current = null;
       peer?.destroy();
     },
   };
