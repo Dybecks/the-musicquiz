@@ -13,6 +13,7 @@ import {
 } from '../spotify/playback';
 import { loadFact, type SongFact } from '../facts';
 import { Timeline } from './Timeline';
+import { SpeakerPicker } from './SpeakerPicker';
 
 interface Props {
   state: GameState;
@@ -80,6 +81,7 @@ export function Game({ state, mode, onModeChange, speaker, onSpeakerChange, onCh
   const [playing, setPlaying] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
   const [showPlayer, setShowPlayer] = useState(false);
+  const [pickSpeaker, setPickSpeaker] = useState(false);
 
   // Create the player for the chosen mode.
   useEffect(() => {
@@ -238,7 +240,7 @@ export function Game({ state, mode, onModeChange, speaker, onSpeakerChange, onCh
                       )}
                     </div>
                   )}
-                  {mode === 'premium' && speaker && !songError && <p className="hint">Playing on {speaker.name}.</p>}
+                  {mode === 'premium' && speaker && !songError && <p className="hint">{speaker.id ? `Playing on ${speaker.name}.` : 'Playing where the Spotify app plays.'}</p>}
                 </div>
               ) : (
                 state.lastGuess && <Reveal correct={state.lastGuess.correct} song={state.lastGuess.song} />
@@ -296,10 +298,27 @@ export function Game({ state, mode, onModeChange, speaker, onSpeakerChange, onCh
         <span className="muted">
           Round {state.round} · {state.refill ? 'more songs on the way' : `${state.deck.length} songs left`}
         </span>
+        {mode === 'premium' && (
+          <button className="link" onClick={() => setPickSpeaker(!pickSpeaker)}>
+            🔊 {speaker ? (speaker.id ? speaker.name : 'Spotify app') : 'This browser'}
+          </button>
+        )}
         <button className="link" onClick={quit}>
           End game
         </button>
       </footer>
+      {pickSpeaker && mode === 'premium' && (
+        <section className="panel">
+          <SpeakerPicker
+            speaker={speaker}
+            testable={false}
+            onChange={(s) => {
+              onSpeakerChange(s);
+              setPickSpeaker(false);
+            }}
+          />
+        </section>
+      )}
     </main>
   );
 }

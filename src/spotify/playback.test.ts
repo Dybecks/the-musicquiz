@@ -53,3 +53,22 @@ describe('createSpeakerPlayback', () => {
     await expect(p.play()).rejects.toThrow(/Kitchen isn't reachable/);
   });
 });
+
+describe('playing where Spotify plays now', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('plays without a device id', async () => {
+    const p = createSpeakerPlayback({ id: '', name: 'Where Spotify plays now' });
+    await p.prepare(song);
+    await p.play();
+    expect(api.playOnDevice).toHaveBeenCalledWith('', 'spotify:track:abc');
+    expect(api.getDevices).not.toHaveBeenCalled();
+  });
+
+  it('says to start something on the speaker when nothing is active', async () => {
+    api.playOnDevice.mockRejectedValueOnce(new SpotifyError('No active device', 404));
+    const p = createSpeakerPlayback({ id: '', name: 'Where Spotify plays now' });
+    await p.prepare(song);
+    await expect(p.play()).rejects.toThrow(/isn't playing anywhere/);
+  });
+});

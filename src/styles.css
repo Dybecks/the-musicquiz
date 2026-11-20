@@ -278,3 +278,4 @@ input:focus { outline: 2px solid var(--accent); border-color: transparent; }
 .setup.flow .decades { margin: 0 0 14px; }
 .speakers { margin-top: 6px; }
 .speakers h2 { font-size: 1rem; margin-bottom: 8px; }
+.test-sound { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }

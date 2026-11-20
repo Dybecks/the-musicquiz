@@ -140,9 +140,16 @@ export async function createPremiumPlayback(): Promise<Playback> {
 
 /** A Spotify Connect device the host chose to play the music on. */
 export interface Speaker {
+  /** Empty: whatever device Spotify is playing on right now. */
   id: string;
   name: string;
 }
+
+/** Plays on whichever device the Spotify app is using, without knowing its id. */
+export const ACTIVE_SPEAKER: Speaker = { id: '', name: 'Where Spotify plays now' };
+
+const WAKE_HINT = 'Start any song on it from the Spotify app, then press Play again.';
+const NOTHING_ACTIVE = `Spotify isn't playing anywhere right now. On your phone, start any song on the speaker in the Spotify app, then press Play again.`;
 
 /**
  * Plays on a Spotify Connect speaker through the Web API. Costs one request
@@ -164,12 +171,17 @@ export function createSpeakerPlayback(speaker: Speaker): Playback {
     try {
       await playOnDevice(deviceId, u);
     } catch (e) {
-      if (!(e instanceof SpotifyError) || (e.status !== 404 && e.status !== 502)) throw e;
+      if (!(e instanceof SpotifyError)) throw e;
+      if (!deviceId) {
+        // "Where Spotify plays now": there must be something playing (or paused) somewhere.
+        if (e.status === 404) throw new Error(NOTHING_ACTIVE);
+        throw e;
+      }
+      if (e.status === 403) throw new Error(`${speaker.name} won't take orders from the game right now. ${WAKE_HINT}`);
+      if (e.status !== 404 && e.status !== 502) throw e;
       // The speaker went to sleep or got a new id: find it by name, wake it, try again.
       const found = (await getDevices()).find((d) => d.id === deviceId || d.name === speaker.name);
-      if (!found) {
-        throw new Error(`${speaker.name} isn't reachable. Open the Spotify (or Sonos) app and play something on it once, then try again.`);
-      }
+      if (!found) throw new Error(`${speaker.name} isn't reachable. ${WAKE_HINT}`);
       deviceId = found.id;
       await transferTo(deviceId).catch(() => {});
       await playOnDevice(deviceId, u);
