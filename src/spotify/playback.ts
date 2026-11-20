@@ -16,7 +16,8 @@ import { getAccessToken } from './auth';
 export type PlaybackKind = 'premium' | 'embed' | 'none';
 
 export interface Playback {
-  kind: PlaybackKind;
+  /** 'sonos': on a Sonos speaker through the bridge (src/sonos/playback.ts). */
+  kind: PlaybackKind | 'sonos';
   /** Look up and load the song. Rejects with a readable message if it can't be played. */
   prepare(song: Song): Promise<void>;
   play(): Promise<void>;
@@ -38,7 +39,7 @@ function loadScript(src: string): Promise<void> {
   });
 }
 
-async function uriFor(song: Song): Promise<string> {
+export async function uriFor(song: Song): Promise<string> {
   const uri = await findTrackUri(song);
   if (!uri) throw new Error('This song could not be found on Spotify. Skip it to draw another.');
   return uri;

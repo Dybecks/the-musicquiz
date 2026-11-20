@@ -322,3 +322,8 @@ input:focus { outline: 2px solid var(--accent); border-color: transparent; }
 .voters .who-chip { margin-right: 0; }
 .open-spotify { text-align: center; margin-top: 10px; }
 .open-spotify a { color: var(--accent-2); font-weight: 600; }
+
+/* Speaker picker (Sonos bridge) */
+.speakers h2 { margin-top: 0; }
+.sonos-code { display: grid; gap: 10px; margin-bottom: 8px; }
+.sonos-code label { display: grid; gap: 6px; font-size: 0.9rem; color: var(--muted); }

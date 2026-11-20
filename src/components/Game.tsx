@@ -15,11 +15,17 @@ import { Timeline } from './Timeline';
 import type { HostRoom } from '../multiplayer/useHostRoom';
 import { HOST_ID, activeVoters, votesBySlot } from '../multiplayer/protocol';
 import { SharePanel } from './SharePanel';
+import { SonosPicker } from './SonosPicker';
+import { createSonosPlayback } from '../sonos/playback';
+import type { SonosChoice } from '../sonos/bridge';
 
 interface Props {
   state: GameState;
   mode: PlaybackKind;
   onModeChange: (mode: PlaybackKind) => void;
+  /** A Sonos speaker to play on through the bridge, instead of this device. */
+  sonos: SonosChoice | null;
+  onSonosChange: (choice: SonosChoice | null) => void;
   onChange: (state: GameState) => void;
   onQuit: () => void;
   /** Phones following the game (see useHostRoom). */
@@ -71,7 +77,7 @@ function useRefill(state: GameState, onChange: (s: GameState) => void): string |
   return note;
 }
 
-export function Game({ state, mode, onModeChange, onChange, onQuit, host }: Props) {
+export function Game({ state, mode, onModeChange, sonos, onSonosChange, onChange, onQuit, host }: Props) {
   const refillNote = useRefill(state, onChange);
   const votes = host.room && state.phase === 'guessing' ? votesBySlot(activeVoters(host.room, state)) : undefined;
   // The host on the team whose turn it is votes like everyone else on it.
@@ -85,6 +91,13 @@ export function Game({ state, mode, onModeChange, onChange, onQuit, host }: Prop
   const [playing, setPlaying] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
   const [showPlayer, setShowPlayer] = useState(false);
+  const [pickSpeaker, setPickSpeaker] = useState(false);
+  /** Play was tapped and the player hasn't answered yet (a Sonos can take a moment). */
+  const [starting, setStarting] = useState(false);
+  /** Bumped by "Try again" to load the song again. */
+  const [attempt, setAttempt] = useState(0);
+  // No audio mode plays nothing, so there's no speaker to choose.
+  const onSonos = mode !== 'none' && !!sonos;
 
   // Create the player for the chosen mode.
   useEffect(() => {
@@ -93,7 +106,9 @@ export function Game({ state, mode, onModeChange, onChange, onQuit, host }: Prop
     setPlayback(null);
     setPlaybackError(null);
     const make =
-      mode === 'premium'
+      onSonos
+        ? Promise.resolve(createSonosPlayback(sonos!))
+        : mode === 'premium'
         ? createPremiumPlayback()
         : mode === 'embed'
           ? createEmbedPlayback(embedHost.current!)
@@ -110,7 +125,8 @@ export function Game({ state, mode, onModeChange, onChange, onQuit, host }: Prop
       cancelled = true;
       created?.destroy();
     };
-  }, [mode]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode, onSonos, sonos?.code, sonos?.speaker.id]);
 
   // Load each new song as it is drawn.
   const songId = state.phase === 'guessing' ? state.current?.id : undefined;
@@ -134,7 +150,7 @@ export function Game({ state, mode, onModeChange, onChange, onQuit, host }: Prop
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [playback, songId]);
+  }, [playback, songId, attempt]);
 
   // A link that opens the song in the Spotify app, to play it on any speaker
   // the app can reach. Songs found by search reuse the lookup the player made.
@@ -160,7 +176,7 @@ export function Game({ state, mode, onModeChange, onChange, onQuit, host }: Prop
   // the song is hidden; their play/pause buttons still control the real song.
   const playbackRef = useRef<Playback | null>(null);
   playbackRef.current = playback;
-  const hidden = state.phase === 'guessing' && mode !== 'none' && !!playback && songStatus === 'ready';
+  const hidden = state.phase === 'guessing' && mode !== 'none' && !!playback && playback.kind !== 'sonos' && songStatus === 'ready';
   useEffect(() => {
     if (!hidden) return showNowPlaying();
     hideNowPlaying(playing, {
@@ -183,13 +199,17 @@ export function Game({ state, mode, onModeChange, onChange, onQuit, host }: Prop
     // Start the silent cover inside the click: Safari won't start it later.
     const priming = !playing && hidden;
     if (priming) primeNowPlaying();
+    setStarting(true);
     try {
       if (playing) await playback.pause();
       else await playback.play();
       if (playback.kind === 'none') setPlaying(!playing);
+      setSongError(null);
     } catch (e) {
       if (priming) unprimeNowPlaying();
       setSongError(message(e));
+    } finally {
+      setStarting(false);
     }
   };
 
@@ -254,14 +274,16 @@ export function Game({ state, mode, onModeChange, onChange, onQuit, host }: Prop
                   </div>
                   <div className="mystery-actions">
                     {mode !== 'none' && (
-                      <button className="primary" onClick={togglePlay} disabled={!playback || songStatus !== 'ready'}>
+                      <button className="primary" onClick={togglePlay} disabled={!playback || songStatus !== 'ready' || starting}>
                         {playbackError
                           ? 'Player unavailable'
                           : !playback
                             ? 'Starting player…'
                             : songStatus === 'loading'
                               ? 'Finding song…'
-                              : playing
+                              : starting
+                                ? 'One moment…'
+                                : playing
                                 ? '❚❚ Pause'
                                 : '▶ Play song'}
                       </button>
@@ -271,7 +293,7 @@ export function Game({ state, mode, onModeChange, onChange, onQuit, host }: Prop
                       Skip song
                     </button>
                   </div>
-                  {spotifyUrl && (
+                  {spotifyUrl && !onSonos && (
                     <p className="hint open-spotify">
                       <a
                         href={spotifyUrl}
@@ -297,6 +319,22 @@ export function Game({ state, mode, onModeChange, onChange, onQuit, host }: Prop
                     </div>
                   )}
                   {songError && <p className="warn">{songError}</p>}
+                  {onSonos && (playbackError || (songError && !/found on Spotify/.test(songError))) && songStatus !== 'loading' && (
+                    <p>
+                      {songStatus === 'error' && (
+                        <>
+                          <button className="link" onClick={() => setAttempt((n) => n + 1)}>
+                            Try again
+                          </button>{' '}
+                          ·{' '}
+                        </>
+                      )}
+                      <button className="link" onClick={() => onSonosChange(null)}>
+                        Play on this device instead
+                      </button>
+                    </p>
+                  )}
+                  {onSonos && !playbackError && !songError && <p className="hint">Playing on {sonos!.speaker.name} (Sonos).</p>}
                 </div>
               ) : (
                 state.lastGuess && <Reveal correct={state.lastGuess.correct} song={state.lastGuess.song} />
@@ -390,7 +428,7 @@ export function Game({ state, mode, onModeChange, onChange, onQuit, host }: Prop
       {state.phase !== 'finished' && <SharePanel host={host} />}
 
       {/* The Spotify embed lives here. It stays covered so the title isn't spoiled. */}
-      <section className={`embed-wrap ${mode === 'embed' && state.phase !== 'finished' ? '' : 'hidden'}`}>
+      <section className={`embed-wrap ${mode === 'embed' && !onSonos && state.phase !== 'finished' ? '' : 'hidden'}`}>
         <div className={`embed-cover ${showPlayer || state.phase === 'revealed' ? 'off' : ''}`}>
           <span>Spotify player hidden so the song isn’t spoiled.</span>
           <button className="link" onClick={() => setShowPlayer(true)}>
@@ -405,10 +443,30 @@ export function Game({ state, mode, onModeChange, onChange, onQuit, host }: Prop
         <span className="muted">
           Round {state.round} · {state.refill ? 'more songs on the way' : `${state.deck.length} songs left`}
         </span>
+        {mode !== 'none' && (
+          <button className="link" onClick={() => setPickSpeaker(!pickSpeaker)}>
+            🔊 {onSonos ? sonos!.speaker.name : 'This device'}
+          </button>
+        )}
         <button className="link" onClick={quit}>
           End game
         </button>
       </footer>
+      {pickSpeaker && mode !== 'none' && (
+        <section className="panel">
+          <SonosPicker
+            choice={sonos}
+            onChange={(c) => {
+              setPickSpeaker(false);
+              const same = c ? sonos?.code === c.code && sonos?.speaker.id === c.speaker.id : !sonos;
+              if (same) return;
+              // The player for the new choice is made fresh (and loads the song again).
+              setPlaying(false);
+              onSonosChange(c);
+            }}
+          />
+        </section>
+      )}
     </main>
   );
 }

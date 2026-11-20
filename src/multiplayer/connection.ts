@@ -21,7 +21,7 @@ function peerOptions(): PeerOptions {
 }
 
 /** PeerJS is only loaded when a room is opened or joined. */
-async function makePeer(id?: string): Promise<Peer> {
+export async function makePeer(id?: string): Promise<Peer> {
   const { Peer } = await import('peerjs');
   return id ? new Peer(id, peerOptions()) : new Peer(peerOptions());
 }
