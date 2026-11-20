@@ -4,10 +4,11 @@
  *
  * Both Spotify players run in a cross-origin iframe and report the real track
  * through the Media Session API. Chrome only routes media info from a frame
- * that is itself playing something (the top-most such frame wins), so setting
- * navigator.mediaSession here does nothing on its own. While the song is
- * hidden, this page therefore also plays a silent, looping clip: that makes
- * the game the frame the browser asks, and it reports "Mystery song".
+ * that has a player in the tab's media session (playing, or paused but still
+ * held), preferring the top-most such frame. Setting navigator.mediaSession
+ * here does nothing on its own, so while the song is hidden this page also
+ * plays a silent, looping clip: the browser then asks the game, and it
+ * reports "Mystery song".
  *
  * Not on iPhone/iPad: Safari there may pause the song when another sound
  * starts in the same page, so only the metadata is set (best effort).
@@ -19,6 +20,11 @@ export interface MysteryControls {
 }
 
 let audio: HTMLAudioElement | null = null;
+let clipUrl: string | null = null;
+/** Whether the cover is on, and whether its clip should be playing. */
+let covering = false;
+let wantPlaying = false;
+let controls: MysteryControls | null = null;
 
 /** A 10-second silent WAV (8 kHz, 8-bit mono). Longer than Chrome's 5 s "short sound" cut-off. */
 function silentClip(): string {
@@ -49,49 +55,103 @@ export function isAppleTouch(): boolean {
   return /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.userAgent.includes('Macintosh') && navigator.maxTouchPoints > 1);
 }
 
-function iconUrl(size: number): string {
-  return new URL(`icons/icon-${size}.png`, document.baseURI).href;
+function clipSupported(): boolean {
+  return typeof Audio !== 'undefined' && typeof URL.createObjectURL === 'function' && !isAppleTouch();
+}
+
+function mediaSession(): MediaSession | undefined {
+  return typeof navigator !== 'undefined' ? navigator.mediaSession : undefined;
+}
+
+function setHandler(action: MediaSessionAction, handler: MediaSessionActionHandler | null): void {
+  try {
+    mediaSession()?.setActionHandler(action, handler);
+  } catch {
+    /* action not supported */
+  }
+}
+
+function clip(): HTMLAudioElement {
+  if (!audio) {
+    audio = new Audio();
+    audio.loop = true;
+    // The browser paused the clip by itself (headphones unplugged, a media key
+    // that skipped our handler...). Pause the song too rather than let the
+    // browser fall back to Spotify's frame, which shows the title.
+    audio.addEventListener('pause', () => {
+      if (covering && wantPlaying) {
+        wantPlaying = false;
+        controls?.pause();
+      }
+    });
+  }
+  clipUrl ??= silentClip();
+  if (audio.getAttribute('src') !== clipUrl) audio.src = clipUrl;
+  return audio;
+}
+
+function setClipPlaying(playing: boolean): void {
+  wantPlaying = playing;
+  if (!clipSupported()) return;
+  if (playing) void clip().play().catch(() => {});
+  else audio?.pause();
+}
+
+/**
+ * Start the silent clip right away. Call it inside the click that starts the
+ * song: Safari only lets a page play sound from a user gesture, and a
+ * Spotify state change arrives too late for that.
+ */
+export function primeNowPlaying(): void {
+  covering = true;
+  setClipPlaying(true);
+}
+
+/** The song didn't start after all: stop the primed clip. */
+export function unprimeNowPlaying(): void {
+  setClipPlaying(false);
 }
 
 /**
  * Report "Mystery song" while `playing` (or paused mid-song). Lock-screen and
- * headphone play/pause go to `controls`, so they still control the real song.
+ * headphone play/pause go to `ctrl`, so they still control the real song.
  */
-export function hideNowPlaying(playing: boolean, controls: MysteryControls): void {
-  const ms = typeof navigator !== 'undefined' ? navigator.mediaSession : undefined;
+export function hideNowPlaying(playing: boolean, ctrl: MysteryControls): void {
+  covering = true;
+  controls = ctrl;
+  const ms = mediaSession();
   if (ms && typeof MediaMetadata !== 'undefined') {
     ms.metadata = new MediaMetadata({
       title: 'Mystery song',
       artist: 'The Music Quiz',
-      artwork: [192, 512].map((s) => ({ src: iconUrl(s), sizes: `${s}x${s}`, type: 'image/png' })),
+      artwork: [192, 512].map((s) => ({
+        src: new URL(`${import.meta.env.BASE_URL}icons/icon-${s}.png`, location.origin).href,
+        sizes: `${s}x${s}`,
+        type: 'image/png',
+      })),
     });
     ms.playbackState = playing ? 'playing' : 'paused';
-    for (const action of ['previoustrack', 'nexttrack', 'seekbackward', 'seekforward', 'seekto'] as const) {
-      try {
-        ms.setActionHandler(action, null);
-      } catch {
-        /* action not supported */
-      }
-    }
-    ms.setActionHandler('play', () => controls.play());
-    ms.setActionHandler('pause', () => controls.pause());
+    setHandler('play', () => ctrl.play());
+    setHandler('pause', () => ctrl.pause());
   }
-  if (isAppleTouch() || typeof Audio === 'undefined') return;
-  if (!audio) {
-    audio = new Audio(silentClip());
-    audio.loop = true;
-  }
-  if (playing) void audio.play().catch(() => {});
-  else audio.pause();
+  setClipPlaying(playing);
 }
 
 /** Stop covering: after the reveal the title is no secret. */
 export function showNowPlaying(): void {
-  audio?.pause();
-  const ms = typeof navigator !== 'undefined' ? navigator.mediaSession : undefined;
+  covering = false;
+  controls = null;
+  setClipPlaying(false);
+  // A paused player can stay in the tab's media session; drop the clip's source
+  // so lock-screen buttons don't resume the silent clip instead of the song.
+  if (audio) {
+    audio.removeAttribute('src');
+    audio.load();
+  }
+  const ms = mediaSession();
   if (!ms) return;
   ms.metadata = null;
   ms.playbackState = 'none';
-  ms.setActionHandler('play', null);
-  ms.setActionHandler('pause', null);
+  setHandler('play', null);
+  setHandler('pause', null);
 }

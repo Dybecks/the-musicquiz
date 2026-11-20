@@ -171,7 +171,11 @@ export async function createEmbedPlayback(host: HTMLElement): Promise<Playback> 
     new Promise<void>((resolve) => {
       api.createController(mount, { uri, width: '100%', height: 152 }, (c) => {
         controller = c;
-        c.addListener('playback_update', (e) => listener(!e.data.isPaused));
+        // A 30-second preview may end without reporting a pause: treat the end as stopped.
+        c.addListener('playback_update', (e) => {
+          const { isPaused, position, duration } = e.data;
+          listener(!isPaused && !(duration > 0 && position >= duration));
+        });
         c.addListener('ready', () => resolve());
       });
     });

@@ -188,11 +188,16 @@ locks a Sonos against control from other apps.
 While the song is hidden, the game reports it as **Mystery song** to the device's
 lock screen, Control Center, car displays and AirPlay/Bluetooth receivers (such as the
 Sonos app), and their play/pause buttons control the song. Spotify's players run in an
-iframe and report the real title, and Chrome only takes media info from a frame that is
-playing something, so the game also plays a silent, looping clip in the page while
-the song is hidden (`src/spotify/nowPlaying.ts`). After the reveal the real title may
-show. On iPhone and iPad the silent clip is left out, since Safari may pause the song
-for it, so the title may still show there.
+iframe and report the real title, and Chrome only takes media info from a frame that has
+a player of its own, so the game also plays a silent, looping clip in the page while
+the song is hidden (`src/spotify/nowPlaying.ts`). The clip starts with the **Play song**
+tap, since Safari only allows sound started by a tap. If the browser stops the clip by
+itself (for example when headphones are unplugged), the song is paused too, so the title
+doesn't slip out. After the reveal the real title may show.
+
+This works in Chrome, Edge and Firefox on computers and Android. On iPhone and iPad the
+silent clip is left out, since Safari may pause the song for it, so the title may still
+show there, also on a Sonos the iPhone AirPlays to. Safari on a Mac is untested.
 
 During a song, **Open in Spotify ↗** opens it in the Spotify app instead, which can play
 on any speaker it reaches (Sonos included). Spotify shows the title there, so someone who
