@@ -180,6 +180,25 @@ Step 1 of setup decides how the music plays:
 | Log in with Spotify (Free) | The hidden player below, for any song. |
 | Play without login | A covered-up [Spotify Embed](https://developer.spotify.com/documentation/embeds) player. Uses the songs that have a known Spotify id. Full songs if the browser is signed in to Spotify, otherwise 30-second previews. |
 
+### Playing on a speaker (Sonos and other Spotify Connect devices)
+
+With a Premium login, **Players & play** has a **Play the music on** row. *This browser* is
+the default. **Find speakers** asks Spotify once for the account's Spotify Connect devices
+(a Sonos, a phone, a TV…) and lists them; the choice is remembered for next time.
+
+On a speaker each song costs one request to start, and one per pause or resume. Nothing
+is polled. If the speaker has gone to sleep, the game looks it up by name, wakes it and
+tries again. A Sonos only shows up after it has been used with Spotify recently: open the
+Spotify or Sonos app, play something on it once, then tap **Look again**. Or pick
+**Where Spotify plays now**: the game then plays on whatever device the Spotify app is
+using (no device id needed), so start any song on the Sonos from the app first.
+
+**Test sound** plays a few seconds of a song on the chosen device before the game starts.
+During the game, the 🔊 button in the footer switches the device; the current song then
+plays on the new one.
+
+The list is Spotify Connect, not Bluetooth: phones show up because they run the Spotify app.
+
 Songs with a Spotify id in `SPOTIFY_IDS` (`src/data/songs.ts`) play without a login.
 Other songs are looked up with the Spotify search API, which needs the login.
 

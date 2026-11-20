@@ -7,10 +7,13 @@
  *    cover. Needs no login for songs with a known Spotify id; it plays the
  *    full track if the browser is signed in to Spotify, otherwise a preview.
  *
+ * With a Premium login the music can also play on a Spotify Connect speaker
+ * (a Sonos, a phone, a TV…) instead of this tab: see createSpeakerPlayback.
+ *
  * Songs without a known id are found via search, which needs the login.
  */
 import type { Song } from '../game/engine';
-import { findTrackUri, playOnDevice } from './api';
+import { SpotifyError, findTrackUri, getDevices, pauseDevice, playOnDevice, resumeDevice, transferTo } from './api';
 import { getAccessToken } from './auth';
 
 export type PlaybackKind = 'premium' | 'embed' | 'none';
@@ -129,6 +132,94 @@ export async function createPremiumPlayback(): Promise<Playback> {
     },
     destroy() {
       player.disconnect();
+    },
+  };
+}
+
+/* ---------------- Spotify Connect speaker (Premium) ---------------- */
+
+/** A Spotify Connect device the host chose to play the music on. */
+export interface Speaker {
+  /** Empty: whatever device Spotify is playing on right now. */
+  id: string;
+  name: string;
+}
+
+/** Plays on whichever device the Spotify app is using, without knowing its id. */
+export const ACTIVE_SPEAKER: Speaker = { id: '', name: 'Where Spotify plays now' };
+
+const WAKE_HINT = 'Start any song on it from the Spotify app, then press Play again.';
+const NOTHING_ACTIVE = `Spotify isn't playing anywhere right now. On your phone, start any song on the speaker in the Spotify app, then press Play again.`;
+
+/**
+ * Plays on a Spotify Connect speaker through the Web API. Costs one request
+ * to start each song and one per pause or resume; nothing is polled, so the
+ * playing state is tracked here.
+ */
+export function createSpeakerPlayback(speaker: Speaker): Playback {
+  let deviceId = speaker.id;
+  let listener: (playing: boolean) => void = () => {};
+  let uri: string | null = null;
+  let started = false;
+  let playing = false;
+  const set = (p: boolean) => {
+    playing = p;
+    listener(p);
+  };
+
+  const start = async (u: string) => {
+    try {
+      await playOnDevice(deviceId, u);
+    } catch (e) {
+      if (!(e instanceof SpotifyError)) throw e;
+      if (!deviceId) {
+        // "Where Spotify plays now": there must be something playing (or paused) somewhere.
+        if (e.status === 404) throw new Error(NOTHING_ACTIVE);
+        throw e;
+      }
+      if (e.status === 403) throw new Error(`${speaker.name} won't take orders from the game right now. ${WAKE_HINT}`);
+      if (e.status !== 404 && e.status !== 502) throw e;
+      // The speaker went to sleep or got a new id: find it by name, wake it, try again.
+      const found = (await getDevices()).find((d) => d.id === deviceId || d.name === speaker.name);
+      if (!found) throw new Error(`${speaker.name} isn't reachable. ${WAKE_HINT}`);
+      deviceId = found.id;
+      await transferTo(deviceId).catch(() => {});
+      await playOnDevice(deviceId, u);
+    }
+  };
+
+  return {
+    kind: 'premium',
+    async prepare(song) {
+      if (playing) await pauseDevice(deviceId).catch(() => {});
+      set(false);
+      uri = await uriFor(song);
+      started = false;
+    },
+    async play() {
+      if (!uri) return;
+      if (!started) {
+        await start(uri);
+        started = true;
+      } else await resumeDevice(deviceId);
+      set(true);
+    },
+    async pause() {
+      await pauseDevice(deviceId);
+      set(false);
+    },
+    async stop() {
+      if (playing) await pauseDevice(deviceId).catch(() => {});
+      set(false);
+      uri = null;
+      started = false;
+    },
+    onStateChange(cb) {
+      listener = cb;
+    },
+    destroy() {
+      if (playing) void pauseDevice(deviceId).catch(() => {});
+      listener = () => {};
     },
   };
 }

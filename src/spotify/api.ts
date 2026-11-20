@@ -162,9 +162,44 @@ export async function findTrackUri(song: Song): Promise<string | null> {
   return uri;
 }
 
+/** `?device_id=…`, or nothing for the device Spotify is playing on right now. */
+const onDevice = (deviceId: string) => (deviceId ? `?device_id=${encodeURIComponent(deviceId)}` : '');
+
 export async function playOnDevice(deviceId: string, uri: string): Promise<void> {
-  await spotifyFetch(`/me/player/play?device_id=${encodeURIComponent(deviceId)}`, {
+  await spotifyFetch(`/me/player/play${onDevice(deviceId)}`, {
     method: 'PUT',
     body: JSON.stringify({ uris: [uri] }),
   });
+}
+
+/* ---------------- Spotify Connect speakers (Sonos, phones, TVs…) ---------------- */
+
+export interface SpeakerDevice {
+  id: string;
+  name: string;
+  type: string;
+  is_active?: boolean;
+  is_restricted?: boolean;
+}
+
+/** Lists the Spotify Connect devices the account can see right now (one request). */
+export async function getDevices(): Promise<SpeakerDevice[]> {
+  const body = await (await spotifyFetch('/me/player/devices')).json();
+  const devices: SpeakerDevice[] = body?.devices ?? [];
+  // Restricted devices may refuse remote control, but list them anyway:
+  // Spotify marks some speakers that way while they are idle.
+  return devices.filter((d) => d.id && d.name !== 'The Music Quiz');
+}
+
+/** Moves playback to a device without starting it, which wakes up some speakers. */
+export async function transferTo(deviceId: string): Promise<void> {
+  await spotifyFetch('/me/player', { method: 'PUT', body: JSON.stringify({ device_ids: [deviceId], play: false }) });
+}
+
+export async function pauseDevice(deviceId: string): Promise<void> {
+  await spotifyFetch(`/me/player/pause${onDevice(deviceId)}`, { method: 'PUT' });
+}
+
+export async function resumeDevice(deviceId: string): Promise<void> {
+  await spotifyFetch(`/me/player/play${onDevice(deviceId)}`, { method: 'PUT' });
 }
