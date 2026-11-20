@@ -4,12 +4,13 @@ import { getProfile, RateLimitError, type SpotifyProfile } from './spotify/api';
 import { handleRedirect, isFriendLogin, isLoggedIn, login, logout, restoreHostLogin, takeAfterLogin } from './spotify/auth';
 import { loadPersonalDeck } from './spotify/listening';
 import type { PersonalDeck } from './spotify/personalDeck';
-import type { PlaybackKind } from './spotify/playback';
+import type { PlaybackKind, Speaker } from './spotify/playback';
 import { Setup, type SetupValues } from './components/Setup';
 import { Game } from './components/Game';
 
 const GAME_KEY = 'mq.game';
 const MODE_KEY = 'mq.mode';
+const SPEAKER_KEY = 'mq.speaker';
 const PROFILE_KEY = 'mq.profile';
 
 function loadJson<T>(key: string): T | null {
@@ -40,6 +41,12 @@ function finishLogin() {
 export function App() {
   const [game, setGame] = useState<GameState | null>(() => loadJson<GameState>(GAME_KEY));
   const [mode, setMode] = useState<PlaybackKind>(() => loadJson<PlaybackKind>(MODE_KEY) ?? 'embed');
+  const [speaker, setSpeaker] = useState<Speaker | null>(() => loadJson<Speaker>(SPEAKER_KEY));
+  const changeSpeaker = (s: Speaker | null) => {
+    if (s) localStorage.setItem(SPEAKER_KEY, JSON.stringify(s));
+    else localStorage.removeItem(SPEAKER_KEY);
+    setSpeaker(s);
+  };
   const [profile, setProfile] = useState<SpotifyProfile | null>(null);
   const [authMessage, setAuthMessage] = useState<string | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
@@ -82,6 +89,7 @@ export function App() {
   const start = (values: SetupValues) => {
     localStorage.setItem(MODE_KEY, JSON.stringify(values.mode));
     setMode(values.mode);
+    changeSpeaker(values.speaker);
     // Spread the songs over the decades, unless the host chose which years to play.
     const order = values.spreadDecades ? 'decades' : 'random';
     setGame({ ...createGame({ playerNames: values.players, targetCards: values.targetCards, songs: values.songs, order }), refill: values.refill });
@@ -100,6 +108,8 @@ export function App() {
             localStorage.setItem(MODE_KEY, JSON.stringify(m));
             setMode(m);
           }}
+          speaker={speaker}
+          onSpeakerChange={changeSpeaker}
           onChange={setGame}
           onQuit={() => setGame(null)}
         />
@@ -120,6 +130,7 @@ export function App() {
             logout();
             setProfile(null);
           }}
+          speaker={speaker}
           onStart={start}
         />
       )}

@@ -168,3 +168,34 @@ export async function playOnDevice(deviceId: string, uri: string): Promise<void>
     body: JSON.stringify({ uris: [uri] }),
   });
 }
+
+/* ---------------- Spotify Connect speakers (Sonos, phones, TVs…) ---------------- */
+
+export interface SpeakerDevice {
+  id: string;
+  name: string;
+  type: string;
+  is_active?: boolean;
+  is_restricted?: boolean;
+}
+
+/** Lists the Spotify Connect devices the account can see right now (one request). */
+export async function getDevices(): Promise<SpeakerDevice[]> {
+  const body = await (await spotifyFetch('/me/player/devices')).json();
+  const devices: SpeakerDevice[] = body?.devices ?? [];
+  // Restricted devices can't be controlled through the Web API.
+  return devices.filter((d) => d.id && !d.is_restricted);
+}
+
+/** Moves playback to a device without starting it, which wakes up some speakers. */
+export async function transferTo(deviceId: string): Promise<void> {
+  await spotifyFetch('/me/player', { method: 'PUT', body: JSON.stringify({ device_ids: [deviceId], play: false }) });
+}
+
+export async function pauseDevice(deviceId: string): Promise<void> {
+  await spotifyFetch(`/me/player/pause?device_id=${encodeURIComponent(deviceId)}`, { method: 'PUT' });
+}
+
+export async function resumeDevice(deviceId: string): Promise<void> {
+  await spotifyFetch(`/me/player/play?device_id=${encodeURIComponent(deviceId)}`, { method: 'PUT' });
+}

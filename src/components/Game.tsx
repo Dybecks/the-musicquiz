@@ -6,7 +6,9 @@ import {
   createEmbedPlayback,
   createPremiumPlayback,
   createSilentPlayback,
+  createSpeakerPlayback,
   type Playback,
+  type Speaker,
   type PlaybackKind,
 } from '../spotify/playback';
 import { loadFact, type SongFact } from '../facts';
@@ -16,6 +18,9 @@ interface Props {
   state: GameState;
   mode: PlaybackKind;
   onModeChange: (mode: PlaybackKind) => void;
+  /** A Spotify Connect speaker to play on (Premium), instead of this browser. */
+  speaker: Speaker | null;
+  onSpeakerChange: (speaker: Speaker | null) => void;
   onChange: (state: GameState) => void;
   onQuit: () => void;
 }
@@ -65,7 +70,7 @@ function useRefill(state: GameState, onChange: (s: GameState) => void): string |
   return note;
 }
 
-export function Game({ state, mode, onModeChange, onChange, onQuit }: Props) {
+export function Game({ state, mode, onModeChange, speaker, onSpeakerChange, onChange, onQuit }: Props) {
   const refillNote = useRefill(state, onChange);
   const embedHost = useRef<HTMLDivElement>(null);
   const [playback, setPlayback] = useState<Playback | null>(null);
@@ -83,7 +88,9 @@ export function Game({ state, mode, onModeChange, onChange, onQuit }: Props) {
     setPlayback(null);
     setPlaybackError(null);
     const make =
-      mode === 'premium'
+      mode === 'premium' && speaker
+        ? Promise.resolve(createSpeakerPlayback(speaker))
+        : mode === 'premium'
         ? createPremiumPlayback()
         : mode === 'embed'
           ? createEmbedPlayback(embedHost.current!)
@@ -100,7 +107,7 @@ export function Game({ state, mode, onModeChange, onChange, onQuit }: Props) {
       cancelled = true;
       created?.destroy();
     };
-  }, [mode]);
+  }, [mode, speaker?.id]);
 
   // Load each new song as it is drawn.
   const songId = state.phase === 'guessing' ? state.current?.id : undefined;
@@ -221,7 +228,17 @@ export function Game({ state, mode, onModeChange, onChange, onQuit }: Props) {
                       )}
                     </div>
                   )}
-                  {songError && <p className="warn">{songError}</p>}
+                  {songError && (
+                    <div className="warn">
+                      <p>{songError}</p>
+                      {mode === 'premium' && speaker && songStatus === 'ready' && (
+                        <button className="link" onClick={() => onSpeakerChange(null)}>
+                          Play in this browser instead
+                        </button>
+                      )}
+                    </div>
+                  )}
+                  {mode === 'premium' && speaker && !songError && <p className="hint">Playing on {speaker.name}.</p>}
                 </div>
               ) : (
                 state.lastGuess && <Reveal correct={state.lastGuess.correct} song={state.lastGuess.song} />
