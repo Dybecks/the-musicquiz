@@ -302,6 +302,3 @@ input:focus { outline: 2px solid var(--accent); border-color: transparent; }
 .voters { list-style: none; padding: 0; margin: 0 0 8px; display: grid; gap: 4px; font-size: 0.92rem; color: var(--muted); }
 .voters li.voted { color: var(--text); }
 .voters li.locked { color: var(--good); }
-.speakers { margin-top: 6px; }
-.speakers h2 { font-size: 1rem; margin-bottom: 8px; }
-.test-sound { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
