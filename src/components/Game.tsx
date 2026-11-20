@@ -238,7 +238,7 @@ export function Game({ state, mode, onModeChange, speaker, onSpeakerChange, onCh
                       )}
                     </div>
                   )}
-                  {mode === 'premium' && speaker && !songError && <p className="hint">Playing on {speaker.name}.</p>}
+                  {mode === 'premium' && speaker && !songError && <p className="hint">{speaker.id ? `Playing on ${speaker.name}.` : 'Playing where the Spotify app plays.'}</p>}
                 </div>
               ) : (
                 state.lastGuess && <Reveal correct={state.lastGuess.correct} song={state.lastGuess.song} />

@@ -162,8 +162,11 @@ export async function findTrackUri(song: Song): Promise<string | null> {
   return uri;
 }
 
+/** `?device_id=…`, or nothing for the device Spotify is playing on right now. */
+const onDevice = (deviceId: string) => (deviceId ? `?device_id=${encodeURIComponent(deviceId)}` : '');
+
 export async function playOnDevice(deviceId: string, uri: string): Promise<void> {
-  await spotifyFetch(`/me/player/play?device_id=${encodeURIComponent(deviceId)}`, {
+  await spotifyFetch(`/me/player/play${onDevice(deviceId)}`, {
     method: 'PUT',
     body: JSON.stringify({ uris: [uri] }),
   });
@@ -183,8 +186,9 @@ export interface SpeakerDevice {
 export async function getDevices(): Promise<SpeakerDevice[]> {
   const body = await (await spotifyFetch('/me/player/devices')).json();
   const devices: SpeakerDevice[] = body?.devices ?? [];
-  // Restricted devices can't be controlled through the Web API.
-  return devices.filter((d) => d.id && !d.is_restricted);
+  // Restricted devices may refuse remote control, but list them anyway:
+  // Spotify marks some speakers that way while they are idle.
+  return devices.filter((d) => d.id && d.name !== 'The Music Quiz');
 }
 
 /** Moves playback to a device without starting it, which wakes up some speakers. */
@@ -193,9 +197,9 @@ export async function transferTo(deviceId: string): Promise<void> {
 }
 
 export async function pauseDevice(deviceId: string): Promise<void> {
-  await spotifyFetch(`/me/player/pause?device_id=${encodeURIComponent(deviceId)}`, { method: 'PUT' });
+  await spotifyFetch(`/me/player/pause${onDevice(deviceId)}`, { method: 'PUT' });
 }
 
 export async function resumeDevice(deviceId: string): Promise<void> {
-  await spotifyFetch(`/me/player/play?device_id=${encodeURIComponent(deviceId)}`, { method: 'PUT' });
+  await spotifyFetch(`/me/player/play${onDevice(deviceId)}`, { method: 'PUT' });
 }

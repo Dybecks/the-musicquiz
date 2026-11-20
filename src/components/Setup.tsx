@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { Song } from '../game/engine';
 import { getDevices, onSpotifyWait, spotifyBlockedUntil, type SpotifyProfile } from '../spotify/api';
 import { BUILT_IN_CLIENT_ID, getClientIdOverride, hasScopes, redirectUri, setClientId } from '../spotify/auth';
-import type { PlaybackKind, Speaker } from '../spotify/playback';
+import { ACTIVE_SPEAKER, type PlaybackKind, type Speaker } from '../spotify/playback';
 import { DECKS, chooseSongs, deckSongs, normalizeDecks, parseSavedDecks, playableSongs, type DeckId } from '../data/decks';
 import {
   MAX_GENRES,
@@ -321,14 +321,18 @@ export function Setup(props: Props) {
     try {
       const found = (await getDevices()).map((d) => ({ id: d.id, name: d.name }));
       setSpeakers(found);
-      if (found.length === 0) setSpeakerNote('No speakers found. Open the Spotify or Sonos app and play something on the speaker once, then look again.');
+      if (found.length === 0) setSpeakerNote('Spotify listed no speakers. Pick “Where Spotify plays now” instead, or start a song on the speaker from the Spotify app and look again.');
     } catch (e) {
       setSpeakerNote(e instanceof Error ? e.message : String(e));
     } finally {
       setSpeakerBusy(false);
     }
   };
-  const speakerChoices: Speaker[] = [...(speaker && !speakers?.some((d) => d.id === speaker.id) ? [speaker] : []), ...(speakers ?? [])];
+  const speakerChoices: Speaker[] = [
+    ACTIVE_SPEAKER,
+    ...(speaker?.id && !speakers?.some((d) => d.id === speaker.id) ? [speaker] : []),
+    ...(speakers ?? []),
+  ];
 
   // ---- Start ----
 
@@ -799,7 +803,7 @@ export function Setup(props: Props) {
               </button>
               {speakerChoices.map((d) => (
                 <button
-                  key={d.id}
+                  key={d.id || 'active'}
                   role="radio"
                   aria-checked={speaker?.id === d.id}
                   className={`chip ${speaker?.id === d.id ? 'selected' : ''}`}
@@ -813,10 +817,16 @@ export function Setup(props: Props) {
               </button>
             </div>
             {speakerNote && <p className="warn">{speakerNote}</p>}
+            <p className="hint">
+              Spotify only lists a speaker (like a Sonos) for a while after it played Spotify. Not there? Pick “Where Spotify plays now” and start any song on the
+              speaker from the Spotify app, and the game takes over from there.
+            </p>
           </div>
         )}
         <p className="hint">
-          {mode === 'premium' && speaker
+          {mode === 'premium' && speaker && !speaker.id
+            ? 'The music plays on whatever the Spotify app is playing on (your Sonos, phone…) through your Spotify Premium.'
+            : mode === 'premium' && speaker
             ? `The music plays on ${speaker.name} through your Spotify Premium.`
             : mode === 'premium'
             ? 'The music plays right here in the browser through your Spotify Premium.'

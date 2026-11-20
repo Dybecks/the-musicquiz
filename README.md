@@ -158,7 +158,11 @@ the default. **Find speakers** asks Spotify once for the account's Spotify Conne
 On a speaker each song costs one request to start, and one per pause or resume. Nothing
 is polled. If the speaker has gone to sleep, the game looks it up by name, wakes it and
 tries again. A Sonos only shows up after it has been used with Spotify recently: open the
-Spotify or Sonos app, play something on it once, then tap **Look again**.
+Spotify or Sonos app, play something on it once, then tap **Look again**. Or pick
+**Where Spotify plays now**: the game then plays on whatever device the Spotify app is
+using (no device id needed), so start any song on the Sonos from the app first.
+
+The list is Spotify Connect, not Bluetooth: phones show up because they run the Spotify app.
 
 Songs with a Spotify id in `SPOTIFY_IDS` (`src/data/songs.ts`) play without a login.
 Other songs are looked up with the Spotify search API, which needs the login.
