@@ -43,6 +43,8 @@ interface Props {
   onLogout: () => void;
   onPersonalChange: (deck: PersonalDeck | null) => void;
   onStart: (values: SetupValues) => void;
+  /** Join a game someone else is hosting, with its code. */
+  onJoin: () => void;
 }
 
 /** Whether the host plays with a Spotify login. */
@@ -426,6 +428,12 @@ export function Setup(props: Props) {
             Next: choose the music
           </button>
         )}
+        <p className="join-line center">
+          Got a code from the host?{' '}
+          <button className="link" onClick={props.onJoin}>
+            Join a game on this phone
+          </button>
+        </p>
       </main>
     );
   }

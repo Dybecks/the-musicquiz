@@ -11,6 +11,8 @@ interface Props {
   /** A wrongly placed song, shown where it really belonged. */
   wrongCard?: Song;
   compact?: boolean;
+  /** Votes from the team's phones, as slot → names. Shown on the gaps, even when they can't be tapped. */
+  votes?: Map<number, string[]>;
 }
 
 function slotLabel(cards: Song[], slot: number): string {
@@ -20,7 +22,7 @@ function slotLabel(cards: Song[], slot: number): string {
   return `Between ${cards[slot - 1].year} and ${cards[slot].year}`;
 }
 
-export function Timeline({ cards, selectable, selectedSlot, onSelect, highlightId, wrongCard, compact }: Props) {
+export function Timeline({ cards, selectable, selectedSlot, onSelect, highlightId, wrongCard, compact, votes }: Props) {
   // Where the wrong card really belongs (first card with a later year).
   let wrongIndex = -1;
   if (wrongCard) {
@@ -28,18 +30,33 @@ export function Timeline({ cards, selectable, selectedSlot, onSelect, highlightI
     if (wrongIndex === -1) wrongIndex = cards.length;
   }
 
-  const slot = (i: number) =>
-    selectable ? (
+  const slot = (i: number) => {
+    const voters = votes?.get(i);
+    if (!selectable && !votes) return null;
+    return (
       <button
         key={`slot-${i}`}
-        className={`slot ${selectedSlot === i ? 'selected' : ''}`}
-        aria-pressed={selectedSlot === i}
+        className={`slot ${selectedSlot === i ? 'selected' : ''} ${voters ? 'voted' : ''}`}
+        aria-pressed={selectable ? selectedSlot === i : undefined}
+        disabled={!selectable}
         onClick={() => onSelect(i)}
       >
-        {selectedSlot === i ? '♪ ' : '+ '}
-        {slotLabel(cards, i)}
+        <span>
+          {selectedSlot === i ? '♪ ' : '+ '}
+          {slotLabel(cards, i)}
+        </span>
+        {voters && (
+          <span className="votes" aria-label={`Votes: ${voters.join(', ')}`}>
+            {voters.map((name, j) => (
+              <span key={j} className="vote-chip">
+                {name}
+              </span>
+            ))}
+          </span>
+        )}
       </button>
-    ) : null;
+    );
+  };
 
   return (
     <ol className={`timeline ${compact ? 'compact' : ''}`}>
