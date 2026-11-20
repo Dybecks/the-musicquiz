@@ -185,6 +185,15 @@ sends its sound: its own speaker, headphones, Bluetooth or AirPlay (for example 
 Sonos). Picking a Spotify Connect speaker from the game was tried and dropped: Spotify
 locks a Sonos against control from other apps.
 
+While the song is hidden, the game reports it as **Mystery song** to the device's
+lock screen, Control Center, car displays and AirPlay/Bluetooth receivers (such as the
+Sonos app), and their play/pause buttons control the song. Spotify's players run in an
+iframe and report the real title, and Chrome only takes media info from a frame that is
+playing something, so the game also plays a silent, looping clip in the page while
+the song is hidden (`src/spotify/nowPlaying.ts`). After the reveal the real title may
+show. On iPhone and iPad the silent clip is left out, since Safari may pause the song
+for it, so the title may still show there.
+
 During a song, **Open in Spotify ↗** opens it in the Spotify app instead, which can play
 on any speaker it reaches (Sonos included). Spotify shows the title there, so someone who
 isn't guessing should tap it.

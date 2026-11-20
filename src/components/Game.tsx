@@ -9,6 +9,7 @@ import {
   type Playback,
   type PlaybackKind,
 } from '../spotify/playback';
+import { hideNowPlaying, showNowPlaying } from '../spotify/nowPlaying';
 import { loadFact, type SongFact } from '../facts';
 import { Timeline } from './Timeline';
 import { useHostRoom, type HostRoom } from '../multiplayer/useHostRoom';
@@ -153,6 +154,20 @@ export function Game({ state, mode, onModeChange, onChange, onQuit: quitGame }: 
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [songId, songStatus]);
+
+  // Report "Mystery song" to lock screens and AirPlay/Bluetooth receivers while
+  // the song is hidden; their play/pause buttons still control the real song.
+  const playbackRef = useRef<Playback | null>(null);
+  playbackRef.current = playback;
+  const hidden = state.phase === 'guessing' && mode !== 'none' && songStatus === 'ready';
+  useEffect(() => {
+    if (!hidden) return showNowPlaying();
+    hideNowPlaying(playing, {
+      play: () => void playbackRef.current?.play().catch(() => {}),
+      pause: () => void playbackRef.current?.pause().catch(() => {}),
+    });
+  }, [hidden, playing, songId]);
+  useEffect(() => () => showNowPlaying(), []);
 
   // Look up the fun fact while the song plays, so it's ready at the reveal.
   useEffect(() => {
