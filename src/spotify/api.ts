@@ -1,5 +1,5 @@
 import type { Song } from '../game/engine';
-import { getAccessToken } from './auth';
+import { getAccessToken, getClientId } from './auth';
 
 export class SpotifyError extends Error {
   constructor(
@@ -16,7 +16,8 @@ const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 const MAX_ATTEMPTS = 6;
 /** Pauses up to this long are waited out on the loading screen; longer ones are not. */
 const MAX_AUTO_WAIT_SECONDS = 120;
-const BLOCKED_KEY = 'mq.spotifyBlockedUntil';
+/** Quotas belong to the Spotify app's developer account, so a block is kept per Client ID. */
+const blockedKey = () => `mq.spotifyBlockedUntil:${getClientId()}`;
 
 /**
  * Spotify won't answer for a long while: the game's request quota is used
@@ -45,7 +46,7 @@ function formatTime(ms: number): string {
  */
 let blockedUntil = (() => {
   try {
-    return Number(localStorage.getItem(BLOCKED_KEY)) || 0;
+    return Number(localStorage.getItem(blockedKey())) || 0;
   } catch {
     return 0;
   }
@@ -69,7 +70,7 @@ function block(until: number): void {
   blockedUntil = until;
   if (until - Date.now() > MAX_AUTO_WAIT_SECONDS * 1000) {
     try {
-      localStorage.setItem(BLOCKED_KEY, String(until));
+      localStorage.setItem(blockedKey(), String(until));
     } catch {
       /* ignore */
     }

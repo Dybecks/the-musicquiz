@@ -143,7 +143,7 @@ Other songs are looked up with the Spotify search API, which needs the login.
 
 ### Spotify setup (only for "Log in with Spotify")
 
-The game ships with its own Spotify app (Client ID `5a008c63808c47478e4edcc99db34a87` in
+The game ships with its own Spotify app (Client ID `a96f51d734d240cdbe07ab7ae00fd959` in
 `src/spotify/auth.ts`). A Client ID is public; the PKCE login uses no secret. The app's
 owner manages it in the [Spotify dashboard](https://developer.spotify.com/dashboard):
 its Redirect URIs must include `https://dybecks.github.io/the-musicquiz/` (and the

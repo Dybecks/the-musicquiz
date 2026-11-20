@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('./auth', () => ({ getAccessToken: async () => 'token' }));
+vi.mock('./auth', () => ({ getAccessToken: async () => 'token', getClientId: () => 'test-client' }));
 
 const reply = (status: number, headers: Record<string, string> = {}) =>
   new Response(status === 200 ? '{"ok":true}' : '{}', { status, headers });
