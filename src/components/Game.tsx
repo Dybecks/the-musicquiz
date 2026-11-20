@@ -11,8 +11,9 @@ import {
 } from '../spotify/playback';
 import { loadFact, type SongFact } from '../facts';
 import { Timeline } from './Timeline';
-import { useHostRoom, type HostRoom } from '../multiplayer/useHostRoom';
-import { activeVoters, votesBySlot } from '../multiplayer/protocol';
+import type { HostRoom } from '../multiplayer/useHostRoom';
+import { HOST_ID, activeVoters, votesBySlot } from '../multiplayer/protocol';
+import { SharePanel } from './SharePanel';
 
 interface Props {
   state: GameState;
@@ -20,6 +21,8 @@ interface Props {
   onModeChange: (mode: PlaybackKind) => void;
   onChange: (state: GameState) => void;
   onQuit: () => void;
+  /** Phones following the game (see useHostRoom). */
+  host: HostRoom;
 }
 
 type SongStatus = 'loading' | 'ready' | 'error';
@@ -67,14 +70,12 @@ function useRefill(state: GameState, onChange: (s: GameState) => void): string |
   return note;
 }
 
-export function Game({ state, mode, onModeChange, onChange, onQuit: quitGame }: Props) {
+export function Game({ state, mode, onModeChange, onChange, onQuit, host }: Props) {
   const refillNote = useRefill(state, onChange);
-  const host = useHostRoom(state, onChange);
-  const onQuit = () => {
-    host.stop();
-    quitGame();
-  };
   const votes = host.room && state.phase === 'guessing' ? votesBySlot(activeVoters(host.room, state)) : undefined;
+  // The host on the team whose turn it is votes like everyone else on it.
+  const hostMember = host.room?.members.find((m) => m.id === HOST_ID);
+  const hostVoting = !!hostMember && state.phase === 'guessing' && hostMember.teamId === currentPlayer(state).id;
   const embedHost = useRef<HTMLDivElement>(null);
   const [playback, setPlayback] = useState<Playback | null>(null);
   const [playbackError, setPlaybackError] = useState<string | null>(null);
@@ -172,6 +173,17 @@ export function Game({ state, mode, onModeChange, onChange, onQuit: quitGame }: 
       setSongError(message(e));
     }
   };
+
+  // Tell the phones what happens here: the song playing, and the spot tapped.
+  const { setLive } = host;
+  useEffect(() => {
+    setLive({ playing: state.phase === 'guessing' && playing, hostPick: state.phase === 'guessing' && !hostVoting ? selectedSlot : null });
+  }, [setLive, playing, selectedSlot, hostVoting, state.phase]);
+  useEffect(() => () => setLive({ playing: false, hostPick: null }), [setLive]);
+
+  // A new turn starts with nothing picked.
+  const turn = `${state.round}:${state.currentPlayerIndex}:${state.current?.id ?? ''}`;
+  useEffect(() => setSelectedSlot(null), [turn]);
 
   const lockIn = () => {
     if (selectedSlot === null) return;
@@ -272,7 +284,31 @@ export function Game({ state, mode, onModeChange, onChange, onQuit: quitGame }: 
             </section>
 
             <div className="action-bar">
-              {state.phase === 'guessing' ? (
+              {state.phase === 'guessing' && hostVoting ? (
+                <>
+                  {hostMember.locked ? (
+                    <button className="ghost big" onClick={() => host.act({ type: 'lock', locked: false })}>
+                      Locked in · tap to change
+                    </button>
+                  ) : (
+                    <button
+                      className="primary big"
+                      disabled={hostMember.vote === null}
+                      onClick={() => host.act({ type: 'lock', locked: true })}
+                    >
+                      {hostMember.vote === null ? 'Tap a spot to vote' : 'Lock in my vote'}
+                    </button>
+                  )}
+                  {host.decision.kind === 'waiting' && (
+                    <p className="hint center vote-status">
+                      Team: {host.decision.locked} of {host.decision.total} locked in
+                    </p>
+                  )}
+                  {host.decision.kind === 'split' && (
+                    <p className="warn center vote-status">The votes are split. Agree on one spot and lock in again.</p>
+                  )}
+                </>
+              ) : state.phase === 'guessing' ? (
                 <>
                   <button className="primary big" disabled={selectedSlot === null} onClick={lockIn}>
                     {selectedSlot === null
@@ -307,16 +343,22 @@ export function Game({ state, mode, onModeChange, onChange, onQuit: quitGame }: 
             </h2>
             {state.phase === 'guessing' ? (
               <p className="hint">
-                {host.decision.kind === 'none'
-                  ? 'Tap where the song belongs, then lock in your guess.'
-                  : 'The team votes on their phones. Tap a spot here to decide for them.'}
+                {hostVoting
+                  ? 'Vote for where the song belongs. The guess goes in when everyone on the team has locked in.'
+                  : host.decision.kind === 'none'
+                    ? 'Tap where the song belongs, then lock in your guess.'
+                    : 'The team votes on their phones. Tap a spot here to decide for them.'}
               </p>
             ) : null}
             <Timeline
               cards={player.timeline}
               selectable={state.phase === 'guessing'}
-              selectedSlot={selectedSlot}
-              onSelect={setSelectedSlot}
+              selectedSlot={hostVoting ? hostMember.vote : selectedSlot}
+              onSelect={(slot) =>
+                hostVoting
+                  ? host.act({ type: 'vote', slot: slot === hostMember.vote ? null : slot })
+                  : setSelectedSlot(slot)
+              }
               highlightId={state.phase === 'revealed' && state.lastGuess?.correct ? state.lastGuess.song.id : undefined}
               wrongCard={state.phase === 'revealed' && state.lastGuess && !state.lastGuess.correct ? state.lastGuess.song : undefined}
               votes={votes}
@@ -325,7 +367,7 @@ export function Game({ state, mode, onModeChange, onChange, onQuit: quitGame }: 
         </div>
       )}
 
-      {state.phase !== 'finished' && <SharePanel host={host} state={state} />}
+      {state.phase !== 'finished' && <SharePanel host={host} />}
 
       {/* The Spotify embed lives here. It stays covered so the title isn't spoiled. */}
       <section className={`embed-wrap ${mode === 'embed' && state.phase !== 'finished' ? '' : 'hidden'}`}>
@@ -434,97 +476,5 @@ export function Finished({
         </button>
       )}
     </section>
-  );
-}
-
-/** The link a phone opens to join this game. */
-export const joinLink = (code: string) => `${new URL(import.meta.env.BASE_URL, window.location.origin)}?join=${code}`;
-
-/** Lets phones join the game: the code, who has joined and which team they are on. */
-function SharePanel({ host, state }: { host: HostRoom; state: GameState }) {
-  const [copied, setCopied] = useState(false);
-  const { room, status } = host;
-  if (!room) {
-    return (
-      <section className="panel share">
-        <h2>Play together on phones</h2>
-        <p className="hint">
-          Share a code so everyone can follow the game on their own phone, join a team and vote for the spot before the
-          team locks in together. The music still plays here.
-        </p>
-        <button className="ghost" onClick={host.share}>
-          Share a game code
-        </button>
-      </section>
-    );
-  }
-  const link = joinLink(room.code);
-  const shareLink = async () => {
-    const data = { title: 'The Music Quiz', text: `Join the game with code ${room.code}`, url: link };
-    try {
-      if (navigator.share) await navigator.share(data);
-      else {
-        await navigator.clipboard.writeText(link);
-        setCopied(true);
-      }
-    } catch {
-      // Cancelled, or no clipboard: the code is on screen anyway.
-    }
-  };
-  const unassigned = room.members.filter((m) => !m.teamId || !state.players.some((p) => p.id === m.teamId));
-  return (
-    <section className="panel share">
-      <div className="share-head">
-        <div>
-          <p className="hint">Game code</p>
-          <p className="room-code" aria-label={`Game code ${room.code.split('').join(' ')}`}>
-            {room.code}
-          </p>
-        </div>
-        <button className="ghost" onClick={shareLink}>
-          {copied ? 'Link copied' : 'Share link'}
-        </button>
-      </div>
-      <p className="hint">
-        {status?.kind === 'open'
-          ? 'Open the game on a phone, choose “Join a game” and type the code, or open the link.'
-          : status?.kind === 'error'
-            ? status.message
-            : 'Opening the room…'}
-      </p>
-      <ul className="team-members">
-        {state.players.map((p) => {
-          const members = room.members.filter((m) => m.teamId === p.id);
-          return (
-            <li key={p.id}>
-              <strong>{p.name}</strong>
-              <span>{members.length ? members.map((m) => <MemberName key={m.id} member={m} />) : <span className="muted">no phones</span>}</span>
-            </li>
-          );
-        })}
-        {unassigned.length > 0 && (
-          <li>
-            <strong className="muted">Choosing a team</strong>
-            <span>
-              {unassigned.map((m) => (
-                <MemberName key={m.id} member={m} />
-              ))}
-            </span>
-          </li>
-        )}
-      </ul>
-      <button className="link" onClick={() => host.stop('The host stopped sharing the game.')}>
-        Stop sharing
-      </button>
-    </section>
-  );
-}
-
-function MemberName({ member }: { member: { name: string; connected: boolean; locked: boolean } }) {
-  return (
-    <span className={`member ${member.connected ? '' : 'offline'}`} title={member.connected ? undefined : 'Not connected'}>
-      {member.name}
-      {member.locked && ' ✓'}
-    </span>
   );
 }

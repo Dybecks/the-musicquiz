@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { Song } from '../game/engine';
 import { onSpotifyWait, spotifyBlockedUntil, type SpotifyProfile } from '../spotify/api';
 import { BUILT_IN_CLIENT_ID, getClientIdOverride, hasScopes, redirectUri, setClientId } from '../spotify/auth';
@@ -45,6 +45,10 @@ interface Props {
   onStart: (values: SetupValues) => void;
   /** Join a game someone else is hosting, with its code. */
   onJoin: () => void;
+  /** The players or teams as they are typed, so phones can pick a team before the start. */
+  onPlayersChange: (names: string[]) => void;
+  /** Inviting phones (the share panel), shown with the players. */
+  invite: ReactNode;
 }
 
 /** Whether the host plays with a Spotify login. */
@@ -136,7 +140,11 @@ export function Setup(props: Props) {
     </p>
   );
 
-  useEffect(() => saveJson(PLAYERS_KEY, players), [players]);
+  useEffect(() => {
+    saveJson(PLAYERS_KEY, players);
+    props.onPlayersChange(players);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [players]);
   useEffect(() => localStorage.setItem(TARGET_KEY, String(target)), [target]);
 
   useEffect(() => {
@@ -782,6 +790,8 @@ export function Setup(props: Props) {
               : 'The music plays through a hidden Spotify player: full songs if this browser is signed in to Spotify, otherwise 30-second previews.'}
         </p>
       </section>
+
+      {props.invite}
 
       {errorLine}
       <button className="primary big" onClick={start}>

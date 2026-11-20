@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { createGame, type GameState } from './game/engine';
 import { getProfile, RateLimitError, type SpotifyProfile } from './spotify/api';
 import { handleRedirect, isFriendLogin, isLoggedIn, login, logout, restoreHostLogin, takeAfterLogin } from './spotify/auth';
@@ -8,7 +8,10 @@ import type { PlaybackKind } from './spotify/playback';
 import { Setup, type SetupValues } from './components/Setup';
 import { Game } from './components/Game';
 import { Remote, savedRemote } from './components/Remote';
-import { isValidCode, normalizeCode } from './multiplayer/protocol';
+import { isValidCode, lobbyTeams, normalizeCode } from './multiplayer/protocol';
+import { useHostRoom } from './multiplayer/useHostRoom';
+import { SharePanel } from './components/SharePanel';
+import { mergeSongs } from './spotify/personalDeck';
 
 const GAME_KEY = 'mq.game';
 const MODE_KEY = 'mq.mode';
@@ -65,6 +68,10 @@ export function App() {
   const [authChecked, setAuthChecked] = useState(false);
   const [personal, setPersonal] = useState<PersonalDeck | null>(loadPersonalDeck);
   const [returnedFromLogin, setReturnedFromLogin] = useState(false);
+  // The teams typed in setup, so phones can join a team before the game starts.
+  const [teamNames, setTeamNames] = useState<string[]>(() => loadJson<string[]>('mq.players') ?? ['Team 1', 'Team 2']);
+  const lobby = useMemo(() => lobbyTeams(teamNames), [teamNames]);
+  const host = useHostRoom(game, setGame, lobby);
 
   const refreshProfile = useCallback(async () => {
     if (!isLoggedIn()) {
@@ -104,7 +111,9 @@ export function App() {
     setMode(values.mode);
     // Spread the songs over the decades, unless the host chose which years to play.
     const order = values.spreadDecades ? 'decades' : 'random';
-    setGame({ ...createGame({ playerNames: values.players, targetCards: values.targetCards, songs: values.songs, order }), refill: values.refill });
+    // Songs the phones sent from their Spotify join the deck.
+    const songs = mergeSongs(values.songs, host.takePending());
+    setGame({ ...createGame({ playerNames: values.players, targetCards: values.targetCards, songs, order }), refill: values.refill });
   };
 
   return (
@@ -113,7 +122,7 @@ export function App() {
         <span className="brand-mark">♪</span> The Music Quiz
       </header>
       {remote ? (
-        <Remote initialCode={remote.code} onLeave={() => setRemote(null)} />
+        <Remote initialCode={remote.code} onLeave={() => setRemote(null)} profile={profile} />
       ) : game ? (
         <Game
           state={game}
@@ -124,6 +133,7 @@ export function App() {
           }}
           onChange={setGame}
           onQuit={() => setGame(null)}
+          host={host}
         />
       ) : !authChecked ? (
         <p className="hint center">Checking Spotify login…</p>
@@ -144,6 +154,8 @@ export function App() {
           }}
           onStart={start}
           onJoin={() => setRemote({})}
+          onPlayersChange={(names) => setTeamNames((cur) => (cur.join('\n') === names.join('\n') ? cur : names))}
+          invite={<SharePanel host={host} lobby />}
         />
       )}
     </div>

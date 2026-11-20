@@ -24,24 +24,41 @@ without using up the turn. The game is saved in the browser, so a reload doesn't
 
 ## Playing together on phones
 
-The host's device plays the music, and everyone else can follow along on their own phone:
+The host's device plays the music, and everyone else can follow along on their own phone or computer:
 
-1. During a game the host taps **Share a game code**. A four-letter code appears (and
-   **Share link** sends a `?join=CODE` link).
+1. Invite people before the game starts, on the **Players & play** screen, or at any time
+   during a game: tap **Share a game code**. A four-letter code appears (and
+   **Share link** sends a `?join=CODE` link). The room stays open from game to game
+   until **Stop sharing**.
 2. On a phone, open the game, tap **Join a game on this phone**, type the code and a name,
-   or just open the link.
-3. Pick a team. The host's screen lists who is on which team.
+   or just open the link. Everyone gets a random emoji as a profile picture (tap it for
+   another one), shown next to their name, also on their votes.
+3. Pick a team. Before the start the teams are the names typed in setup, so a renamed or
+   added team shows up on the phones right away. The host picks a team too (or
+   **Just running the game**) in the same panel.
 4. When it's your team's turn, tap the spot on the timeline where you think the song
-   belongs. Everyone sees the team's votes as name tags on the spots.
-5. Each team member taps **Lock in my vote**. When everyone on the team who is
-   connected has locked in, the spot with the most votes is the guess. If the votes are
-   split evenly, the team agrees on one spot and locks in again. Changing a vote unlocks it.
+   belongs. Everyone sees the team's votes as emoji-and-name tags on the spots.
+5. Each team member, the host included, taps **Lock in my vote**. When everyone on the
+   team who is connected has locked in, the spot with the most votes is the guess. If the
+   votes are split evenly, the team agrees on one spot and locks in again. Changing a vote
+   unlocks it.
 
-Phones never receive the song that is playing, only the timelines, votes and the reveal.
-The host can still tap a spot and lock in for a team, for example when someone's phone
-stops responding. A team with no phones plays on the host's screen as before. Phones
-reconnect by themselves after a reload or a dropped connection, and so does the room
-after the host's page reloads.
+Everything that happens is sent to every device as it happens: votes, lock-ins, team
+changes, the reveal, whether the song is playing, and the spot the host has tapped when
+deciding for a team they aren't on. Phones never receive the song that is playing, only the
+timelines, votes and the reveal. The host can still tap a spot and lock in for a team, for
+example when someone's phone stops responding, and a team with nobody on a phone plays on the
+host's screen as before. Phones reconnect by themselves after a reload or a dropped
+connection, and so does the room after the host's page reloads.
+
+### Adding your own songs from a phone (optional)
+
+Joining needs no Spotify login. Anyone who wants to can tap **Add songs from my Spotify**
+on their phone, log in to Spotify there, tick some of their playlists and send about 40
+songs at a time (**Send more songs** fetches more). Songs sent before the start join the
+deck when the game starts; songs sent during a game go straight into the deck. While the
+game's Spotify app is in development mode, their account must be listed under **User
+Management** in the Spotify dashboard, like any other login.
 
 The phones talk to the host directly over WebRTC ([PeerJS](https://peerjs.com/)); the
 free public PeerJS server only puts them in touch, so the game still needs no backend.
@@ -51,7 +68,8 @@ the same Wi-Fi works best. To use your own PeerJS server, set `VITE_PEER_HOST`
 
 The code: `src/multiplayer/protocol.ts` (messages, votes and what phones see, tested in
 `protocol.test.ts`), `src/multiplayer/connection.ts` (the connections),
-`src/multiplayer/useHostRoom.ts` (the host side) and `src/components/Remote.tsx` (the phone).
+`src/multiplayer/useHostRoom.ts` (the host side), `src/components/SharePanel.tsx` (inviting),
+`src/components/Remote.tsx` (the phone) and `src/components/AddMyMusic.tsx` (songs from a phone).
 
 ## Song decks
 

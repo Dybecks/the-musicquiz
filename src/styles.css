@@ -302,5 +302,23 @@ input:focus { outline: 2px solid var(--accent); border-color: transparent; }
 .voters { list-style: none; padding: 0; margin: 0 0 8px; display: grid; gap: 4px; font-size: 0.92rem; color: var(--muted); }
 .voters li.voted { color: var(--text); }
 .voters li.locked { color: var(--good); }
+.avatar { display: inline-block; margin-right: 4px; }
+.avatar-button { font-size: 2rem; width: 56px; height: 56px; padding: 0; border-radius: 50%; background: var(--panel-2); line-height: 1; flex: none; }
+.avatar-button.small { font-size: 1.3rem; width: 38px; height: 38px; min-height: 38px; }
+.remote-head .who { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.host-me { display: grid; grid-template-columns: auto 1fr; column-gap: 12px; align-items: center; margin-bottom: 12px; }
+.host-me .avatar-button { grid-row: span 1; }
+.host-me .hint, .host-me .chips { grid-column: 1 / -1; }
+.host-me .chips { margin-bottom: 0; }
+.who-chip { margin-right: 8px; white-space: nowrap; }
+.who-chip.offline { opacity: 0.5; }
+.team-choice span .who-chip { color: var(--text); }
+.now-playing { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+.vinyl.mini { width: 48px; font-size: 1.1rem; flex: none; }
+.row-actions { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; }
+.pick-playlists { max-height: 320px; overflow-y: auto; }
+.add-music .info, .add-music .progress { margin-bottom: 10px; }
+.lobby h1 { font-size: 1.25rem; }
+.voters .who-chip { margin-right: 0; }
 .open-spotify { text-align: center; margin-top: 10px; }
 .open-spotify a { color: var(--accent-2); font-weight: 600; }
