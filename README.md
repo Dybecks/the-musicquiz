@@ -29,7 +29,8 @@ The host's device plays the music, and everyone else can follow along on their o
 1. Invite people before the game starts, on the **Players & play** screen, or at any time
    during a game: tap **Share a game code**. A four-letter code appears (and
    **Share link** sends a `?join=CODE` link). The room stays open from game to game
-   until **Stop sharing**.
+   (**Play again**) until **Stop sharing** or **End game**, which sends every phone
+   out of the game right away.
 2. On a phone, open the game, tap **Join a game on this phone**, type the code and a name,
    or just open the link. Everyone gets a random emoji as a profile picture (tap it for
    another one), shown next to their name, also on their votes.
@@ -42,6 +43,16 @@ The host's device plays the music, and everyone else can follow along on their o
    team who is connected has locked in, the spot with the most votes is the guess. If the
    votes are split evenly, the team agrees on one spot and locks in again. Changing a vote
    unlocks it.
+6. After the reveal, the next song starts as the host chose under **Who starts the next
+   song**: **Most players** (more than half of the connected phones tap **Next song**; the
+   default), **Any player** (one tap is enough) or **Only me**. With the first two, phones
+   can also play and pause the song. The host's own **Next** button always works.
+
+Team members can rename their own team from their phone (**✎ Rename**), and the host can
+rename any team with ✎ in the share panel; the new name shows everywhere and is kept for the
+next game. The host taps a player's name in the share panel to move them to another team
+or **Remove from the game**. A removed phone is sent out at once and can't join that game
+again until the host taps **let back in**.
 
 Everything that happens is sent to every device as it happens: votes, lock-ins, team
 changes, the reveal, whether the song is playing, and the spot the host has tapped when
@@ -212,7 +223,9 @@ but the Sonos bridge):
   Cast (Chromecast built-in) only appear while something plays on them, which is how
   Spotify works. Spotify shows the title in its app and on a TV's screen, so keep them
   out of sight. Devices Spotify won't let other apps control (often a Sonos) are shown
-  with 🔒; use the Sonos bridge for those.
+  with 🔒; use the Sonos bridge for those. A phone closes the Spotify app in the
+  background after a while when nothing plays; then **Open the Spotify app** under the
+  message brings it back, and Play starts the song again.
 - **Wherever Spotify plays**: each song starts on the device the Spotify app is using at
   that moment. When nothing is playing anywhere, it uses the device the last song played on,
   or the only device that's open. If several are open, it asks you to pick one.

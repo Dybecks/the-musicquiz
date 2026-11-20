@@ -41,7 +41,9 @@ export interface ConnectTarget {
 }
 
 const NOTHING_OPEN =
-  'Spotify can’t see any speaker or Spotify app to play on. Switch the speaker on, or open the Spotify app on a phone or computer and start any song there, then press Play here again.';
+  'Spotify can’t see any speaker or Spotify app to play on. Switch the speaker on, or open the Spotify app on a phone or computer (a phone closes it in the background after a while when nothing plays) and start any song there, then press Play here again.';
+
+const scopeMissing = 'The Spotify login is missing permission to play on speakers and apps. End the game, log out of Spotify in setup and log in again.';
 
 const notListed = (t: ConnectTarget) =>
   `Spotify can’t see “${t.name}” right now. Make sure it’s switched on, then open the Spotify app, pick “${t.name}” in its device list (the speaker icon), start any song there and press Play here again. Speakers with Google Cast only show up while something plays on them.`;
@@ -56,6 +58,12 @@ const didNotStart = (d: SpotifyDevice) =>
   `“${d.name}” didn’t start playing. Make sure it’s switched on and awake (if it has gone to sleep, start any song on it from the Spotify app), then press Play here again.`;
 
 const premiumNeeded = 'Playing on Spotify speakers and apps needs Spotify Premium.';
+
+/** A login from before the playback permissions were asked for (or none at all). */
+const loginLacking = (e: unknown) => e instanceof SpotifyError && (/scope/i.test(e.message) || e.status === 401);
+
+/** Why the list of devices couldn't be fetched, in words. */
+export const listError = (e: unknown) => (loginLacking(e) ? scopeMissing : e instanceof Error ? e.message : String(e));
 
 /** The game's own in-browser player. Spotify keeps listing it for a while after it's gone. */
 const OWN_PLAYER = 'The Music Quiz';
@@ -156,6 +164,7 @@ function explain(e: unknown, device: SpotifyDevice | null): never {
   if (e instanceof SpotifyError && !(e instanceof RateLimitError)) {
     // Spotify's own words help when the guess below is wrong.
     const why = ` (${e.message.replace(/^Spotify: /, '')})`;
+    if (loginLacking(e)) throw new Error(scopeMissing + why);
     if (/premium/i.test(e.message)) throw new Error(premiumNeeded + why);
     if (flaky(e)) throw new Error((device ? didNotStart(device) : NOTHING_OPEN) + why);
     if (e.status === 403) throw new Error((device ? restricted(device) : premiumNeeded) + why);

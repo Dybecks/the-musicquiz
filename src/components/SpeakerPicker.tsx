@@ -3,7 +3,7 @@ import { connectBridge, isBridgeCode, normalizeBridgeCode, type BridgeLink, type
 import { SPOTIFY_APP, type SpeakerChoice } from '../speakers';
 import { getDevices, type SpotifyDevice } from '../spotify/api';
 import { isLoggedIn } from '../spotify/auth';
-import { connectDevices, findTarget, type ConnectTarget } from '../spotify/remote';
+import { connectDevices, findTarget, listError, type ConnectTarget } from '../spotify/remote';
 
 const CODE_KEY = 'mq.sonosCode';
 
@@ -51,7 +51,7 @@ function useConnectDevices(enabled: boolean) {
       setDevices(connectDevices(await getDevices()));
       setNote(null);
     } catch (e) {
-      setNote(message(e));
+      setNote(listError(e));
     } finally {
       asking.current = false;
       setBusy(false);

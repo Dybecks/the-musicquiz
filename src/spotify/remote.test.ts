@@ -272,6 +272,37 @@ describe('playing on a Spotify Connect device', () => {
     expect(mocked.getDevices).toHaveBeenCalledTimes(2);
   });
 
+  it('counts pausing an app that went away (and its music with it) as paused', async () => {
+    const spotify = fakeSpotify([{ ...phone, is_active: true }]);
+    const p = createSpotifyConnectPlayback(null);
+    await p.prepare(song);
+    await settle(p.play());
+    spotify.state = null;
+    mocked.pauseDevice.mockRejectedValueOnce(new api.SpotifyError('Spotify: Device not found', 404));
+    await expect(settle(p.pause())).resolves.toBeUndefined();
+  });
+
+  it('counts a resume Spotify refuses while the song already plays as playing', async () => {
+    fakeSpotify([{ ...phone, is_active: true }]);
+    const p = createSpotifyConnectPlayback(null);
+    await p.prepare(song);
+    await settle(p.play());
+    await settle(p.pause());
+    mocked.resumeDevice.mockImplementationOnce(async () => {
+      await mocked.playOnDevice.getMockImplementation()!('p1', URI); // it did resume…
+      throw new api.SpotifyError('Spotify: Player command failed: Restriction violated', 403); // …and said no
+    });
+    await expect(settle(p.play())).resolves.toBeUndefined();
+    expect(mocked.getDevices).toHaveBeenCalledTimes(1);
+  });
+
+  it('asks for a new login when the old one lacks the permission', async () => {
+    mocked.getDevices.mockRejectedValue(new api.SpotifyError('Spotify: Insufficient client scope', 403));
+    const p = createSpotifyConnectPlayback(target(kitchen));
+    await p.prepare(song);
+    await expect(settle(p.play())).rejects.toThrow(/log in again/);
+  });
+
   it('following the Spotify app, plays the next song where the last one played, not on the phone', async () => {
     const spotify = fakeSpotify([{ ...kitchen, is_active: true }, { ...phone }]);
     const p = createSpotifyConnectPlayback(null);
