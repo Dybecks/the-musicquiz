@@ -165,28 +165,51 @@ export async function findTrackUri(song: Song): Promise<string | null> {
 /** `?device_id=…`, or nothing for the device Spotify is playing on right now. */
 const onDevice = (deviceId: string) => (deviceId ? `?device_id=${encodeURIComponent(deviceId)}` : '');
 
-export async function playOnDevice(deviceId: string, uri: string): Promise<void> {
+/** Starts `uri` on the device, `positionMs` into the song. */
+export async function playOnDevice(deviceId: string, uri: string, positionMs = 0): Promise<void> {
   await spotifyFetch(`/me/player/play${onDevice(deviceId)}`, {
     method: 'PUT',
-    body: JSON.stringify({ uris: [uri] }),
+    body: JSON.stringify({ uris: [uri], ...(positionMs > 0 ? { position_ms: Math.round(positionMs) } : {}) }),
   });
 }
 
-/* ---------------- Steering the Spotify app (Spotify Connect) ---------------- */
+/* ---------------- Playing on Spotify Connect devices ---------------- */
 
 export interface SpotifyDevice {
   id: string | null;
   name: string;
+  /** "Computer", "Smartphone", "Speaker", "TV", "CastAudio", "AVR"… */
   type: string;
   is_active: boolean;
   /** True: Spotify accepts no commands from apps for this device (often a Sonos). */
   is_restricted: boolean;
+  /** In a private session Spotify doesn't say what plays on it. */
+  is_private_session?: boolean;
 }
 
 /** The devices the account's Spotify apps can play on right now (one request). */
 export async function getDevices(): Promise<SpotifyDevice[]> {
   const body = await (await spotifyFetch('/me/player/devices')).json();
   return body?.devices ?? [];
+}
+
+export interface PlaybackState {
+  device: SpotifyDevice | null;
+  is_playing: boolean;
+  item: { uri: string; linked_from?: { uri: string } | null } | null;
+}
+
+/** What plays where right now, or null when Spotify plays nowhere (one request). */
+export async function getPlaybackState(): Promise<PlaybackState | null> {
+  const res = await spotifyFetch('/me/player');
+  if (res.status === 204) return null;
+  const text = await res.text();
+  return text ? (JSON.parse(text) as PlaybackState) : null;
+}
+
+/** Moves playback to the device and makes it the active one. `play: false` keeps it paused if it was. */
+export async function transferPlayback(deviceId: string, play: boolean): Promise<void> {
+  await spotifyFetch('/me/player', { method: 'PUT', body: JSON.stringify({ device_ids: [deviceId], play }) });
 }
 
 export async function pauseDevice(deviceId: string): Promise<void> {

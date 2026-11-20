@@ -17,14 +17,14 @@ import { HOST_ID, activeVoters, votesBySlot } from '../multiplayer/protocol';
 import { SharePanel } from './SharePanel';
 import { SpeakerPicker } from './SpeakerPicker';
 import { createSonosPlayback } from '../sonos/playback';
-import { createSpotifyAppPlayback } from '../spotify/remote';
+import { createSpotifyConnectPlayback } from '../spotify/remote';
 import { sameSpeaker, speakerKey, speakerLabel, type SpeakerChoice } from '../speakers';
 
 interface Props {
   state: GameState;
   mode: PlaybackKind;
   onModeChange: (mode: PlaybackKind) => void;
-  /** Where the music plays instead of this device: the Spotify app, or a Sonos. */
+  /** Where the music plays instead of this device: a Spotify Connect device, the Spotify app, or a Sonos. */
   speaker: SpeakerChoice | null;
   onSpeakerChange: (choice: SpeakerChoice | null) => void;
   onChange: (state: GameState) => void;
@@ -109,8 +109,8 @@ export function Game({ state, mode, onModeChange, speaker, onSpeakerChange, onCh
     const make =
       remote?.kind === 'sonos'
         ? Promise.resolve(createSonosPlayback(remote))
-        : remote?.kind === 'spotify-app'
-          ? Promise.resolve(createSpotifyAppPlayback())
+        : remote?.kind === 'spotify-device' || remote?.kind === 'spotify-app'
+          ? Promise.resolve(createSpotifyConnectPlayback(remote.kind === 'spotify-device' ? remote.device : null))
         : mode === 'premium'
         ? createPremiumPlayback()
         : mode === 'embed'
@@ -183,7 +183,7 @@ export function Game({ state, mode, onModeChange, speaker, onSpeakerChange, onCh
   // the song is hidden; their play/pause buttons still control the real song.
   const playbackRef = useRef<Playback | null>(null);
   playbackRef.current = playback;
-  const hidden = state.phase === 'guessing' && mode !== 'none' && !!playback && playback.kind !== 'sonos' && playback.kind !== 'spotify-app' && songStatus === 'ready';
+  const hidden = state.phase === 'guessing' && mode !== 'none' && !!playback && playback.kind !== 'sonos' && playback.kind !== 'spotify-connect' && songStatus === 'ready';
   useEffect(() => {
     if (!hidden) return showNowPlaying();
     hideNowPlaying(playing, {
@@ -211,7 +211,7 @@ export function Game({ state, mode, onModeChange, speaker, onSpeakerChange, onCh
     if (p.kind === 'none') return;
     const tapped = (navigator as Navigator & { userActivation?: { hasBeenActive: boolean } }).userActivation?.hasBeenActive ?? true;
     if (!tapped) return;
-    const remoteKind = p.kind === 'sonos' || p.kind === 'spotify-app';
+    const remoteKind = p.kind === 'sonos' || p.kind === 'spotify-connect';
     setStarting(true);
     try {
       await p.play();
@@ -366,7 +366,9 @@ export function Game({ state, mode, onModeChange, speaker, onSpeakerChange, onCh
                     <p className="hint">
                       {remote.kind === 'sonos'
                         ? `Playing on ${remote.speaker.name} (Sonos).`
-                        : 'Playing in the Spotify app, wherever it plays. It shows the title, so keep it out of sight.'}
+                        : remote.kind === 'spotify-device'
+                          ? `Playing on ${remote.device.name} through Spotify. The Spotify app (and a TV’s screen) shows the title, so keep it out of sight.`
+                          : 'Playing in the Spotify app, wherever it plays. It shows the title, so keep it out of sight.'}
                     </p>
                   )}
                 </div>
