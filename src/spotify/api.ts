@@ -162,9 +162,37 @@ export async function findTrackUri(song: Song): Promise<string | null> {
   return uri;
 }
 
+/** `?device_id=…`, or nothing for the device Spotify is playing on right now. */
+const onDevice = (deviceId: string) => (deviceId ? `?device_id=${encodeURIComponent(deviceId)}` : '');
+
 export async function playOnDevice(deviceId: string, uri: string): Promise<void> {
-  await spotifyFetch(`/me/player/play?device_id=${encodeURIComponent(deviceId)}`, {
+  await spotifyFetch(`/me/player/play${onDevice(deviceId)}`, {
     method: 'PUT',
     body: JSON.stringify({ uris: [uri] }),
   });
+}
+
+/* ---------------- Steering the Spotify app (Spotify Connect) ---------------- */
+
+export interface SpotifyDevice {
+  id: string | null;
+  name: string;
+  type: string;
+  is_active: boolean;
+  /** True: Spotify accepts no commands from apps for this device (often a Sonos). */
+  is_restricted: boolean;
+}
+
+/** The devices the account's Spotify apps can play on right now (one request). */
+export async function getDevices(): Promise<SpotifyDevice[]> {
+  const body = await (await spotifyFetch('/me/player/devices')).json();
+  return body?.devices ?? [];
+}
+
+export async function pauseDevice(deviceId: string): Promise<void> {
+  await spotifyFetch(`/me/player/pause${onDevice(deviceId)}`, { method: 'PUT' });
+}
+
+export async function resumeDevice(deviceId: string): Promise<void> {
+  await spotifyFetch(`/me/player/play${onDevice(deviceId)}`, { method: 'PUT' });
 }

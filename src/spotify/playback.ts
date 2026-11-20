@@ -16,8 +16,12 @@ import { getAccessToken } from './auth';
 export type PlaybackKind = 'premium' | 'embed' | 'none';
 
 export interface Playback {
-  /** 'sonos': on a Sonos speaker through the bridge (src/sonos/playback.ts). */
-  kind: PlaybackKind | 'sonos';
+  /**
+   * Not in this browser: 'sonos' plays on a Sonos through the bridge
+   * (src/sonos/playback.ts), 'spotify-app' steers the Spotify app
+   * (src/spotify/remote.ts).
+   */
+  kind: PlaybackKind | 'sonos' | 'spotify-app';
   /** Look up and load the song. Rejects with a readable message if it can't be played. */
   prepare(song: Song): Promise<void>;
   play(): Promise<void>;
