@@ -102,6 +102,10 @@ input:focus { outline: 2px solid var(--accent); border-color: transparent; }
 .verdict { font-weight: 800; font-size: 1.2rem; }
 .reveal.right .verdict { color: var(--good); }
 .reveal.wrong .verdict { color: var(--bad); }
+.fun-fact { max-width: 360px; margin: 14px auto 0; text-align: left; font-size: 0.92rem; line-height: 1.45; animation: pop 0.3s ease-out; }
+.fun-fact p { margin: 0 0 6px; }
+.fun-fact .fun-fact-label { color: var(--accent-2); font-weight: 800; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; }
+.fun-fact a { color: var(--muted); font-size: 0.85rem; overflow-wrap: anywhere; }
 
 /* Timeline */
 .timeline { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
