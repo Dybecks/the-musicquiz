@@ -35,6 +35,7 @@ import {
   type Room,
   type Team,
 } from './protocol';
+import { msg as texts } from '../i18n';
 
 const ROOM_KEY = 'mq.room';
 const HOST_NAME_KEY = 'mq.hostName';
@@ -215,7 +216,7 @@ export function useHostRoom(
             members: [
               {
                 id: HOST_ID,
-                name: localStorage.getItem(HOST_NAME_KEY) || 'Host',
+                name: localStorage.getItem(HOST_NAME_KEY) || texts().app.defaultHost,
                 teamId: null,
                 connected: true,
                 vote: null,
@@ -242,7 +243,7 @@ export function useHostRoom(
       // Rooms from before the host could be a member get one.
       const withHost = r.members.some((m) => m.id === HOST_ID)
         ? r
-        : applyMessage(r, null, HOST_ID, { type: 'hello', memberId: HOST_ID, name: localStorage.getItem(HOST_NAME_KEY) || 'Host' });
+        : applyMessage(r, null, HOST_ID, { type: 'hello', memberId: HOST_ID, name: localStorage.getItem(HOST_NAME_KEY) || texts().app.defaultHost });
       return applyMessage(withHost, latest.current.game, HOST_ID, msg, latest.current.teams);
     });
   }, []);

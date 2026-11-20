@@ -4,6 +4,7 @@
  */
 import type { Song } from '../game/engine';
 import type { DeckFilter } from '../data/genres';
+import { msg } from '../i18n';
 
 /** The parts of a Spotify track object the game uses. */
 export interface SpotifyTrack {
@@ -24,12 +25,8 @@ export const SOURCE_SCOPES: Record<ListeningSource, string> = {
   playlists: 'playlist-read-private',
 };
 
-export const SOURCE_LABELS: Record<ListeningSource, { title: string; detail: string }> = {
-  top: { title: 'Top tracks', detail: 'What you play most: up to 100 each for last month, last 6 months and the past year.' },
-  recent: { title: 'Recently played', detail: 'Your last 50 played tracks.' },
-  liked: { title: 'Liked songs', detail: 'Up to 1,000 of your saved tracks.' },
-  playlists: { title: 'Your playlists', detail: 'Songs from up to 20 of your playlists.' },
-};
+/** The texts for each source, in the current language (src/i18n). */
+export const sourceLabel = (source: ListeningSource): { title: string; detail: string } => msg().sources[source];
 
 export const ALL_SOURCES: ListeningSource[] = ['top', 'recent', 'liked', 'playlists'];
 

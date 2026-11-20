@@ -4,6 +4,8 @@ import { SPOTIFY_APP, type SpeakerChoice } from '../speakers';
 import { getDevices, type SpotifyDevice } from '../spotify/api';
 import { isLoggedIn } from '../spotify/auth';
 import { connectDevices, findTarget, listError, type ConnectTarget } from '../spotify/remote';
+import { msg, useT } from '../i18n';
+import { Rich } from '../i18n/Rich';
 
 const CODE_KEY = 'mq.sonosCode';
 
@@ -72,6 +74,7 @@ function useConnectDevices(enabled: boolean) {
  * or a Sonos speaker through the Sonos bridge.
  */
 export function SpeakerPicker({ choice, onChange }: { choice: SpeakerChoice | null; onChange: (c: SpeakerChoice | null) => void }) {
+  const t = useT().speakers;
   const sonosChoice = choice?.kind === 'sonos' ? choice : null;
   const [code, setCode] = useState(() => sonosChoice?.code ?? savedCode());
   const [speakers, setSpeakers] = useState<SonosSpeaker[] | null>(null);
@@ -107,7 +110,7 @@ export function SpeakerPicker({ choice, onChange }: { choice: SpeakerChoice | nu
       const found = await l.list();
       setSpeakers(found);
       setFoundWith(code);
-      if (found.length === 0) setNote('The bridge found no Sonos speakers. Is its computer on the same Wi-Fi as the speakers?');
+      if (found.length === 0) setNote(msg().speakers.noSonos);
     } catch (e) {
       setSpeakers(null);
       setNote(message(e));
@@ -121,10 +124,10 @@ export function SpeakerPicker({ choice, onChange }: { choice: SpeakerChoice | nu
 
   return (
     <div className="speakers">
-      <h2>Play the music on</h2>
-      <div className="chips" role="radiogroup" aria-label="Play the music on">
+      <h2>{t.playOn}</h2>
+      <div className="chips" role="radiogroup" aria-label={t.playOn}>
         <button role="radio" aria-checked={!choice} className={`chip ${!choice ? 'selected' : ''}`} onClick={() => onChange(null)}>
-          This device
+          {t.thisDevice}
         </button>
         {connectShown.map((d) => {
           const lockedOne = 'is_restricted' in d && (d.is_restricted || !d.id);
@@ -135,11 +138,11 @@ export function SpeakerPicker({ choice, onChange }: { choice: SpeakerChoice | nu
               aria-checked={isPicked(d)}
               className={`chip ${isPicked(d) ? 'selected' : ''}`}
               disabled={lockedOne}
-              title={lockedOne ? 'Spotify won’t let other apps control this one' : undefined}
+              title={lockedOne ? t.lockedOne : undefined}
               onClick={() => onChange({ kind: 'spotify-device', device: { id: d.id!, name: d.name, type: d.type } })}
             >
               <span aria-hidden>{icon(d.type)}</span> {d.name}
-              {lockedOne && <span aria-label="locked"> 🔒</span>}
+              {lockedOne && <span aria-label={t.locked}> 🔒</span>}
             </button>
           );
         })}
@@ -150,7 +153,7 @@ export function SpeakerPicker({ choice, onChange }: { choice: SpeakerChoice | nu
             className={`chip ${choice?.kind === 'spotify-app' ? 'selected' : ''}`}
             onClick={() => onChange(SPOTIFY_APP)}
           >
-            Wherever Spotify plays
+            {t.whereverSpotify}
           </button>
         )}
         {shown.map((s) => (
@@ -169,35 +172,29 @@ export function SpeakerPicker({ choice, onChange }: { choice: SpeakerChoice | nu
         <>
           <p className="hint">
             {connect.devices === null && !connect.note ? (
-              'Looking for Spotify speakers…'
+              t.lookingSpotify
             ) : (
-              <>
-                <strong>Spotify speakers and apps:</strong> speakers, TVs and the Spotify app on computers (PC or Mac) and phones that your Spotify account can
-                play on. The game starts each song there; nothing plays on this device. Needs Spotify Premium. Spotify shows the title in its app (and on a TV),
-                so keep it out of sight.
-              </>
+              <Rich text={t.connectHint} />
             )}
           </p>
           {connect.note && <p className="warn">{connect.note}</p>}
           <p className="hint">
-            Missing one? Switch it on, open the Spotify app, pick it in the device list (the speaker icon) and start any song, then come back here.{' '}
+            {t.missingOne}{' '}
             <button className="link" onClick={() => void connect.look()} disabled={connect.busy}>
-              {connect.busy ? 'Looking…' : '↻ Look again'}
+              {connect.busy ? t.looking : t.lookAgain}
             </button>
           </p>
           {locked.length > 0 && (
             <p className="hint">
-              🔒 Spotify won’t let other apps control {locked.map((d) => `“${d.name}”`).join(', ')}. For a Sonos, use the Sonos bridge below.
+              {t.lockedList(locked.map((d) => d.name))}
             </p>
           )}
         </>
       ) : (
-        <p className="hint">
-          Spotify speakers, TVs and computers need the Spotify login (Premium): end the game and choose “Log in with Spotify” in setup.
-        </p>
+        <p className="hint">{t.needsLogin}</p>
       )}
       <details className="sonos-bridge" open={!!sonosChoice || undefined}>
-        <summary>Sonos through the Sonos bridge</summary>
+        <summary>{t.sonosBridge}</summary>
         <form
           className="sonos-code"
           onSubmit={(e) => {
@@ -206,7 +203,7 @@ export function SpeakerPicker({ choice, onChange }: { choice: SpeakerChoice | nu
           }}
         >
           <label>
-            Sonos bridge code
+            {t.bridgeCode}
             <input
               className="code-input"
               value={code}
@@ -219,14 +216,11 @@ export function SpeakerPicker({ choice, onChange }: { choice: SpeakerChoice | nu
             />
           </label>
           <button type="submit" className="ghost" disabled={busy || !isBridgeCode(code)}>
-            {busy ? 'Looking…' : speakers ? '↻ Look again' : 'Find Sonos speakers'}
+            {busy ? t.looking : speakers ? t.lookAgain : t.findSonos}
           </button>
         </form>
         {note && <p className="warn">{note}</p>}
-        <p className="hint">
-          For a Sonos the Spotify app can’t steer. Needs the Sonos bridge running on a computer on this Wi-Fi (see “Playing on a Sonos” in the README); it shows the
-          code when it starts.
-        </p>
+        <p className="hint">{t.sonosHint}</p>
       </details>
     </div>
   );

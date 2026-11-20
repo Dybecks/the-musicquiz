@@ -395,6 +395,7 @@ export function letBackIn(room: Room, memberId: string): Room {
 
 export const isKicked = (room: Room | null, memberId: string) => !!room?.kicked?.some((k) => k.id === memberId);
 
+/** Sent to a removed phone. A code on the wire: phones show remote.removedText from src/i18n in their own language. */
 export const KICKED_REASON = 'The host removed you from the game.';
 
 export function setConnected(room: Room, memberId: string, connected: boolean): Room {

@@ -18,6 +18,8 @@ import {
   type PlaylistSummary,
 } from '../spotify/listening';
 import { hostContributor, personalSongs, summarize, type PersonalDeck } from '../spotify/personalDeck';
+import { locale, msg, useT } from '../i18n';
+import { Rich } from '../i18n/Rich';
 
 export interface SetupValues {
   players: string[];
@@ -98,11 +100,13 @@ const clampYear = (y: number) => Math.max(FIRST_YEAR, Math.min(THIS_YEAR, Math.r
 const decadesLabel = (from: number, to: number) => (from === to ? String(from) : `${from}–${to}`);
 
 export function Setup(props: Props) {
+  const t = useT();
+  const ts = t.setup;
   const { profile, authMessage, personal, onLogout } = props;
   const [account, setAccountState] = useState<Account | null>(loadAccount);
   const [source, setSourceState] = useState<Source>(() => (localStorage.getItem(SOURCE_KEY) === 'own' ? 'own' : 'ready'));
   const [step, setStep] = useState<Step>(() => (props.returnedFromLogin && loadAccount() === 'login' ? 'source' : 'account'));
-  const [players, setPlayers] = useState<string[]>(() => loadJson(PLAYERS_KEY, ['Team 1', 'Team 2'], (v) => Array.isArray(v) && v.length > 0));
+  const [players, setPlayers] = useState<string[]>(() => loadJson(PLAYERS_KEY, [msg().app.defaultTeam(1), msg().app.defaultTeam(2)], (v) => Array.isArray(v) && v.length > 0));
   const [target, setTarget] = useState<number>(() => Number(localStorage.getItem(TARGET_KEY)) || 10);
   const [clientIdOverride, setClientIdOverride] = useState(getClientIdOverride);
   const clientId = clientIdOverride.trim() || BUILT_IN_CLIENT_ID;
@@ -136,8 +140,8 @@ export function Setup(props: Props) {
     <p className="info warn-info" role="status">
       <span aria-hidden="true">⏳</span>
       <span>
-        Spotify asked the game to pause for a moment. Carrying on by itself in{' '}
-        <strong>{secondsLeft >= 60 ? `${Math.floor(secondsLeft / 60)}:${String(secondsLeft % 60).padStart(2, '0')}` : `${secondsLeft} s`}</strong>.
+        {ts.spotifyPause}{' '}
+        <strong>{secondsLeft >= 60 ? `${Math.floor(secondsLeft / 60)}:${String(secondsLeft % 60).padStart(2, '0')}` : ts.seconds(secondsLeft)}</strong>.
       </span>
     </p>
   );
@@ -202,7 +206,7 @@ export function Setup(props: Props) {
   const deckCount = (id: DeckId) => {
     const all = deckSongs(id, null).length;
     const playable = playableSongs(deckSongs(id, null), mode, canAsk).length;
-    return playable === all ? `${all}` : `${playable} of ${all}`;
+    return ts.deckCount(playable, all);
   };
 
   // ---- Building the host's own list ----
@@ -219,14 +223,14 @@ export function Setup(props: Props) {
     if (id !== buildId.current) return; // cancelled
     setProgress(null);
     if (built.length < 5) {
-      setError(note ?? `Only ${built.length} songs were found. Pick more ${from === 'genres' ? 'genres or a wider year span' : 'playlists'}.`);
+      setError(note ?? msg().setup.tooFewFound(built.length, from === 'genres'));
       setStep(from);
       return;
     }
     const deck = savePersonalDeck({
       role: 'host',
       userId: profile!.id,
-      name: profile!.display_name || 'You',
+      name: profile!.display_name || msg().app.you,
       sources,
       builtAt: new Date().toISOString(),
       label,
@@ -325,8 +329,8 @@ export function Setup(props: Props) {
 
   const start = () => {
     setError(null);
-    if (names.length === 0) return setError('Add at least one player or team.');
-    if (songs.length < names.length + 1) return setError('Too few songs for this many players. Pick more music, or use fewer players.');
+    if (names.length === 0) return setError(ts.addPlayer);
+    if (songs.length < names.length + 1) return setError(ts.tooFewSongs);
     props.onStart({
       players: names,
       targetCards: target,
@@ -340,10 +344,10 @@ export function Setup(props: Props) {
 
   // ---- Shared bits ----
 
-  const steps = ['Spotify', 'Music', 'Players & play'];
+  const steps = ts.steps;
   const stepIndex = step === 'account' ? 0 : step === 'players' ? 2 : 1;
   const stepBar = (
-    <ol className="steps" aria-label="Setup steps">
+    <ol className="steps" aria-label={ts.stepsLabel}>
       {steps.map((label, i) => (
         <li key={label} className={i === stepIndex ? 'current' : i < stepIndex ? 'done' : ''} aria-current={i === stepIndex ? 'step' : undefined}>
           <span className="num">{i < stepIndex ? '✓' : i + 1}</span> {label}
@@ -351,7 +355,7 @@ export function Setup(props: Props) {
       ))}
     </ol>
   );
-  const back = (to: Step, label = 'Back') => (
+  const back = (to: Step, label = ts.back) => (
     <p>
       <button className="link" onClick={() => go(to)}>
         ← {label}
@@ -365,10 +369,13 @@ export function Setup(props: Props) {
   const clientIdInput = (
     <>
       <label className="field">
-        <span>Spotify Client ID{BUILT_IN_CLIENT_ID ? ' (leave empty to use the game’s own)' : ''}</span>
+        <span>
+          {ts.clientIdLabel}
+          {BUILT_IN_CLIENT_ID ? ts.clientIdOwn : ''}
+        </span>
         <input
           value={clientIdOverride}
-          placeholder="From developer.spotify.com/dashboard"
+          placeholder={ts.clientIdPlaceholder}
           onChange={(e) => {
             setClientIdOverride(e.target.value);
             setClientId(e.target.value);
@@ -376,13 +383,13 @@ export function Setup(props: Props) {
         />
       </label>
       <p className="hint">
-        Add <code>{redirectUri()}</code> as a Redirect URI in your Spotify app settings.
+        {ts.redirectBefore} <code>{redirectUri()}</code> {ts.redirectAfter}
       </p>
     </>
   );
   const clientIdField = BUILT_IN_CLIENT_ID ? (
     <details className="own-app" open={!!clientIdOverride}>
-      <summary>Use your own Spotify app</summary>
+      <summary>{ts.ownApp}</summary>
       {clientIdInput}
     </details>
   ) : (
@@ -397,36 +404,35 @@ export function Setup(props: Props) {
       <main className="setup flow">
         {stepBar}
         <section className="panel intro">
-          <h1>Place the song on your timeline</h1>
+          <h1>{ts.introTitle}</h1>
           <p>
-            A mystery song plays. Decide whether it came out before, after or between the years on your timeline. Get it
-            right and the card is yours. The first to collect <strong>{target}</strong> cards wins.
+            <Rich text={ts.intro(target)} />
           </p>
         </section>
 
         <section className="panel">
-          <h2>Play with a Spotify login?</h2>
-          <div className="mode-options" role="radiogroup" aria-label="Play with a Spotify login?">
+          <h2>{ts.loginQuestion}</h2>
+          <div className="mode-options" role="radiogroup" aria-label={ts.loginQuestion}>
             <ModeOption
               value="login"
               current={account}
               onSelect={setAccount}
-              title="Log in with Spotify"
-              detail="Use your own playlists or pick genres, and every ready-made list. With Premium the full songs play right here in the browser."
+              title={ts.loginTitle}
+              detail={ts.loginDetail}
             />
             <ModeOption
               value="guest"
               current={account}
               onSelect={setAccount}
-              title="Play without login"
-              detail="Ready-made lists through a hidden Spotify player. Full songs if this browser is signed in to Spotify, otherwise 30-second previews."
+              title={ts.guestTitle}
+              detail={ts.guestDetail}
             />
           </div>
           {profile && (
             <p className="hint spotify-box">
-              Logged in as <strong>{profile.display_name}</strong>.{' '}
+              <Rich text={ts.loggedInAs(profile.display_name)} />{' '}
               <button className="link" onClick={onLogout}>
-                Log out
+                {ts.logOut}
               </button>
             </p>
           )}
@@ -436,17 +442,17 @@ export function Setup(props: Props) {
 
         {needsLogin ? (
           <button className="spotify big" disabled={!clientId.trim()} onClick={() => props.onLogin(PLAYLIST_SCOPES)}>
-            {profile ? 'Allow reading your playlists' : 'Log in with Spotify'}
+            {profile ? ts.allowPlaylists : ts.loginTitle}
           </button>
         ) : (
           <button className="primary big" disabled={!account} onClick={() => go('source')}>
-            Next: choose the music
+            {ts.nextMusic}
           </button>
         )}
         <p className="join-line center">
-          Got a code from the host?{' '}
+          {ts.gotCode}{' '}
           <button className="link" onClick={props.onJoin}>
-            Join a game on this phone
+            {ts.joinOnPhone}
           </button>
         </p>
       </main>
@@ -459,22 +465,22 @@ export function Setup(props: Props) {
     return (
       <main className="setup flow">
         {stepBar}
-        {back('account', `${useLogin ? 'Playing with a Spotify login' : 'Playing without login'}. Change`)}
-        <h2 className="screen-title">Where should the songs come from?</h2>
-        <div className="choices" role="radiogroup" aria-label="Where should the songs come from?">
+        {back('account', useLogin ? ts.playingWithLogin : ts.playingWithoutLogin)}
+        <h2 className="screen-title">{ts.sourceQuestion}</h2>
+        <div className="choices" role="radiogroup" aria-label={ts.sourceQuestion}>
           <Choice
             icon="📦"
-            title="Ready-made lists"
-            detail="Hand-picked songs with checked years. Ready to play right away."
-            tag="Works without login"
+            title={ts.readyTitle}
+            detail={ts.readyDetail}
+            tag={ts.readyTag}
             selected={source === 'ready'}
             onSelect={() => setSource('ready')}
           />
           <Choice
             icon="🎛️"
-            title="Make your own"
-            detail="Pick genres and years, or use your own Spotify playlists."
-            tag="Needs Spotify login"
+            title={ts.ownTitle}
+            detail={ts.ownDetail}
+            tag={ts.ownTag}
             tagKind="warn"
             selected={source === 'own'}
             disabled={!loggedIn}
@@ -484,12 +490,12 @@ export function Setup(props: Props) {
         {!loggedIn && (
           <p className="hint">
             <button className="link" onClick={() => go('account')}>
-              Log in to use your own music
+              {ts.loginForOwn}
             </button>
           </p>
         )}
         <button className="primary big" onClick={() => go(source === 'own' && loggedIn ? 'own' : 'ready')}>
-          Continue
+          {ts.continue}
         </button>
       </main>
     );
@@ -500,14 +506,14 @@ export function Setup(props: Props) {
       <main className="setup flow">
         {stepBar}
         {back('source')}
-        <h2 className="screen-title">Pick your lists</h2>
-        <p className="hint">Pick one or more. Songs from several lists are shuffled together.</p>
-        <div className="mode-options deck-options" role="group" aria-label="Pick your lists">
+        <h2 className="screen-title">{ts.pickLists}</h2>
+        <p className="hint">{ts.pickListsHint}</p>
+        <div className="mode-options deck-options" role="group" aria-label={ts.pickLists}>
           {readyDecks.map((d) => (
-            <DeckOption key={d.id} title={d.title} detail={d.detail} count={deckCount(d.id)} checked={activeDecks.includes(d.id)} onToggle={() => toggleDeck(d.id)} />
+            <DeckOption key={d.id} title={t.decks[d.id].title} detail={t.decks[d.id].detail} count={deckCount(d.id)} checked={activeDecks.includes(d.id)} onToggle={() => toggleDeck(d.id)} />
           ))}
         </div>
-        {!loggedIn && <p className="hint">Without a login, only songs with a known Spotify link can play.</p>}
+        {!loggedIn && <p className="hint">{ts.withoutLoginHint}</p>}
         {errorLine}
         <button
           className="primary big"
@@ -517,7 +523,7 @@ export function Setup(props: Props) {
             go('players');
           }}
         >
-          Continue with {readySongs.length} songs
+          {ts.continueWith(readySongs.length)}
         </button>
       </main>
     );
@@ -528,18 +534,18 @@ export function Setup(props: Props) {
       <main className="setup flow">
         {stepBar}
         {back('source')}
-        <h2 className="screen-title">How do you want to pick?</h2>
+        <h2 className="screen-title">{ts.howPick}</h2>
         <p className="hint">
-          Logged in as <strong>{profile?.display_name}</strong>.
+          <Rich text={ts.loggedInAs(profile?.display_name ?? '')} />
         </p>
         <div className="choices">
-          <Choice icon="🎸" title="By genre" detail="Choose genres and years. We find well-known songs that fit." onSelect={() => go('genres')} />
-          <Choice icon="📃" title="From my playlists" detail="Pick any of your own Spotify playlists." onSelect={() => go('playlists')} />
+          <Choice icon="🎸" title={ts.byGenre} detail={ts.byGenreDetail} onSelect={() => go('genres')} />
+          <Choice icon="📃" title={ts.fromPlaylists} detail={ts.fromPlaylistsDetail} onSelect={() => go('playlists')} />
           {ownList && ownSongs.length > 0 && (
             <Choice
               icon="↺"
-              title="Use my last list"
-              detail={`${ownList.label ?? 'Your songs'} · ${ownSongs.length} songs. No new requests.`}
+              title={ts.lastList}
+              detail={ts.lastListDetail(ownList.label ?? ts.yourSongs, ownSongs.length)}
               onSelect={() => {
                 setSource('own');
                 go('players');
@@ -558,12 +564,12 @@ export function Setup(props: Props) {
       <main className="setup flow">
         {stepBar}
         {back('own')}
-        <h2 className="screen-title">Genres and years</h2>
+        <h2 className="screen-title">{ts.genresAndYears}</h2>
         <section className="panel">
           <h2>
-            Genres <span className="muted">· pick 1 to {MAX_GENRES}</span>
+            {ts.genres} <span className="muted">{ts.pickGenres(MAX_GENRES)}</span>
           </h2>
-          <div className="chips" role="group" aria-label="Genres">
+          <div className="chips" role="group" aria-label={ts.genres}>
             {SEARCH_GENRES.map((g) => (
               <button
                 key={g.id}
@@ -579,14 +585,14 @@ export function Setup(props: Props) {
           </div>
         </section>
         <section className="panel">
-          <h2>Years</h2>
+          <h2>{ts.years}</h2>
           <div className="year-range">
             <label className="field">
-              <span>From</span>
+              <span>{ts.from}</span>
               <input type="number" inputMode="numeric" min={FIRST_YEAR} max={THIS_YEAR} value={from} onChange={(e) => setYear(0, Number(e.target.value))} onBlur={commitYears} />
             </label>
             <label className="field">
-              <span>To</span>
+              <span>{ts.to}</span>
               <input type="number" inputMode="numeric" min={FIRST_YEAR} max={THIS_YEAR} value={to} onChange={(e) => setYear(1, Number(e.target.value))} onBlur={commitYears} />
             </label>
           </div>
@@ -600,7 +606,7 @@ export function Setup(props: Props) {
                   saveJson(YEARS_KEY, [d, Math.min(d + 9, THIS_YEAR)]);
                 }}
               >
-                {String(d).slice(2)}s
+                {ts.decade(d)}
               </button>
             ))}
             <button
@@ -610,7 +616,7 @@ export function Setup(props: Props) {
                 saveJson(YEARS_KEY, [FIRST_YEAR, THIS_YEAR]);
               }}
             >
-              All years
+              {ts.allYears}
             </button>
           </div>
         </section>
@@ -618,14 +624,13 @@ export function Setup(props: Props) {
           <p className="info">
             <span aria-hidden="true">⚡</span>
             <span>
-              Songs are fetched a few at a time while you play: <strong>1 Spotify request</strong> to start, then about one
-              more per 20 songs played. Each is a random pick from these genres and years.
+              <Rich text={ts.genreFetchInfo} />
             </span>
           </p>
         )}
         {errorLine}
         <button className="primary big" disabled={genres.length === 0} onClick={buildGenres}>
-          Build my list
+          {ts.buildList}
         </button>
       </main>
     );
@@ -637,33 +642,31 @@ export function Setup(props: Props) {
       <main className="setup flow">
         {stepBar}
         {back('own')}
-        <h2 className="screen-title">Your playlists</h2>
+        <h2 className="screen-title">{ts.yourPlaylists}</h2>
         {!canReadPlaylists ? (
           <>
-            <p className="hint">Spotify needs your OK before the game can see your playlists.</p>
+            <p className="hint">{ts.needPlaylistOk}</p>
             <button className="spotify big" onClick={() => props.onLogin(PLAYLIST_SCOPES)}>
-              Allow reading your playlists
+              {ts.allowPlaylists}
             </button>
           </>
         ) : playlists === null ? (
           <>
             {waitNotice}
             <p className="hint" role="status">
-              {listBusy ? 'Loading your playlists…' : ''}
+              {listBusy ? ts.loadingPlaylists : ''}
             </p>
           </>
         ) : (
           <>
-            <p className="hint">
-              {playlistTotal} playlist{playlistTotal === 1 ? '' : 's'}
-            </p>
-            {playlists.length === 0 && <p className="hint">You have no playlists yet. Pick by genre instead.</p>}
-            <div className="mode-options deck-options" role="group" aria-label="Your playlists">
+            <p className="hint">{ts.playlistCount(playlistTotal)}</p>
+            {playlists.length === 0 && <p className="hint">{ts.noPlaylists}</p>}
+            <div className="mode-options deck-options" role="group" aria-label={ts.yourPlaylists}>
               {playlists.map((p) => (
                 <DeckOption
                   key={p.id}
                   title={p.name}
-                  detail={p.owner ? `by ${p.owner}` : ''}
+                  detail={p.owner ? ts.playlistBy(p.owner) : ''}
                   count={String(p.tracks)}
                   image={p.image}
                   checked={picked.includes(p.id)}
@@ -673,15 +676,14 @@ export function Setup(props: Props) {
             </div>
             {playlists.length < playlistTotal && (
               <button className="ghost add" disabled={listBusy} onClick={() => void loadPlaylists(true)}>
-                {listBusy ? 'Loading…' : `Show more (${playlistTotal - playlists.length})`}
+                {listBusy ? ts.loading : ts.showMore(playlistTotal - playlists.length)}
               </button>
             )}
             {chosenPlaylists.length > 0 && (
               <p className="info warn-info">
                 <span aria-hidden="true">ℹ️</span>
                 <span>
-                  Songs are read a few at a time while you play, in random order from the playlists you picked: about{' '}
-                  <strong>1 request</strong> per 20 songs.
+                  <Rich text={ts.playlistFetchInfo} />
                 </span>
               </p>
             )}
@@ -690,9 +692,7 @@ export function Setup(props: Props) {
         {errorLine}
         {canReadPlaylists && (
           <button className="primary big" disabled={chosenPlaylists.length === 0} onClick={buildPlaylists}>
-            {chosenPlaylists.length
-              ? `Use ${chosenPlaylists.length} playlist${chosenPlaylists.length === 1 ? '' : 's'} (${songsPicked} songs)`
-              : 'Pick at least one playlist'}
+            {chosenPlaylists.length ? ts.usePlaylists(chosenPlaylists.length, songsPicked) : ts.pickOnePlaylist}
           </button>
         )}
       </main>
@@ -703,21 +703,19 @@ export function Setup(props: Props) {
     return (
       <main className="setup flow">
         {stepBar}
-        <h2 className="screen-title">{buildReturn === 'genres' ? 'Building your list…' : 'Reading your playlists…'}</h2>
+        <h2 className="screen-title">{buildReturn === 'genres' ? ts.building : ts.readingPlaylists}</h2>
         {waitNotice}
         <section className="panel">
           <p className="progress" role="status">
-            {progress?.label ?? 'Starting…'}
+            {progress?.label ?? ts.starting}
             <progress value={progress?.done ?? 0} max={progress?.total || 1} />
             {progress && progress.total > 0 && (
-              <span className="hint">
-                {progress.done} of {progress.total}
-              </span>
+              <span className="hint">{ts.progress(progress.done, progress.total)}</span>
             )}
           </p>
         </section>
         <button className="ghost big" onClick={cancelBuild}>
-          Cancel
+          {ts.cancel}
         </button>
       </main>
     );
@@ -728,9 +726,9 @@ export function Setup(props: Props) {
   const summary = summarize(songs);
   const what =
     source === 'own'
-      ? ownList?.label ?? 'Your own list'
+      ? ownList?.label ?? ts.ownList
       : activeDecks
-          .map((id) => DECKS.find((d) => d.id === id)?.title)
+          .map((id) => t.decks[id].title)
           .filter(Boolean)
           .join(', ');
   return (
@@ -738,38 +736,38 @@ export function Setup(props: Props) {
       {stepBar}
       <div className="music-summary">
         <span>
-          <strong>{source === 'own' && ownList?.plan ? `${songs.length} songs to start` : `${songs.length} songs`}</strong> · {what}
+          <strong>{source === 'own' && ownList?.plan ? ts.songsToStart(songs.length) : ts.songs(songs.length)}</strong> · {what}
         </span>
         <button className="link" onClick={() => go(source === 'own' ? 'own' : 'source')}>
-          Change
+          {ts.change}
         </button>
       </div>
-      {source === 'own' && ownList?.plan ? <p className="hint">More songs are fetched from Spotify while you play.</p> : null}
+      {source === 'own' && ownList?.plan ? <p className="hint">{ts.moreFetched}</p> : null}
       {source === 'own' && summary.decades.length > 1 && (
-        <ul className="decades" aria-label="Songs per decade">
+        <ul className="decades" aria-label={ts.perDecade}>
           {summary.decades.map(([decade, count]) => (
             <li key={decade}>
               <span className="bar" style={{ height: `${Math.max(6, (count / Math.max(...summary.decades.map(([, n]) => n))) * 100)}%` }} />
               <span className="n">{count}</span>
-              <span className="d">{String(decade).slice(2)}s</span>
+              <span className="d">{ts.decade(decade)}</span>
             </li>
           ))}
         </ul>
       )}
 
       <section className="panel">
-        <h2>Players or teams</h2>
+        <h2>{ts.playersOrTeams}</h2>
         <ul className="player-list">
           {players.map((name, i) => (
             <li key={i}>
               <input
-                aria-label={`Player ${i + 1} name`}
+                aria-label={ts.playerName(i + 1)}
                 value={name}
                 maxLength={24}
                 onChange={(e) => setPlayers(players.map((p, j) => (j === i ? e.target.value : p)))}
               />
               {players.length > 1 && (
-                <button className="ghost" aria-label={`Remove ${name || 'player'}`} onClick={() => setPlayers(players.filter((_, j) => j !== i))}>
+                <button className="ghost" aria-label={ts.remove(name)} onClick={() => setPlayers(players.filter((_, j) => j !== i))}>
                   ✕
                 </button>
               )}
@@ -777,23 +775,23 @@ export function Setup(props: Props) {
           ))}
         </ul>
         {players.length < 8 && (
-          <button className="ghost add" onClick={() => setPlayers([...players, `Team ${players.length + 1}`])}>
-            + Add player or team
+          <button className="ghost add" onClick={() => setPlayers([...players, t.app.defaultTeam(players.length + 1)])}>
+            {ts.addPlayerButton}
           </button>
         )}
 
         <label className="field">
-          <span>Cards needed to win</span>
+          <span>{ts.cardsToWin}</span>
           <input type="number" min={3} max={30} value={target} onChange={(e) => setTarget(Math.max(3, Math.min(30, Number(e.target.value) || 10)))} />
         </label>
         <p className="hint">
           {mode === 'premium'
-            ? 'The music plays right here in the browser through your Spotify Premium.'
+            ? ts.playsPremium
             : loggedIn && blockedUntil
-              ? `Spotify's request limit for this game is used up until ${new Date(blockedUntil).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}, so the music plays through a hidden Spotify player meanwhile.`
+              ? ts.playsBlocked(new Date(blockedUntil).toLocaleTimeString(locale(), { hour: '2-digit', minute: '2-digit' }))
               : loggedIn
-              ? "Your account isn't Premium, so the music plays through a hidden Spotify player."
-              : 'The music plays through a hidden Spotify player: full songs if this browser is signed in to Spotify, otherwise 30-second previews.'}
+              ? ts.playsNotPremium
+              : ts.playsGuest}
         </p>
       </section>
 
@@ -801,7 +799,7 @@ export function Setup(props: Props) {
 
       {errorLine}
       <button className="primary big" onClick={start}>
-        Start game
+        {ts.startGame}
       </button>
     </main>
   );

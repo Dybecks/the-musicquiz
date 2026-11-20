@@ -4,24 +4,27 @@ import { mergeSongs, personalSongs, type PersonalDeck } from '../spotify/persona
 import { DEFAULT_SONGS } from './songs';
 import { GAME_SONGS, MOVIE_SONGS, MUSICAL_SONGS, TV_SONGS } from './soundtracks';
 import { filterSongs, NO_FILTER, type DeckFilter } from './genres';
+import { msg } from '../i18n';
 
 /** The decks a game can be played with. Any combination can be chosen. */
 export type DeckId = 'classic' | 'movies' | 'musicals' | 'tv' | 'games' | 'mine';
 
 export interface DeckInfo {
   id: DeckId;
-  title: string;
-  detail: string;
+  readonly title: string;
+  readonly detail: string;
 }
 
-export const DECKS: DeckInfo[] = [
-  { id: 'classic', title: 'Classic hits', detail: 'Well-known songs from the 1950s to today.' },
-  { id: 'movies', title: 'Movie songs', detail: 'From The Wizard of Oz to Barbie.' },
-  { id: 'musicals', title: 'Musicals', detail: 'From Oklahoma! to Hamilton.' },
-  { id: 'tv', title: 'TV themes', detail: 'From Peter Gunn to Severance.' },
-  { id: 'games', title: 'Video game music', detail: 'From Super Mario Bros. to Baldur’s Gate 3.' },
-  { id: 'mine', title: 'My Spotify music', detail: 'Songs you actually listen to, from your Spotify account.' },
-];
+/** The decks, in order. Titles and details are in the current language (src/i18n). */
+export const DECKS: DeckInfo[] = (['classic', 'movies', 'musicals', 'tv', 'games', 'mine'] as const).map((id) => ({
+  id,
+  get title() {
+    return msg().decks[id].title;
+  },
+  get detail() {
+    return msg().decks[id].detail;
+  },
+}));
 
 const BUILT_IN: Record<Exclude<DeckId, 'mine'>, Song[]> = {
   classic: DEFAULT_SONGS,

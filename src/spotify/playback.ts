@@ -12,6 +12,7 @@
 import type { Song } from '../game/engine';
 import { findTrackUri, playOnDevice } from './api';
 import { getAccessToken } from './auth';
+import { msg } from '../i18n';
 
 export type PlaybackKind = 'premium' | 'embed' | 'none';
 
@@ -39,14 +40,21 @@ function loadScript(src: string): Promise<void> {
     s.src = src;
     s.async = true;
     s.onload = () => resolve();
-    s.onerror = () => reject(new Error(`Could not load ${src}`));
+    s.onerror = () => reject(new Error(msg().errors.couldNotLoad(src)));
     document.body.appendChild(s);
   });
 }
 
+/** The song isn't on Spotify: skipping it helps, another speaker doesn't. */
+export class SongNotFoundError extends Error {
+  constructor() {
+    super(msg().errors.songNotFound);
+  }
+}
+
 export async function uriFor(song: Song): Promise<string> {
   const uri = await findTrackUri(song);
-  if (!uri) throw new Error('This song could not be found on Spotify. Skip it to draw another.');
+  if (!uri) throw new SongNotFoundError();
   return uri;
 }
 
@@ -93,14 +101,14 @@ export async function createPremiumPlayback(): Promise<Playback> {
   let started = false;
 
   const deviceId = await new Promise<string>((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error('The Spotify player did not start in time.')), 15000);
+    const timer = setTimeout(() => reject(new Error(msg().errors.playerTimeout)), 15000);
     player.addListener('ready', ({ device_id }) => {
       clearTimeout(timer);
       resolve(device_id);
     });
     player.addListener('initialization_error', ({ message }) => reject(new Error(message)));
     player.addListener('authentication_error', ({ message }) => reject(new Error(message)));
-    player.addListener('account_error', () => reject(new Error('Spotify Premium is needed for in-browser playback.')));
+    player.addListener('account_error', () => reject(new Error(msg().errors.premiumNeeded)));
     void player.connect();
   });
   player.addListener('player_state_changed', (state) => listener(state ? !state.paused : false));

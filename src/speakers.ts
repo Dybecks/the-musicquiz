@@ -1,4 +1,5 @@
 import { parseSonosChoice, type SonosChoice } from './sonos/bridge';
+import { msg } from './i18n';
 import type { ConnectTarget } from './spotify/remote';
 
 /**
@@ -39,4 +40,4 @@ export const speakerKey = (c: SpeakerChoice | null) =>
 export const sameSpeaker = (a: SpeakerChoice | null, b: SpeakerChoice | null): boolean => speakerKey(a) === speakerKey(b);
 
 export const speakerLabel = (c: SpeakerChoice | null) =>
-  !c ? 'This device' : c.kind === 'sonos' ? c.speaker.name : c.kind === 'spotify-device' ? c.device.name : 'Spotify app';
+  !c ? msg().speakers.thisDevice : c.kind === 'sonos' ? c.speaker.name : c.kind === 'spotify-device' ? c.device.name : msg().speakers.spotifyApp;

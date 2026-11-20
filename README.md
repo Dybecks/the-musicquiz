@@ -183,10 +183,12 @@ When a song is revealed, a short fun fact appears under the card.
 Songs in the built-in decks have facts written for them in `src/data/facts.ts`
 (345 of the 360 songs). They need no network, so they appear right away. To add one, append
 `[title, artist, fact]` to the deck's list; `facts.test.ts` checks that the title and artist
-match a song. Leave a song out rather than add a fact you aren't sure of.
+match a song. Leave a song out rather than add a fact you aren't sure of. Every written fact
+also has a Swedish version in `src/data/facts.sv.ts`, shown when the game is in Swedish;
+`facts.test.ts` fails if one is missing, so add both.
 
-Every other song, including your own lists, gets a few lines from English
-Wikipedia instead, with a link to the article. If the song has no article of its own, the
+Every other song, including your own lists, gets a few lines from Wikipedia in the
+game's language (English or Swedish Wikipedia) instead, with a link to the article. If the song has no article of its own, the
 lines are about the artist; soundtrack songs only get lines about the song itself. The
 lookup starts while the song is playing, so it is usually ready when the guess is locked in.
 
@@ -198,6 +200,28 @@ the browser.
 
 The code: `src/facts/index.ts` (picks the fact), `src/facts/wikipedia.ts` (the lookup,
 tested in `wikipedia.test.ts`) and `src/data/facts.ts` (the written facts).
+
+## Languages
+
+The whole site is in English and Swedish. The **EN / SV** switch in the top corner changes
+the language right away, mid-game too, and is remembered on that device. The first time,
+the game picks Swedish if the browser's language is Swedish, otherwise English. Each phone
+that joins a game has its own language, so a Swedish host and an English-speaking guest
+each see the game in their own language.
+
+Every text a player can see lives in `src/i18n/en.ts` and `src/i18n/sv.ts`. To add or
+change a text:
+
+1. Add it to `en.ts`, in the section for the screen it belongs to. Texts with numbers or
+   names in them are functions, like `` songsLeft: (n: number) => `${n} songs left` ``.
+2. Add the Swedish version to `sv.ts`. The build fails until you do: `sv.ts` must have
+   exactly the same texts as `en.ts`.
+3. Use it: `const t = useT()` in a component (`t.game.songsLeft(n)`), or `msg()` in other
+   code, such as error messages. Wrap a text in `<Rich text={…} />` to show `**bold**` parts.
+
+`src/i18n/i18n.test.ts` fails if a component, a `title`/`aria-label`/`placeholder`, an
+error message or a `confirm()` has text written straight into it, so no English-only
+text slips in. Song titles, artists and team names are never translated.
 
 ## Music playback
 
@@ -385,4 +409,5 @@ The project is Vite + React + TypeScript. The pieces:
   `[title, artist, year, from]` rows. `src/data/decks.ts` combines the chosen decks.
 - `src/spotify/`: login (`auth.ts`), Web API calls (`api.ts`) and the playback options (`playback.ts`).
 - `src/components/`: setup screen, game screen and timeline.
+- `src/i18n/`: the English and Swedish texts (see [Languages](#languages)).
 - `bridge/`: the Sonos bridge, a separate Node program (`cd bridge && npm test`).
