@@ -13,6 +13,8 @@ import {
   mergeSongs,
   releaseYear,
   songKey,
+  songsFromSearch,
+  yearSlices,
   summarize,
   trackToSong,
   uniqueTracks,
@@ -157,5 +159,42 @@ describe('contributors', () => {
     expect(friendContributors(deck).map((c) => c.userId)).toEqual(['bo', 'anna']);
     expect(withoutContributor(deck, 'bo')?.contributors.map((c) => c.userId)).toEqual(['host2', 'anna']);
     expect(withoutContributor(withContributor(null, person('x')), 'x')).toBeNull();
+  });
+});
+
+describe('yearSlices', () => {
+  it('searches each decade on its own when few genres are chosen', () => {
+    expect(yearSlices(1975, 1999, 2)).toEqual([
+      { from: 1975, to: 1979 },
+      { from: 1980, to: 1989 },
+      { from: 1990, to: 1999 },
+    ]);
+  });
+  it('joins decades so genres × slices stays within the cap', () => {
+    const slices = yearSlices(1950, 2026, 4, 12);
+    expect(slices).toHaveLength(3);
+    expect(slices[0].from).toBe(1950);
+    expect(slices[2].to).toBe(2026);
+    for (let i = 1; i < slices.length; i++) expect(slices[i].from).toBe(slices[i - 1].to + 1);
+  });
+  it('handles a single year and reversed input', () => {
+    expect(yearSlices(1985, 1985, 1)).toEqual([{ from: 1985, to: 1985 }]);
+    expect(yearSlices(1999, 1990, 1)).toEqual([{ from: 1990, to: 1999 }]);
+  });
+});
+
+describe('songsFromSearch', () => {
+  it('keeps songs on their original album inside the years, and skips reissues', () => {
+    const songs = songsFromSearch(
+      [
+        track('a', 'Take On Me', '1985-04-01'),
+        { ...track('b', 'Dancing Queen', '1992-01-01'), album: { name: 'ABBA Gold', album_type: 'compilation', release_date: '1992-01-01' } },
+        track('c', 'Under Pressure - Remastered 2011', '1985'),
+        track('d', 'Too Late', '2001'),
+        null,
+      ],
+      { from: 1980, to: 1989 },
+    );
+    expect(songs.map((s) => [s.spotifyId, s.year])).toEqual([['a', 1985]]);
   });
 });

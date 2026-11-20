@@ -1,7 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
 import { createGame, type GameState } from './game/engine';
-import { DEFAULT_SONGS, NO_LOGIN_SONGS } from './data/songs';
-import { chooseSongs } from './data/decks';
 import { getProfile, type SpotifyProfile } from './spotify/api';
 import { handleRedirect, isFriendLogin, isLoggedIn, login, logout, restoreHostLogin, takeAfterLogin } from './spotify/auth';
 import { loadPersonalDeck } from './spotify/listening';
@@ -45,8 +43,7 @@ export function App() {
   const [authMessage, setAuthMessage] = useState<string | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
   const [personal, setPersonal] = useState<PersonalDeck | null>(loadPersonalDeck);
-  const [autoStart, setAutoStart] = useState(false);
-  const [friendReturn, setFriendReturn] = useState(false);
+  const [returnedFromLogin, setReturnedFromLogin] = useState(false);
 
   const refreshProfile = useCallback(async () => {
     if (!isLoggedIn()) {
@@ -65,8 +62,7 @@ export function App() {
     void (async () => {
       const { err, after } = await finishLogin();
       if (err) setAuthMessage(err);
-      if (after === 'friend' && !err) setFriendReturn(true);
-      if (after === 'start' && !err) setAutoStart(true);
+      if ((after === 'music' || after === 'start') && !err) setReturnedFromLogin(true);
       await refreshProfile();
       setAuthChecked(true);
     })();
@@ -80,10 +76,9 @@ export function App() {
   const start = (values: SetupValues) => {
     localStorage.setItem(MODE_KEY, JSON.stringify(values.mode));
     setMode(values.mode);
-    const songs = chooseSongs({ decks: values.decks, mode: values.mode, loggedIn: values.loggedIn, personal: values.personal, filter: values.filter });
     // Spread the songs over the decades, unless the host chose which years to play.
-    const order = values.filter.fromYear === null && values.filter.toYear === null ? 'decades' : 'random';
-    setGame(createGame({ playerNames: values.players, targetCards: values.targetCards, songs, order }));
+    const order = values.spreadDecades ? 'decades' : 'random';
+    setGame(createGame({ playerNames: values.players, targetCards: values.targetCards, songs: values.songs, order }));
   };
 
   return (
@@ -108,30 +103,13 @@ export function App() {
         <Setup
           profile={profile}
           authMessage={authMessage}
-          initialMode={mode}
-          onModeChange={(m) => {
-            localStorage.setItem(MODE_KEY, JSON.stringify(m));
-            setMode(m);
-          }}
-          deckSize={{ all: DEFAULT_SONGS.length, noLogin: NO_LOGIN_SONGS.length }}
           personal={personal}
-          autoStart={autoStart}
-          onAutoStartHandled={() => setAutoStart(false)}
+          returnedFromLogin={returnedFromLogin}
+          onReturnHandled={() => setReturnedFromLogin(false)}
           onLogin={(extraScopes) =>
-            login({ extraScopes, afterLogin: 'start' }).catch((e) => setAuthMessage(e instanceof Error ? e.message : String(e)))
+            login({ extraScopes, afterLogin: 'music' }).catch((e) => setAuthMessage(e instanceof Error ? e.message : String(e)))
           }
           onPersonalChange={setPersonal}
-          friendReturn={friendReturn}
-          onFriendLogin={(scopes) =>
-            login({ extraScopes: scopes, afterLogin: 'friend', asFriend: true }).catch((e) =>
-              setAuthMessage(e instanceof Error ? e.message : String(e)),
-            )
-          }
-          onFriendDone={() => {
-            setFriendReturn(false);
-            restoreHostLogin();
-            void refreshProfile();
-          }}
           onLogout={() => {
             logout();
             setProfile(null);

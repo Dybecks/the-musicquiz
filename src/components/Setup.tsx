@@ -1,29 +1,30 @@
 import { useEffect, useRef, useState } from 'react';
+import type { Song } from '../game/engine';
 import type { SpotifyProfile } from '../spotify/api';
 import { BUILT_IN_CLIENT_ID, getClientIdOverride, hasScopes, redirectUri, setClientId } from '../spotify/auth';
 import type { PlaybackKind } from '../spotify/playback';
 import { DECKS, chooseSongs, deckSongs, normalizeDecks, parseSavedDecks, playableSongs, type DeckId } from '../data/decks';
-import { gatherListening, loadSources, removeContributor, savePersonalDeck, scopesFor, type GatherProgress } from '../spotify/listening';
 import {
-  SOURCE_LABELS,
-  friendContributors,
-  hostContributor,
-  personalSongs,
-  type ListeningSource,
-  type PersonalDeck,
-} from '../spotify/personalDeck';
-import { MyMusic } from './MyMusic';
-import { DeckFilterPanel } from './DeckFilterPanel';
-import { loadFilter, NO_FILTER, personalPresets, sameFilter, saveFilter, STANDARD_PRESETS, type DeckFilter } from '../data/genres';
+  MAX_GENRES,
+  PLAYLIST_SCOPES,
+  SEARCH_GENRES,
+  buildFromGenres,
+  buildFromPlaylists,
+  fetchPlaylists,
+  genrePlan,
+  savePersonalDeck,
+  type BuildProgress,
+  type PlaylistSummary,
+} from '../spotify/listening';
+import { hostContributor, personalSongs, summarize, type PersonalDeck } from '../spotify/personalDeck';
 
 export interface SetupValues {
   players: string[];
   targetCards: number;
   mode: PlaybackKind;
-  decks: DeckId[];
-  filter: DeckFilter;
-  /** The host's own songs to play with, freshly loaded or saved earlier. */
-  personal: PersonalDeck | null;
+  songs: Song[];
+  /** Spread the songs over the decades (no year span was chosen). */
+  spreadDecades: boolean;
   /** Whether the game may use the Spotify login (search, Premium playback). */
   loggedIn: boolean;
 }
@@ -31,140 +32,271 @@ export interface SetupValues {
 interface Props {
   profile: SpotifyProfile | null;
   authMessage: string | null;
-  initialMode: PlaybackKind;
-  onModeChange: (mode: PlaybackKind) => void;
-  deckSize: { all: number; noLogin: number };
   personal: PersonalDeck | null;
-  /** Set when the host just came back from logging in: load the music and start right away. */
-  autoStart: boolean;
-  onAutoStartHandled: () => void;
+  /** Set when the host just came back from logging in: carry on with the music. */
+  returnedFromLogin: boolean;
+  onReturnHandled: () => void;
   onLogin: (extraScopes: string[]) => void;
   onLogout: () => void;
   onPersonalChange: (deck: PersonalDeck | null) => void;
-  /** Set when a friend just logged in to share their music: load it, then hand the login back. */
-  friendReturn: boolean;
-  onFriendLogin: (scopes: string[]) => void;
-  onFriendDone: () => void;
   onStart: (values: SetupValues) => void;
 }
 
-/** Whether the host plays with a Spotify login. The login itself happens last. */
+/** Whether the host plays with a Spotify login. */
 type Account = 'login' | 'guest';
-type Step = 'account' | 'music' | 'loading';
+/** Where the songs come from. */
+type Source = 'ready' | 'own';
+type Step = 'account' | 'source' | 'ready' | 'own' | 'genres' | 'playlists' | 'building' | 'players';
 
 const PLAYERS_KEY = 'mq.players';
 const TARGET_KEY = 'mq.target';
 const DECK_KEY = 'mq.deck';
 const ACCOUNT_KEY = 'mq.account';
-/** Who was the host when a friend went to log in, to catch the same account logging in twice. */
-const HOST_ID_KEY = 'mq.friendHostId';
-/** What friends share when the host has ticked nothing. */
-const FRIEND_DEFAULT_SOURCES: ListeningSource[] = ['top', 'recent'];
+const SOURCE_KEY = 'mq.source';
+const GENRES_KEY = 'mq.ownGenres';
+const YEARS_KEY = 'mq.ownYears';
+const PLAYLISTS_KEY = 'mq.ownPlaylists';
+
+const THIS_YEAR = new Date().getFullYear();
+const FIRST_YEAR = 1950;
+
+function loadJson<T>(key: string, fallback: T, valid: (v: unknown) => boolean = () => true): T {
+  try {
+    const v = JSON.parse(localStorage.getItem(key) ?? 'null');
+    if (v !== null && valid(v)) return v as T;
+  } catch {
+    /* ignore */
+  }
+  return fallback;
+}
+const saveJson = (key: string, value: unknown) => {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch {
+    /* ignore */
+  }
+};
 
 function loadAccount(): Account | null {
   const saved = localStorage.getItem(ACCOUNT_KEY);
   return saved === 'login' || saved === 'guest' ? saved : null;
 }
 
-function loadPlayers(): string[] {
-  try {
-    const saved = JSON.parse(localStorage.getItem(PLAYERS_KEY) ?? 'null');
-    if (Array.isArray(saved) && saved.length) return saved;
-  } catch {
-    /* ignore */
-  }
-  return ['Team 1', 'Team 2'];
-}
-
-const sameSources = (a: readonly ListeningSource[], b: readonly ListeningSource[]) =>
-  a.length === b.length && a.every((s) => b.includes(s));
-
 const message = (e: unknown) => (e instanceof Error ? e.message : String(e));
+const clampYear = (y: number) => Math.max(FIRST_YEAR, Math.min(THIS_YEAR, Math.round(y)));
+const decadesLabel = (from: number, to: number) => (from === to ? String(from) : `${from}–${to}`);
 
 export function Setup(props: Props) {
-  const { profile, authMessage, deckSize, personal, onLogout } = props;
+  const { profile, authMessage, personal, onLogout } = props;
   const [account, setAccountState] = useState<Account | null>(loadAccount);
-  const [step, setStep] = useState<Step>(() =>
-    props.friendReturn ? 'loading' : (props.autoStart || authMessage) && loadAccount() === 'login' ? 'music' : 'account',
-  );
-  const [loadingName, setLoadingName] = useState<string | null>(null);
-  const [players, setPlayers] = useState<string[]>(loadPlayers);
+  const [source, setSourceState] = useState<Source>(() => (localStorage.getItem(SOURCE_KEY) === 'own' ? 'own' : 'ready'));
+  const [step, setStep] = useState<Step>(() => (props.returnedFromLogin && loadAccount() === 'login' ? 'source' : 'account'));
+  const [players, setPlayers] = useState<string[]>(() => loadJson(PLAYERS_KEY, ['Team 1', 'Team 2'], (v) => Array.isArray(v) && v.length > 0));
   const [target, setTarget] = useState<number>(() => Number(localStorage.getItem(TARGET_KEY)) || 10);
-  const [mode, setModeState] = useState<PlaybackKind>(props.initialMode);
   const [clientIdOverride, setClientIdOverride] = useState(getClientIdOverride);
   const clientId = clientIdOverride.trim() || BUILT_IN_CLIENT_ID;
   const [error, setError] = useState<string | null>(null);
-  const [decks, setDecks] = useState<DeckId[]>(() => parseSavedDecks(localStorage.getItem(DECK_KEY)));
-  const [sources, setSources] = useState<ListeningSource[]>(loadSources);
-  const [filter, setFilterState] = useState<DeckFilter>(loadFilter);
-  const [progress, setProgress] = useState<GatherProgress | null>(null);
-  const running = useRef(false);
+  const [decks, setDecks] = useState<DeckId[]>(() => parseSavedDecks(localStorage.getItem(DECK_KEY)).filter((d) => d !== 'mine'));
+  const [genres, setGenres] = useState<string[]>(() => loadJson(GENRES_KEY, ['pop', 'rock'], Array.isArray));
+  const [years, setYears] = useState<[number, number]>(() => loadJson(YEARS_KEY, [1970, THIS_YEAR], (v) => Array.isArray(v) && v.length === 2));
+  const [playlists, setPlaylists] = useState<PlaylistSummary[] | null>(null);
+  const [playlistTotal, setPlaylistTotal] = useState(0);
+  const [picked, setPicked] = useState<string[]>(() => loadJson(PLAYLISTS_KEY, [], Array.isArray));
+  const [listBusy, setListBusy] = useState(false);
+  const [progress, setProgress] = useState<BuildProgress | null>(null);
+  const [buildReturn, setBuildReturn] = useState<Step>('own');
+  const buildId = useRef(0);
 
-  // Everything chosen here is kept in the browser, so it survives the trip
-  // to Spotify's login page and back.
-  useEffect(() => localStorage.setItem(PLAYERS_KEY, JSON.stringify(players)), [players]);
+  useEffect(() => saveJson(PLAYERS_KEY, players), [players]);
   useEffect(() => localStorage.setItem(TARGET_KEY, String(target)), [target]);
+
+  useEffect(() => {
+    if (props.returnedFromLogin) props.onReturnHandled();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const setAccount = (a: Account) => {
     setAccountState(a);
     localStorage.setItem(ACCOUNT_KEY, a);
   };
-  const setMode = (m: PlaybackKind) => {
-    setModeState(m);
-    props.onModeChange(m);
+  const setSource = (s: Source) => {
+    setSourceState(s);
+    localStorage.setItem(SOURCE_KEY, s);
   };
-  const setFilter = (f: DeckFilter) => {
-    setFilterState(f);
-    saveFilter(f);
+  const go = (s: Step) => {
+    setError(null);
+    setStep(s);
   };
 
   const useLogin = account === 'login';
   const loggedIn = useLogin && !!profile;
+  const canReadPlaylists = loggedIn && hasScopes(PLAYLIST_SCOPES);
+  const isPremium = profile?.product === 'premium';
+  // The music plays the way step 1 decided: in the browser with a (Premium)
+  // login, otherwise through the hidden Spotify player.
+  const mode: PlaybackKind = loggedIn && isPremium ? 'premium' : 'embed';
   const owner = hostContributor(personal);
-  const friends = friendContributors(personal);
-  const mySavedSongs = personalSongs(personal).length;
-  // Without a login, the songs saved from an earlier login can still be used.
-  const visibleDecks = DECKS.filter((d) => d.id !== 'mine' || useLogin || mySavedSongs > 0);
-  const activeDecks = normalizeDecks(decks.filter((d) => visibleDecks.some((v) => v.id === d)));
-  const wantsMine = activeDecks.includes('mine');
-  // Playing in the browser needs a login; without one, use the hidden player.
-  const playMode: PlaybackKind = !useLogin && mode === 'premium' ? 'embed' : mode;
-
-  // The saved songs are reused only if they were loaded for the same choices.
-  const canReuse = (p: SpotifyProfile | null) =>
-    !!owner &&
-    (!p || owner.userId === p.id) &&
-    sameSources(owner.sources, sources) &&
-    sameFilter(owner.filter ?? NO_FILTER, filter);
-  const willLoad = useLogin && wantsMine && sources.length > 0 && !canReuse(profile);
-  const friendSources = sources.length ? sources : FRIEND_DEFAULT_SOURCES;
-
-  const deckOptions = { decks: activeDecks, mode: playMode, loggedIn: useLogin, personal: willLoad ? null : personal };
-  const unfilteredCount = chooseSongs(deckOptions).length;
-  const songCount = chooseSongs({ ...deckOptions, filter }).length;
-  const myPresets = personalPresets(personalSongs(personal));
-  const soundtrackWithGenres = filter.genres.length > 0 && activeDecks.some((d) => d !== 'classic' && d !== 'mine');
+  const ownList = owner && profile && owner.userId === profile.id ? owner : undefined;
+  const ownSongs = ownList ? personalSongs(personal) : [];
   const names = players.map((p) => p.trim()).filter(Boolean);
+
+  const readyDecks = DECKS.filter((d) => d.id !== 'mine');
+  const activeDecks = normalizeDecks(decks);
+  const readySongs = chooseSongs({ decks: activeDecks, mode, loggedIn, personal: null });
+  const songs = source === 'own' ? ownSongs : readySongs;
 
   const toggleDeck = (id: DeckId) => {
     const next = activeDecks.includes(id) ? activeDecks.filter((d) => d !== id) : normalizeDecks([...activeDecks, id]);
     if (next.length === 0) return; // keep at least one deck
     setDecks(next);
-    localStorage.setItem(DECK_KEY, JSON.stringify(next));
+    saveJson(DECK_KEY, next);
   };
 
-  const deckDetail = (id: DeckId, detail: string) => {
-    if (id === 'mine') {
-      const who = friends.length ? ` With music from ${friends.map((f) => f.name).join(', ')}.` : '';
-      if (willLoad) return `Loaded from your Spotify when you start, matching the genres and years you choose.${who}`;
-      return mySavedSongs ? `${mySavedSongs} songs from what you listen to.${who}` : detail;
-    }
-    const all = deckSongs(id, personal).length;
-    const playable = playableSongs(deckSongs(id, personal), playMode, useLogin).length;
-    if (playable === all) return `${all} songs. ${detail}`;
-    if (playable === 0) return `${all} songs. ${detail} Needs a Spotify login to play.`;
-    return `${playable} of ${all} songs play without a login. ${detail}`;
+  const deckCount = (id: DeckId) => {
+    const all = deckSongs(id, null).length;
+    const playable = playableSongs(deckSongs(id, null), mode, loggedIn).length;
+    return playable === all ? `${all}` : `${playable} of ${all}`;
   };
+
+  // ---- Building the host's own list ----
+
+  const finishBuild = (id: number, built: Song[], label: string, from: Step, sources: PersonalDeck['contributors'][number]['sources']) => {
+    if (id !== buildId.current) return; // cancelled
+    setProgress(null);
+    if (built.length < 5) {
+      setError(`Only ${built.length} songs were found. Pick more ${from === 'genres' ? 'genres or a wider year span' : 'playlists'}.`);
+      setStep(from);
+      return;
+    }
+    const deck = savePersonalDeck({
+      role: 'host',
+      userId: profile!.id,
+      name: profile!.display_name || 'You',
+      sources,
+      builtAt: new Date().toISOString(),
+      label,
+      songs: built,
+    });
+    props.onPersonalChange(deck);
+    setSource('own');
+    setStep('players');
+  };
+
+  const failBuild = (id: number, e: unknown, from: Step) => {
+    if (id !== buildId.current) return;
+    setProgress(null);
+    setError(message(e));
+    setStep(from);
+  };
+
+  const buildGenres = () => {
+    if (!profile) return;
+    const id = ++buildId.current;
+    const [from, to] = years;
+    const label = `${SEARCH_GENRES.filter((g) => genres.includes(g.id)).map((g) => g.label).join(', ')} · ${decadesLabel(from, to)}`;
+    setBuildReturn('genres');
+    go('building');
+    buildFromGenres(genres, from, to, setProgress).then(
+      (built) => finishBuild(id, built, label, 'genres', []),
+      (e) => failBuild(id, e, 'genres'),
+    );
+  };
+
+  const chosenPlaylists = (playlists ?? []).filter((p) => picked.includes(p.id));
+  const buildPlaylists = () => {
+    if (!profile) return;
+    const id = ++buildId.current;
+    const label = chosenPlaylists.map((p) => p.name).join(', ');
+    setBuildReturn('playlists');
+    go('building');
+    buildFromPlaylists(chosenPlaylists, setProgress).then(
+      ({ songs: built, skipped }) => {
+        finishBuild(id, built, label, 'playlists', ['playlists']);
+        if (skipped.length && id === buildId.current) setError(`Spotify didn't share ${skipped.join(', ')}, so those were skipped.`);
+      },
+      (e) => failBuild(id, e, 'playlists'),
+    );
+  };
+
+  const cancelBuild = () => {
+    buildId.current++;
+    setProgress(null);
+    go(buildReturn);
+  };
+
+  const loadPlaylists = async (more = false) => {
+    setListBusy(true);
+    setError(null);
+    try {
+      const page = await fetchPlaylists(more ? (playlists?.length ?? 0) : 0);
+      setPlaylists(more ? [...(playlists ?? []), ...page.playlists] : page.playlists);
+      setPlaylistTotal(page.total);
+    } catch (e) {
+      setError(message(e));
+    } finally {
+      setListBusy(false);
+    }
+  };
+
+  // One request lists every playlist, made when the screen opens.
+  useEffect(() => {
+    if (step === 'playlists' && playlists === null && !listBusy && canReadPlaylists) void loadPlaylists();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step]);
+
+  const togglePlaylist = (id: string) => {
+    const next = picked.includes(id) ? picked.filter((p) => p !== id) : [...picked, id];
+    setPicked(next);
+    saveJson(PLAYLISTS_KEY, next);
+  };
+
+  const toggleGenre = (id: string) => {
+    const next = genres.includes(id) ? genres.filter((g) => g !== id) : genres.length >= MAX_GENRES ? genres : [...genres, id];
+    setGenres(next);
+    saveJson(GENRES_KEY, next);
+  };
+  const setYear = (i: 0 | 1, value: number) => {
+    const next: [number, number] = [...years];
+    next[i] = value;
+    setYears(next);
+  };
+  const commitYears = () => {
+    let [from, to] = years.map(clampYear) as [number, number];
+    if (from > to) [from, to] = [to, from];
+    setYears([from, to]);
+    saveJson(YEARS_KEY, [from, to]);
+  };
+
+  // ---- Start ----
+
+  const start = () => {
+    setError(null);
+    if (names.length === 0) return setError('Add at least one player or team.');
+    if (songs.length < names.length + 1) return setError('Too few songs for this many players. Pick more music, or use fewer players.');
+    props.onStart({ players: names, targetCards: target, mode, songs, spreadDecades: source === 'ready', loggedIn });
+  };
+
+  // ---- Shared bits ----
+
+  const steps = ['Spotify', 'Music', 'Players & play'];
+  const stepIndex = step === 'account' ? 0 : step === 'players' ? 2 : 1;
+  const stepBar = (
+    <ol className="steps" aria-label="Setup steps">
+      {steps.map((label, i) => (
+        <li key={label} className={i === stepIndex ? 'current' : i < stepIndex ? 'done' : ''} aria-current={i === stepIndex ? 'step' : undefined}>
+          <span className="num">{i < stepIndex ? '✓' : i + 1}</span> {label}
+        </li>
+      ))}
+    </ol>
+  );
+  const back = (to: Step, label = 'Back') => (
+    <p>
+      <button className="link" onClick={() => go(to)}>
+        ← {label}
+      </button>
+    </p>
+  );
+  const errorLine = error && <p className="warn center">{error}</p>;
 
   // The game ships with its own Spotify app, so the Client ID field is tucked
   // away for hosts who want to use their own app instead.
@@ -195,193 +327,12 @@ export function Setup(props: Props) {
     clientIdInput
   );
 
-  const values = (personalDeck: PersonalDeck | null): SetupValues => ({
-    players: names,
-    targetCards: target,
-    mode: playMode,
-    decks: activeDecks,
-    filter,
-    personal: personalDeck,
-    loggedIn,
-  });
-
-  /** Checks what can be checked before the host's own songs are loaded. */
-  const validate = (): string | null => {
-    if (names.length === 0) return 'Add at least one player or team.';
-    if (useLogin && wantsMine && sources.length === 0 && !owner && friends.length === 0)
-      return 'Choose at least one kind of Spotify listening, or untick My Spotify music.';
-    if (willLoad) return null; // the count is checked once the songs are loaded
-    if (unfilteredCount === 0)
-      return useLogin ? 'These decks have no songs to play. Choose other decks.' : 'These songs need a Spotify login to play. Go back and choose to log in, or pick other decks.';
-    if (songCount < names.length + 1) return 'Too few songs match. Widen the genres or years, or use fewer players.';
-    return null;
-  };
-
-  /** The last step for a logged-in host: load the songs that match the choices, then start. */
-  const loadAndStart = async (p: SpotifyProfile) => {
-    if (running.current) return;
-    if (playMode === 'premium' && p.product !== 'premium') {
-      setError("This account isn't Premium, so music can't play in the browser. Choose the hidden Spotify player instead.");
-      return;
-    }
-    let deck = personal;
-    if (wantsMine && sources.length > 0 && !canReuse(p)) {
-      running.current = true;
-      setLoadingName(null);
-      setStep('loading');
-      try {
-        const result = await gatherListening(sources, filter, setProgress);
-        const skipped = result.failures.map((f) => `${SOURCE_LABELS[f.source].title}: ${f.message}`);
-        if (result.songs.length === 0) {
-          setError(
-            ['None of your Spotify songs match these genres and years. Widen them, or untick My Spotify music.', ...skipped.map((s) => `Skipped ${s}`)].join(' '),
-          );
-          setStep('music');
-          return;
-        }
-        deck = savePersonalDeck({
-          role: 'host',
-          userId: p.id,
-          name: p.display_name || 'You',
-          sources,
-          filter,
-          builtAt: new Date().toISOString(),
-          songs: result.songs,
-        });
-        props.onPersonalChange(deck);
-      } catch (e) {
-        setError(message(e));
-        setStep('music');
-        return;
-      } finally {
-        running.current = false;
-        setProgress(null);
-      }
-    }
-    const count = chooseSongs({ decks: activeDecks, mode: playMode, loggedIn: true, personal: deck, filter }).length;
-    if (count < names.length + 1) {
-      setError('Too few songs match. Widen the genres or years, add a deck, or use fewer players.');
-      setStep('music');
-      return;
-    }
-    props.onStart(values(deck));
-  };
-
-  const start = () => {
-    setError(null);
-    const problem = validate();
-    if (problem) return setError(problem);
-    if (!useLogin) return props.onStart(values(personal));
-    const needed = willLoad ? scopesFor(sources) : [];
-    // Log in (or ask for more access) last; the game starts on the way back.
-    if (!profile || !hasScopes(needed)) return props.onLogin(needed);
-    void loadAndStart(profile);
-  };
-
-  const addFriend = () => {
-    setError(null);
-    sessionStorage.setItem(HOST_ID_KEY, profile?.id ?? owner?.userId ?? '');
-    props.onFriendLogin(scopesFor(friendSources));
-  };
-
-  const removeFriend = (userId: string) => props.onPersonalChange(removeContributor(userId));
-
-  // Back from a friend's login: load their music with the same choices,
-  // then hand the login back to the host.
-  useEffect(() => {
-    if (!props.friendReturn || running.current) return;
-    const hostId = sessionStorage.getItem(HOST_ID_KEY);
-    sessionStorage.removeItem(HOST_ID_KEY);
-    const done = (problem?: string) => {
-      if (problem) setError(problem);
-      setStep('music');
-      props.onFriendDone();
-    };
-    const friend = profile;
-    if (!friend) return done('Your friend’s Spotify login could not be completed.');
-    if (friend.id === hostId || friend.id === owner?.userId)
-      return done('That was your own Spotify account. On Spotify’s page, choose “Not you?” and let your friend log in.');
-    if (!hasScopes(scopesFor(friendSources))) return done("Spotify didn't grant access to your friend's listening.");
-    running.current = true;
-    setLoadingName(friend.display_name || 'your friend');
-    void (async () => {
-      try {
-        const result = await gatherListening(friendSources, filter, setProgress);
-        if (result.songs.length === 0) return done(`None of ${friend.display_name || 'your friend'}’s songs match these genres and years.`);
-        props.onPersonalChange(
-          savePersonalDeck({
-            role: 'friend',
-            userId: friend.id,
-            name: friend.display_name || 'Friend',
-            sources: friendSources,
-            filter,
-            builtAt: new Date().toISOString(),
-            songs: result.songs,
-          }),
-        );
-        done();
-      } catch (e) {
-        done(message(e));
-      } finally {
-        running.current = false;
-        setProgress(null);
-      }
-    })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [props.friendReturn]);
-
-  // Back from Spotify's login page: carry on where the host left off.
-  useEffect(() => {
-    if (!props.autoStart) return;
-    props.onAutoStartHandled();
-    if (!useLogin) return;
-    setStep('music');
-    if (!profile) return;
-    if (!hasScopes(willLoad ? scopesFor(sources) : [])) {
-      setError("Spotify didn't grant access to your listening, so your songs couldn't be loaded.");
-      return;
-    }
-    const problem = validate();
-    if (problem) return setError(problem);
-    void loadAndStart(profile);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [props.autoStart]);
-
-  const steps = ['Spotify', 'Music', useLogin ? 'Log in & load' : 'Play'];
-  const stepIndex = step === 'account' ? 0 : step === 'music' ? 1 : 2;
-  const stepBar = (
-    <ol className="steps" aria-label="Setup steps">
-      {steps.map((label, i) => (
-        <li key={label} className={i === stepIndex ? 'current' : i < stepIndex ? 'done' : ''} aria-current={i === stepIndex ? 'step' : undefined}>
-          <span className="num">{i + 1}</span> {label}
-        </li>
-      ))}
-    </ol>
-  );
-
-  if (step === 'loading') {
-    return (
-      <main className="setup">
-        {stepBar}
-        <section className="panel">
-          <h2>{loadingName ? `Loading ${loadingName}’s music` : 'Loading your music'}</h2>
-          <p className="hint">Only songs that match the genres and years you chose are kept.</p>
-          <p className="progress" role="status">
-            {!progress || progress.step === 'reading'
-              ? 'Reading listening…'
-              : progress.step === 'genres'
-                ? `Looking up genres: ${progress.done} of ${progress.total} artists`
-                : `Finding the original release year: ${progress.done} of ${progress.total}`}
-            <progress value={progress?.done ?? 0} max={progress?.total || 1} />
-          </p>
-        </section>
-      </main>
-    );
-  }
+  // ---- Step 1: Spotify ----
 
   if (step === 'account') {
+    const needsLogin = useLogin && !canReadPlaylists;
     return (
-      <main className="setup">
+      <main className="setup flow">
         {stepBar}
         <section className="panel intro">
           <h1>Place the song on your timeline</h1>
@@ -399,14 +350,14 @@ export function Setup(props: Props) {
               current={account}
               onSelect={setAccount}
               title="Log in with Spotify"
-              detail="Play with your own music and every deck, and with Premium the full songs play right here. You first choose the music; logging in is the last step."
+              detail="Use your own playlists or pick genres, and every ready-made list. With Premium the full songs play right here in the browser."
             />
             <ModeOption
               value="guest"
               current={account}
               onSelect={setAccount}
               title="Play without login"
-              detail={`The classic hits through a hidden Spotify player (${deckSize.noLogin} songs). Full songs if this browser is signed in to Spotify, otherwise 30-second previews.`}
+              detail="Ready-made lists through a hidden Spotify player. Full songs if this browser is signed in to Spotify, otherwise 30-second previews."
             />
           </div>
           {profile && (
@@ -417,60 +368,328 @@ export function Setup(props: Props) {
               </button>
             </p>
           )}
+          {useLogin && !profile && clientIdField}
+          {authMessage && <p className="warn">{authMessage}</p>}
         </section>
 
-        <button className="primary big" disabled={!account} onClick={() => setStep('music')}>
-          Next: choose the music
+        {needsLogin ? (
+          <button className="spotify big" disabled={!clientId.trim()} onClick={() => props.onLogin(PLAYLIST_SCOPES)}>
+            {profile ? 'Allow reading your playlists' : 'Log in with Spotify'}
+          </button>
+        ) : (
+          <button className="primary big" disabled={!account} onClick={() => go('source')}>
+            Next: choose the music
+          </button>
+        )}
+      </main>
+    );
+  }
+
+  // ---- Step 2: Music ----
+
+  if (step === 'source') {
+    return (
+      <main className="setup flow">
+        {stepBar}
+        {back('account', `${useLogin ? 'Playing with a Spotify login' : 'Playing without login'}. Change`)}
+        <h2 className="screen-title">Where should the songs come from?</h2>
+        <div className="choices" role="radiogroup" aria-label="Where should the songs come from?">
+          <Choice
+            icon="📦"
+            title="Ready-made lists"
+            detail="Hand-picked songs with checked years. Ready to play right away."
+            tag="Works without login"
+            selected={source === 'ready'}
+            onSelect={() => setSource('ready')}
+          />
+          <Choice
+            icon="🎛️"
+            title="Make your own"
+            detail="Pick genres and years, or use your own Spotify playlists."
+            tag="Needs Spotify login"
+            tagKind="warn"
+            selected={source === 'own'}
+            disabled={!loggedIn}
+            onSelect={() => setSource('own')}
+          />
+        </div>
+        {!loggedIn && (
+          <p className="hint">
+            <button className="link" onClick={() => go('account')}>
+              Log in to use your own music
+            </button>
+          </p>
+        )}
+        <button className="primary big" onClick={() => go(source === 'own' && loggedIn ? 'own' : 'ready')}>
+          Continue
         </button>
       </main>
     );
   }
 
-  const isPremium = profile?.product === 'premium';
-  const startLabel = !useLogin ? 'Start game' : !profile ? 'Log in with Spotify and start' : willLoad ? 'Load my music and start' : 'Start game';
-
-  return (
-    <main className="setup">
-      {stepBar}
-      <p>
-        <button className="link" onClick={() => setStep('account')}>
-          ← {useLogin ? 'Playing with a Spotify login' : 'Playing without login'}. Change
-        </button>
-      </p>
-
-      <DeckFilterPanel
-        filter={filter}
-        onChange={setFilter}
-        presets={STANDARD_PRESETS}
-        personalPresets={myPresets}
-        count={songCount}
-        total={unfilteredCount}
-        pending={willLoad ? 'plus your matching Spotify songs, loaded when you start' : undefined}
-        note={soundtrackWithGenres ? 'Soundtrack songs have no genre, so a genre choice leaves them out. Use years only to keep them.' : undefined}
-      />
-
-      <section className="panel">
-        <h2>Which songs?</h2>
-        <p className="hint">Pick one or more. Songs from several decks are shuffled together.</p>
-        <div className="mode-options deck-options" role="group" aria-label="Which songs?">
-          {visibleDecks.map((d) => (
-            <DeckOption key={d.id} title={d.title} detail={deckDetail(d.id, d.detail)} checked={activeDecks.includes(d.id)} onToggle={() => toggleDeck(d.id)} />
+  if (step === 'ready') {
+    return (
+      <main className="setup flow">
+        {stepBar}
+        {back('source')}
+        <h2 className="screen-title">Pick your lists</h2>
+        <p className="hint">Pick one or more. Songs from several lists are shuffled together.</p>
+        <div className="mode-options deck-options" role="group" aria-label="Pick your lists">
+          {readyDecks.map((d) => (
+            <DeckOption key={d.id} title={d.title} detail={d.detail} count={deckCount(d.id)} checked={activeDecks.includes(d.id)} onToggle={() => toggleDeck(d.id)} />
           ))}
         </div>
-        {wantsMine && useLogin && (
-          <MyMusic
-            personal={personal}
-            sources={sources}
-            onSourcesChange={setSources}
-            willLoad={willLoad}
-            onForgetMine={() => owner && props.onPersonalChange(removeContributor(owner.userId))}
-            onAddFriend={addFriend}
-            onRemoveFriend={removeFriend}
-            canAddFriend={!!clientId.trim()}
-          />
-        )}
-      </section>
+        {!loggedIn && <p className="hint">Without a login, only songs with a known Spotify link can play.</p>}
+        {errorLine}
+        <button
+          className="primary big"
+          disabled={readySongs.length === 0}
+          onClick={() => {
+            setSource('ready');
+            go('players');
+          }}
+        >
+          Continue with {readySongs.length} songs
+        </button>
+      </main>
+    );
+  }
 
+  if (step === 'own') {
+    return (
+      <main className="setup flow">
+        {stepBar}
+        {back('source')}
+        <h2 className="screen-title">How do you want to pick?</h2>
+        <p className="hint">
+          Logged in as <strong>{profile?.display_name}</strong>.
+        </p>
+        <div className="choices">
+          <Choice icon="🎸" title="By genre" detail="Choose genres and years. We find well-known songs that fit." onSelect={() => go('genres')} />
+          <Choice icon="📃" title="From my playlists" detail="Pick any of your own Spotify playlists." onSelect={() => go('playlists')} />
+          {ownList && ownSongs.length > 0 && (
+            <Choice
+              icon="↺"
+              title="Use my last list"
+              detail={`${ownList.label ?? 'Your songs'} · ${ownSongs.length} songs. No new requests.`}
+              onSelect={() => {
+                setSource('own');
+                go('players');
+              }}
+            />
+          )}
+        </div>
+        {errorLine}
+      </main>
+    );
+  }
+
+  if (step === 'genres') {
+    const [from, to] = years;
+    const plan = genrePlan(genres, Math.min(from, to), Math.max(from, to));
+    return (
+      <main className="setup flow">
+        {stepBar}
+        {back('own')}
+        <h2 className="screen-title">Genres and years</h2>
+        <section className="panel">
+          <h2>
+            Genres <span className="muted">· pick 1 to {MAX_GENRES}</span>
+          </h2>
+          <div className="chips" role="group" aria-label="Genres">
+            {SEARCH_GENRES.map((g) => (
+              <button
+                key={g.id}
+                role="checkbox"
+                aria-checked={genres.includes(g.id)}
+                className={`chip ${genres.includes(g.id) ? 'selected' : ''}`}
+                disabled={!genres.includes(g.id) && genres.length >= MAX_GENRES}
+                onClick={() => toggleGenre(g.id)}
+              >
+                {g.label}
+              </button>
+            ))}
+          </div>
+        </section>
+        <section className="panel">
+          <h2>Years</h2>
+          <div className="year-range">
+            <label className="field">
+              <span>From</span>
+              <input type="number" inputMode="numeric" min={FIRST_YEAR} max={THIS_YEAR} value={from} onChange={(e) => setYear(0, Number(e.target.value))} onBlur={commitYears} />
+            </label>
+            <label className="field">
+              <span>To</span>
+              <input type="number" inputMode="numeric" min={FIRST_YEAR} max={THIS_YEAR} value={to} onChange={(e) => setYear(1, Number(e.target.value))} onBlur={commitYears} />
+            </label>
+          </div>
+          <div className="chips decade-chips">
+            {[1960, 1970, 1980, 1990, 2000, 2010, 2020].map((d) => (
+              <button
+                key={d}
+                className={`chip ${from === d && to === Math.min(d + 9, THIS_YEAR) ? 'selected' : ''}`}
+                onClick={() => {
+                  setYears([d, Math.min(d + 9, THIS_YEAR)]);
+                  saveJson(YEARS_KEY, [d, Math.min(d + 9, THIS_YEAR)]);
+                }}
+              >
+                {String(d).slice(2)}s
+              </button>
+            ))}
+            <button
+              className={`chip ${from === FIRST_YEAR && to === THIS_YEAR ? 'selected' : ''}`}
+              onClick={() => {
+                setYears([FIRST_YEAR, THIS_YEAR]);
+                saveJson(YEARS_KEY, [FIRST_YEAR, THIS_YEAR]);
+              }}
+            >
+              All years
+            </button>
+          </div>
+        </section>
+        {genres.length > 0 && (
+          <p className="info">
+            <span aria-hidden="true">⚡</span>
+            <span>
+              <strong>
+                {plan.requests} Spotify request{plan.requests === 1 ? '' : 's'}
+              </strong>{' '}
+              ({genres.length} genre{genres.length === 1 ? '' : 's'} × {plan.slices.length} year span{plan.slices.length === 1 ? '' : 's'}).
+            </span>
+          </p>
+        )}
+        {errorLine}
+        <button className="primary big" disabled={genres.length === 0} onClick={buildGenres}>
+          Build my list
+        </button>
+      </main>
+    );
+  }
+
+  if (step === 'playlists') {
+    const songsPicked = chosenPlaylists.reduce((n, p) => n + p.tracks, 0);
+    const requests = chosenPlaylists.reduce((n, p) => n + Math.max(1, Math.min(3, Math.ceil(p.tracks / 100))), 0);
+    return (
+      <main className="setup flow">
+        {stepBar}
+        {back('own')}
+        <h2 className="screen-title">Your playlists</h2>
+        {!canReadPlaylists ? (
+          <>
+            <p className="hint">Spotify needs your OK before the game can see your playlists.</p>
+            <button className="spotify big" onClick={() => props.onLogin(PLAYLIST_SCOPES)}>
+              Allow reading your playlists
+            </button>
+          </>
+        ) : playlists === null ? (
+          <p className="hint" role="status">
+            {listBusy ? 'Loading your playlists…' : ''}
+          </p>
+        ) : (
+          <>
+            <p className="hint">
+              {playlistTotal} playlist{playlistTotal === 1 ? '' : 's'}
+            </p>
+            {playlists.length === 0 && <p className="hint">You have no playlists yet. Pick by genre instead.</p>}
+            <div className="mode-options deck-options" role="group" aria-label="Your playlists">
+              {playlists.map((p) => (
+                <DeckOption
+                  key={p.id}
+                  title={p.name}
+                  detail={p.owner ? `by ${p.owner}` : ''}
+                  count={String(p.tracks)}
+                  image={p.image}
+                  checked={picked.includes(p.id)}
+                  onToggle={() => togglePlaylist(p.id)}
+                />
+              ))}
+            </div>
+            {playlists.length < playlistTotal && (
+              <button className="ghost add" disabled={listBusy} onClick={() => void loadPlaylists(true)}>
+                {listBusy ? 'Loading…' : `Show more (${playlistTotal - playlists.length})`}
+              </button>
+            )}
+            {chosenPlaylists.length > 0 && (
+              <p className="info warn-info">
+                <span aria-hidden="true">ℹ️</span>
+                <span>
+                  Reading {chosenPlaylists.length} playlist{chosenPlaylists.length === 1 ? '' : 's'} takes{' '}
+                  <strong>
+                    {requests} request{requests === 1 ? '' : 's'}
+                  </strong>
+                  . Songs without a clear original year get one quick check each.
+                </span>
+              </p>
+            )}
+          </>
+        )}
+        {errorLine}
+        {canReadPlaylists && (
+          <button className="primary big" disabled={chosenPlaylists.length === 0} onClick={buildPlaylists}>
+            {chosenPlaylists.length
+              ? `Use ${chosenPlaylists.length} playlist${chosenPlaylists.length === 1 ? '' : 's'} (${songsPicked} songs)`
+              : 'Pick at least one playlist'}
+          </button>
+        )}
+      </main>
+    );
+  }
+
+  if (step === 'building') {
+    return (
+      <main className="setup flow">
+        {stepBar}
+        <h2 className="screen-title">{buildReturn === 'genres' ? 'Building your list…' : 'Reading your playlists…'}</h2>
+        <section className="panel">
+          <p className="progress" role="status">
+            {progress?.label ?? 'Starting…'}
+            <progress value={progress?.done ?? 0} max={progress?.total || 1} />
+            {progress && progress.total > 0 && (
+              <span className="hint">
+                {progress.done} of {progress.total}
+              </span>
+            )}
+          </p>
+        </section>
+        <button className="ghost big" onClick={cancelBuild}>
+          Cancel
+        </button>
+      </main>
+    );
+  }
+
+  // ---- Step 3: Players & play ----
+
+  const summary = summarize(songs);
+  const what =
+    source === 'own'
+      ? ownList?.label ?? 'Your own list'
+      : activeDecks
+          .map((id) => DECKS.find((d) => d.id === id)?.title)
+          .filter(Boolean)
+          .join(', ');
+  return (
+    <main className="setup flow">
+      {stepBar}
+      <div className="music-summary">
+        <span>
+          <strong>{songs.length} songs</strong> · {what}
+        </span>
+        <button className="link" onClick={() => go(source === 'own' ? 'own' : 'source')}>
+          Change
+        </button>
+      </div>
+      {source === 'own' && summary.decades.length > 1 && (
+        <ul className="decades" aria-label="Songs per decade">
+          {summary.decades.map(([decade, count]) => (
+            <li key={decade}>
+              <span className="bar" style={{ height: `${Math.max(6, (count / Math.max(...summary.decades.map(([, n]) => n))) * 100)}%` }} />
+              <span className="n">{count}</span>
+              <span className="d">{String(decade).slice(2)}s</span>
+            </li>
+          ))}
+        </ul>
+      )}
 
       <section className="panel">
         <h2>Players or teams</h2>
@@ -501,65 +720,18 @@ export function Setup(props: Props) {
           <span>Cards needed to win</span>
           <input type="number" min={3} max={30} value={target} onChange={(e) => setTarget(Math.max(3, Math.min(30, Number(e.target.value) || 10)))} />
         </label>
+        <p className="hint">
+          {mode === 'premium'
+            ? 'The music plays right here in the browser through your Spotify Premium.'
+            : loggedIn
+              ? "Your account isn't Premium, so the music plays through a hidden Spotify player."
+              : 'The music plays through a hidden Spotify player: full songs if this browser is signed in to Spotify, otherwise 30-second previews.'}
+        </p>
       </section>
 
-      <section className="panel">
-        <h2>How should the music play?</h2>
-        <div className="mode-options" role="radiogroup" aria-label="How should the music play?">
-          {useLogin && (
-            <ModeOption
-              value="premium"
-              current={playMode}
-              onSelect={setMode}
-              title="In the browser (Spotify Premium)"
-              detail="Full songs played right here. Needs Spotify Premium."
-            />
-          )}
-          <ModeOption
-            value="embed"
-            current={playMode}
-            onSelect={setMode}
-            title="Hidden Spotify player"
-            detail={
-              useLogin
-                ? 'A covered-up Spotify player. Full songs if this browser is signed in to Spotify, otherwise 30-second previews.'
-                : `A covered-up Spotify player. Full songs if this browser is signed in to Spotify, otherwise 30-second previews. Without a login it plays only songs with a known Spotify id (${deckSize.noLogin} of the classic hits, and your saved Spotify songs).`
-            }
-          />
-          <ModeOption value="none" current={playMode} onSelect={setMode} title="No audio" detail="Try the rules, or play the music some other way." />
-        </div>
-        {profile && !isPremium && playMode === 'premium' && (
-          <p className="warn">This account isn't Premium, so in-browser playback won't work. Choose the hidden Spotify player instead.</p>
-        )}
-      </section>
-
-      {useLogin && (
-        <section className="panel">
-          <h2>Log in and start</h2>
-          {profile ? (
-            <p>
-              Logged in as <strong>{profile.display_name}</strong> ({isPremium ? 'Premium' : profile.product}).{' '}
-              <button className="link" onClick={onLogout}>
-                Log out
-              </button>
-            </p>
-          ) : (
-            <>
-              <p className="hint">
-                {willLoad
-                  ? 'Spotify asks you to log in and to allow the game to read the listening you ticked. Your songs are loaded right after, and the game starts.'
-                  : 'Spotify asks you to log in, and the game starts when you come back.'}
-              </p>
-              {clientIdField}
-            </>
-          )}
-          {authMessage && <p className="warn">{authMessage}</p>}
-        </section>
-      )}
-
-      {error && <p className="warn center">{error}</p>}
-      <button className={`primary big ${useLogin && !profile ? 'spotify' : ''}`} disabled={useLogin && !profile && !clientId.trim()} onClick={start}>
-        {startLabel}
+      {errorLine}
+      <button className="primary big" onClick={start}>
+        Start game
       </button>
     </main>
   );
@@ -575,14 +747,49 @@ function ModeOption<T extends string>(props: { value: T; current: T | null; onSe
   );
 }
 
-function DeckOption(props: { title: string; detail: string; checked: boolean; onToggle: () => void }) {
+function Choice(props: {
+  icon: string;
+  title: string;
+  detail: string;
+  tag?: string;
+  tagKind?: 'ok' | 'warn';
+  selected?: boolean;
+  disabled?: boolean;
+  onSelect: () => void;
+}) {
   return (
-    <button role="checkbox" aria-checked={props.checked} className={`mode deck ${props.checked ? 'selected' : ''}`} onClick={props.onToggle}>
-      <span className="tick" aria-hidden="true">
-        {props.checked ? '✓' : ''}
+    <button
+      role={props.selected === undefined ? undefined : 'radio'}
+      aria-checked={props.selected}
+      className={`choice ${props.selected ? 'selected' : ''}`}
+      disabled={props.disabled}
+      onClick={props.onSelect}
+    >
+      <span className="choice-icon" aria-hidden="true">
+        {props.icon}
       </span>
       <strong>{props.title}</strong>
       <span>{props.detail}</span>
+      {props.tag && <small className={`tag ${props.tagKind ?? 'ok'}`}>{props.tag}</small>}
+    </button>
+  );
+}
+
+function DeckOption(props: { title: string; detail: string; count?: string; image?: string | null; checked: boolean; onToggle: () => void }) {
+  return (
+    <button
+      role="checkbox"
+      aria-checked={props.checked}
+      className={`mode deck ${props.image !== undefined ? 'with-cover' : ''} ${props.checked ? 'selected' : ''}`}
+      onClick={props.onToggle}
+    >
+      <span className="tick" aria-hidden="true">
+        {props.checked ? '✓' : ''}
+      </span>
+      {props.image !== undefined && (props.image ? <img className="cover" src={props.image} alt="" loading="lazy" /> : <span className="cover" aria-hidden="true" />)}
+      <strong>{props.title}</strong>
+      {props.count && <span className="count">{props.count}</span>}
+      <span className="detail">{props.detail}</span>
     </button>
   );
 }
