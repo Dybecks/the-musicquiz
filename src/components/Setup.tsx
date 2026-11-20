@@ -65,6 +65,8 @@ const SOURCE_KEY = 'mq.source';
 const GENRES_KEY = 'mq.ownGenres';
 const YEARS_KEY = 'mq.ownYears';
 const PLAYLISTS_KEY = 'mq.ownPlaylists';
+/** Who a list belongs to when it was built without a login. */
+const GUEST_ID = 'guest';
 
 const THIS_YEAR = new Date().getFullYear();
 const FIRST_YEAR = 1950;
@@ -177,7 +179,8 @@ export function Setup(props: Props) {
   const canAsk = loggedIn && !blockedUntil;
   const mode: PlaybackKind = canAsk && isPremium ? 'premium' : 'embed';
   const owner = hostContributor(personal);
-  const ownList = owner && profile && owner.userId === profile.id ? owner : undefined;
+  // Without a login, a list built by genre belongs to this browser.
+  const ownList = owner && owner.userId === (loggedIn ? profile!.id : GUEST_ID) ? owner : undefined;
   const ownSongs = ownList ? personalSongs(personal) : [];
   const names = players.map((p) => p.trim()).filter(Boolean);
 
@@ -219,8 +222,8 @@ export function Setup(props: Props) {
     }
     const deck = savePersonalDeck({
       role: 'host',
-      userId: profile!.id,
-      name: profile!.display_name || 'You',
+      userId: loggedIn ? profile!.id : GUEST_ID,
+      name: (loggedIn && profile!.display_name) || 'You',
       sources,
       builtAt: new Date().toISOString(),
       label,
@@ -241,13 +244,12 @@ export function Setup(props: Props) {
   };
 
   const buildGenres = () => {
-    if (!profile) return;
     const id = ++buildId.current;
     const [from, to] = years;
     const label = `${SEARCH_GENRES.filter((g) => genres.includes(g.id)).map((g) => g.label).join(', ')} · ${decadesLabel(from, to)}`;
     setBuildReturn('genres');
     go('building');
-    startList(newGenrePlan(genres, Math.min(from, to), Math.max(from, to)), setProgress).then(
+    startList(newGenrePlan(genres, Math.min(from, to), Math.max(from, to)), setProgress, undefined, canAsk).then(
       ({ songs: built, plan, note }) => finishBuild(id, built, label, 'genres', [], note, plan),
       (e) => failBuild(id, e, 'genres'),
     );
@@ -413,7 +415,7 @@ export function Setup(props: Props) {
               current={account}
               onSelect={setAccount}
               title="Play without login"
-              detail="Ready-made lists through a hidden Spotify player. Full songs if this browser is signed in to Spotify, otherwise 30-second previews."
+              detail="Ready-made lists or genres and years, through a hidden Spotify player. Full songs if this browser is signed in to Spotify, otherwise 30-second previews."
             />
           </div>
           {profile && (
@@ -468,21 +470,13 @@ export function Setup(props: Props) {
             icon="🎛️"
             title="Make your own"
             detail="Pick genres and years, or use your own Spotify playlists."
-            tag="Needs Spotify login"
+            tag={loggedIn ? undefined : 'Playlists need Spotify login'}
             tagKind="warn"
             selected={source === 'own'}
-            disabled={!loggedIn}
             onSelect={() => setSource('own')}
           />
         </div>
-        {!loggedIn && (
-          <p className="hint">
-            <button className="link" onClick={() => go('account')}>
-              Log in to use your own music
-            </button>
-          </p>
-        )}
-        <button className="primary big" onClick={() => go(source === 'own' && loggedIn ? 'own' : 'ready')}>
+        <button className="primary big" onClick={() => go(source === 'own' ? 'own' : 'ready')}>
           Continue
         </button>
       </main>
@@ -523,12 +517,22 @@ export function Setup(props: Props) {
         {stepBar}
         {back('source')}
         <h2 className="screen-title">How do you want to pick?</h2>
-        <p className="hint">
-          Logged in as <strong>{profile?.display_name}</strong>.
-        </p>
+        {loggedIn && (
+          <p className="hint">
+            Logged in as <strong>{profile?.display_name}</strong>.
+          </p>
+        )}
         <div className="choices">
           <Choice icon="🎸" title="By genre" detail="Choose genres and years. We find well-known songs that fit." onSelect={() => go('genres')} />
-          <Choice icon="📃" title="From my playlists" detail="Pick any of your own Spotify playlists." onSelect={() => go('playlists')} />
+          <Choice
+            icon="📃"
+            title="From my playlists"
+            detail="Pick any of your own Spotify playlists."
+            tag={loggedIn ? undefined : 'Needs Spotify login'}
+            tagKind="warn"
+            disabled={!loggedIn}
+            onSelect={() => go('playlists')}
+          />
           {ownList && ownSongs.length > 0 && (
             <Choice
               icon="↺"
@@ -612,8 +616,8 @@ export function Setup(props: Props) {
           <p className="info">
             <span aria-hidden="true">⚡</span>
             <span>
-              Songs are fetched a few at a time while you play: <strong>1 Spotify request</strong> to start, then about one
-              more per 20 songs played. Each is a random pick from these genres and years.
+              Songs come from the game's own lists for these genres and years, so <strong>no Spotify requests</strong> are
+              needed. {loggedIn ? 'If a pick has few songs, a few more are fetched from Spotify while you play.' : ''}
             </span>
           </p>
         )}

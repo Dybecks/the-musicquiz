@@ -48,7 +48,9 @@ describe('deck choice', () => {
 
   it('only keeps songs with a Spotify id for the hidden player without login', () => {
     const songs = chooseSongs({ decks: ['classic', 'games'], mode: 'embed', loggedIn: false, personal: null });
-    expect(songs).toEqual(NO_LOGIN_SONGS);
+    expect(songs.length).toBeGreaterThanOrEqual(NO_LOGIN_SONGS.length);
+    expect(songs.every((s) => s.spotifyId)).toBe(true);
+    expect(songs.slice(0, NO_LOGIN_SONGS.length)).toEqual(NO_LOGIN_SONGS);
   });
 
   it("puts the person's own copy of a song first", () => {

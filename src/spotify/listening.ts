@@ -5,8 +5,10 @@
  */
 import type { Song } from '../game/engine';
 import { RateLimitError, spotifyGet, SpotifyError } from './api';
-import { filterSongs, type Genre } from '../data/genres';
+import { filterSongs } from '../data/genres';
 import { DEFAULT_SONGS } from '../data/songs';
+import { SEARCH_GENRES } from '../data/searchGenres';
+import { loadGenrePools, poolSongs } from '../data/spotifyData';
 import {
   earliestYear,
   needsYearCheck,
@@ -53,25 +55,7 @@ const CACHE_LIMIT = 8000;
 /** Reading playlists needs these on top of the login's usual access. */
 export const PLAYLIST_SCOPES = ['playlist-read-private', 'playlist-read-collaborative'];
 
-/** Genres the host can build a list from, with the Spotify genre each one searches. */
-export const SEARCH_GENRES: { id: string; label: string; query: string; genre?: Genre }[] = [
-  { id: 'pop', label: 'Pop', query: 'pop', genre: 'pop' },
-  { id: 'rock', label: 'Rock', query: 'rock', genre: 'rock' },
-  { id: 'hiphop', label: 'Hip-hop', query: 'hip hop', genre: 'hiphop' },
-  { id: 'rnb', label: 'R&B', query: 'r&b', genre: 'hiphop' },
-  { id: 'soul', label: 'Soul', query: 'soul', genre: 'soul' },
-  { id: 'disco', label: 'Disco & funk', query: 'disco', genre: 'soul' },
-  { id: 'dance', label: 'Dance', query: 'dance', genre: 'dance' },
-  { id: 'country', label: 'Country', query: 'country' },
-  { id: 'metal', label: 'Metal', query: 'metal', genre: 'rock' },
-  { id: 'indie', label: 'Indie', query: 'indie', genre: 'rock' },
-  { id: 'schlager', label: 'Schlager', query: 'schlager', genre: 'swedish' },
-  { id: 'swedishpop', label: 'Swedish pop', query: 'swedish pop', genre: 'swedish' },
-  { id: 'jazz', label: 'Jazz', query: 'jazz', genre: 'soul' },
-  { id: 'reggae', label: 'Reggae', query: 'reggae' },
-  { id: 'latin', label: 'Latin', query: 'latin' },
-  { id: 'punk', label: 'Punk', query: 'punk', genre: 'rock' },
-];
+export { SEARCH_GENRES } from '../data/searchGenres';
 
 // ---- The saved list ----
 
@@ -343,19 +327,50 @@ export function builtInForGenres(genreIds: readonly string[], from: number, to: 
 }
 
 /**
+ * With at least this many songs from the game's own genre lists, a genre
+ * list asks Spotify nothing at all.
+ */
+export const ENOUGH_OWN_SONGS = 40;
+
+/**
+ * The songs the game already has for these genres and years, with no
+ * requests: its own genre lists (looked up on Spotify ahead of time), and,
+ * when those are thin, its classic hits in the same wider genres.
+ */
+export async function ownGenreSongs(genreIds: readonly string[], from: number, to: number): Promise<Song[]> {
+  let pools = {};
+  try {
+    pools = await loadGenrePools();
+  } catch {
+    /* the lists didn't load (offline with an old cache): use the classic hits */
+  }
+  const pooled = poolSongs(pools, genreIds, from, to);
+  return pooled.length >= ENOUGH_OWN_SONGS ? mergeById(pooled) : mergeById([...pooled, ...builtInForGenres(genreIds, from, to)]);
+}
+
+/**
  * Fetches the first few songs, one batch (request) after another, until
- * there are enough to start. If Spotify won't answer (the quota is used up),
- * a genre list carries on with the game's own songs for the same genres and
- * years, so the host never has to act.
+ * there are enough to start. A genre list starts from the game's own songs
+ * for those genres and years; when there are plenty of them, or there is no
+ * login to ask Spotify with, those are the whole list. If Spotify won't
+ * answer (the quota is used up), a genre list carries on with the game's
+ * own songs, so the host never has to act.
  */
 export async function startList(
   plan: RefillPlan,
   onProgress: (p: BuildProgress) => void = () => {},
   want = FIRST_BATCH,
+  canAskSpotify = true,
 ): Promise<{ songs: Song[]; plan: RefillPlan | null; note: string | null }> {
-  // A genre list starts with the game's own songs for those genres and
-  // years (no requests), spread over the decades, plus one Spotify batch.
-  let songs: Song[] = plan.kind === 'genres' ? builtInForGenres(plan.genres, plan.from, plan.to) : [];
+  let songs: Song[] = [];
+  if (plan.kind === 'genres') {
+    onProgress({ label: 'Picking songs', done: 0, total: want });
+    songs = await ownGenreSongs(plan.genres, plan.from, plan.to);
+    if (songs.length >= ENOUGH_OWN_SONGS || !canAskSpotify) {
+      onProgress({ label: 'Picking songs', done: want, total: want });
+      return { songs, plan: null, note: null };
+    }
+  }
   let next: RefillPlan | null = plan;
   let tries = 0;
   const label = plan.kind === 'genres' ? 'Finding songs on Spotify' : 'Reading your playlists';
@@ -371,7 +386,7 @@ export async function startList(
         throw e;
       }
       if (songs.length === 0) throw e;
-      return { songs, plan: null, note: `${e.message} Until then the game uses its own classic hits for these genres and years.` };
+      return { songs, plan: null, note: `${e.message} Until then the game uses its own songs for these genres and years.` };
     }
     tries++;
     if (next && songs.length < want) await pause(PAUSE_MS);

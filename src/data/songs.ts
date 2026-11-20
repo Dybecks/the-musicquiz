@@ -1,12 +1,13 @@
 import type { Song } from '../game/engine';
 import type { Genre } from './genres';
+import { withTrackId } from './spotifyData';
 
 /**
  * The default deck. Years are the original release year of the song (single or
  * album, whichever came first), not the year of a remaster on Spotify.
- * Songs without a Spotify id are looked up by title + artist at play time
- * (needs login); add an id to SPOTIFY_IDS to pin a recording and make the
- * song playable without login.
+ * Spotify ids are filled in by scripts/spotify-precompute.ts (track-ids.json);
+ * an id in SPOTIFY_IDS pins a recording by hand. Songs with neither are
+ * looked up by title + artist at play time, which needs a login.
  *
  * To add songs: append [title, artist, year] to RAW below.
  */
@@ -393,14 +394,18 @@ const ARTIST_GENRES: Record<string, Genre[]> = {
   "a-ha": ['pop'],
 };
 
-export const DEFAULT_SONGS: Song[] = RAW.map(([title, artist, year], i) => ({
-  id: `d${i + 1}`,
-  title,
-  artist,
-  year,
-  genres: ARTIST_GENRES[artist] ?? [],
-  ...(SPOTIFY_IDS[title] ? { spotifyId: SPOTIFY_IDS[title] } : {}),
-}));
+// Ids checked by hand (above) win; the rest come from track-ids.json, looked
+// up on Spotify by scripts/spotify-precompute.ts.
+export const DEFAULT_SONGS: Song[] = RAW.map(([title, artist, year], i) =>
+  withTrackId({
+    id: `d${i + 1}`,
+    title,
+    artist,
+    year,
+    genres: ARTIST_GENRES[artist] ?? [],
+    ...(SPOTIFY_IDS[title] ? { spotifyId: SPOTIFY_IDS[title] } : {}),
+  }),
+);
 
 /** Songs that can be played without a Spotify login. */
 export const NO_LOGIN_SONGS: Song[] = DEFAULT_SONGS.filter((s) => s.spotifyId);

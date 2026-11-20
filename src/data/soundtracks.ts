@@ -1,4 +1,5 @@
 import type { Song } from '../game/engine';
+import { withTrackId } from './spotifyData';
 
 /**
  * Themed decks of songs from soundtracks. Each list holds songs written for
@@ -6,8 +7,9 @@ import type { Song } from '../game/engine';
  * first came out (the film's release, the show's premiere, the game's first
  * release, the musical's first major production or concept album).
  *
- * None of these have a pinned Spotify id yet, so they are found with the
- * Spotify search at play time, which needs a login.
+ * Spotify ids come from track-ids.json (scripts/spotify-precompute.ts). Songs
+ * without one are found with the Spotify search at play time, which needs a
+ * login.
  *
  * To add songs: append [title, artist, year, from] to a list.
  */
@@ -226,7 +228,7 @@ const GAMES: Row[] = [
 ];
 
 const toSongs = (prefix: string, rows: Row[]): Song[] =>
-  rows.map(([title, artist, year, from], i) => ({ id: `${prefix}${i + 1}`, title, artist, year, from }));
+  rows.map(([title, artist, year, from], i) => withTrackId({ id: `${prefix}${i + 1}`, title, artist, year, from }));
 
 export const MOVIE_SONGS = toSongs('mv', MOVIES);
 export const MUSICAL_SONGS = toSongs('mu', MUSICALS);

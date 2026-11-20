@@ -88,10 +88,34 @@ The four soundtrack decks are in `src/data/soundtracks.ts`. They only hold songs
 for the film, show, game or musical, so the year on the card is the year that work first
 came out: the film's release, the show's premiere, the game's first release, or the
 musical's first major production (or concept album, as for Evita). Cards say where the
-song is from. None of these songs has a pinned Spotify id yet, so they are found with the
-Spotify search at play time, which needs a Spotify login. Some video game music, Nintendo's
-in particular, isn't on Spotify; the search may then find a cover, or nothing, and
-**Skip song** draws another.
+song is from. Their Spotify ids are looked up ahead of time (see **Spotify data shipped
+with the game** below); a song without one is found with the Spotify search at play time,
+which needs a login. Some video game music, Nintendo's in particular, isn't on Spotify;
+such songs are listed for review instead of being matched to a cover.
+
+## Spotify data shipped with the game
+
+`scripts/spotify-precompute.ts` looks things up on Spotify once, so games don't have to:
+
+- a Spotify track id for every ready-made song that has none pinned by hand
+  (`src/data/spotify/track-ids.json`), so every song plays in the hidden player without
+  a login or a request;
+- the genre lists for **By genre** (`src/data/spotify/genre-pools.json`): for each genre
+  and decade, the best-known songs from Spotify's genre search. Songs on compilations,
+  remasters, live albums, karaoke and the like are skipped, so each song is dated by its
+  own album; a song found in several decades keeps the earliest, and a song that is also
+  in a ready-made deck keeps that deck's checked year.
+
+Songs it can't match are listed in `src/data/spotify/REVIEW.md`, never guessed, along with
+ready-made songs whose Spotify year differs from the deck's.
+
+It runs on GitHub: the **Look up Spotify data** workflow (Actions tab, or every 6 hours
+until everything is looked up). It needs two repository secrets, `SPOTIFY_CLIENT_ID` and
+`SPOTIFY_CLIENT_SECRET`, from the Spotify app's dashboard (Settings → Secrets and
+variables → Actions). Spotify's request quota is shared by every app on the developer
+account, so a run makes at most 300 requests, one every 1.5 seconds, and stops by itself
+if Spotify asks for a long pause; the next run carries on (`scripts/spotify-progress.json`).
+Results go to the `spotify-data` branch and a pull request from it.
 
 ## Setting up a game
 
@@ -103,7 +127,8 @@ Setup asks one thing per screen, in three steps:
    in the browser, otherwise through the hidden Spotify player.
 2. **Music:** **Ready-made lists** or **Make your own**.
    - **Ready-made lists:** tick one or more of the decks above. No Spotify requests.
-   - **Make your own** (needs the login): **By genre** or **From my playlists**, or
+   - **Make your own:** **By genre** (works without login) or **From my playlists**
+     (needs the login), or
      **Use my last list** to play the list built last time again without any requests.
 3. **Players & play:** players or teams, cards needed to win, and **Start game**.
 
@@ -119,9 +144,12 @@ with the songs from last time and fetches new ones from where it left off.
 
 ### By genre
 
-Pick 1 to 4 genres and a year span. The list starts with the game's own classic hits for
-those genres and years that have a Spotify link (no requests at all; for pop, rock,
-dance, soul and Swedish), plus one Spotify batch. Each batch is one Spotify search such as
+Pick 1 to 4 genres and a year span. The list comes from the game's own genre lists
+(`src/data/spotify/genre-pools.json`): well-known songs per genre and decade, each with
+its original year and Spotify id, so building it makes **no Spotify requests** and works
+without a login. Only when those lists hold fewer than 40 songs for the pick (and you are
+logged in) does the game mix in its classic hits for the same wider genres and fetch
+batches from Spotify while you play. Each batch is one Spotify search such as
 `genre:"rock" year:1980-1989`: the decades take turns (the one searched least so far, wide
 spans with many genres search neighbouring decades together), with a random genre and a
 random depth in the first 250 results, so the songs are known ones. Whenever songs are
