@@ -50,6 +50,8 @@ export interface Contributor {
   /** What the list was built from, for example "Pop, Rock · 1970–1999". */
   label?: string;
   songs: Song[];
+  /** Where more songs come from while playing (a RefillPlan from listening.ts). */
+  plan?: unknown;
 }
 
 export interface PersonalDeck {

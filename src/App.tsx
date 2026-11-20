@@ -84,7 +84,7 @@ export function App() {
     setMode(values.mode);
     // Spread the songs over the decades, unless the host chose which years to play.
     const order = values.spreadDecades ? 'decades' : 'random';
-    setGame(createGame({ playerNames: values.players, targetCards: values.targetCards, songs: values.songs, order }));
+    setGame({ ...createGame({ playerNames: values.players, targetCards: values.targetCards, songs: values.songs, order }), refill: values.refill });
   };
 
   return (

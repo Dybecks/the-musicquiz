@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createGame, insertSorted, isCorrectPlacement, nextTurn, placeCurrent, skipSong, spreadByDecade, type Song } from './engine';
+import { addSongs, createGame, insertSorted, isCorrectPlacement, nextTurn, placeCurrent, skipSong, spreadByDecade, type Song } from './engine';
 
 const song = (year: number, id = `s${year}`): Song => ({ id, title: `Song ${year}`, artist: 'Artist', year });
 const songs = [1960, 1970, 1980, 1990, 2000, 2010, 2020].map((y) => song(y));
@@ -103,5 +103,21 @@ describe('spreadByDecade', () => {
   it('keeps every song exactly once', () => {
     const out = spreadByDecade(songs);
     expect(out.map((s) => s.id).sort()).toEqual(songs.map((s) => s.id).sort());
+  });
+});
+
+describe('addSongs', () => {
+  it('appends new songs and leaves out ones already dealt or in the deck', () => {
+    const g = createGame({ playerNames: ['A'], targetCards: 3, songs: songs.slice(0, 3), rng: noShuffle });
+    const dealt = g.players[0].timeline[0];
+    const next = addSongs(g, [dealt, g.deck[0], song(1955), song(1955, 'other-release')], { more: true }, noShuffle);
+    expect(next.deck.map((s) => s.year)).toEqual([...g.deck.map((s) => s.year), 1955]);
+    expect(next.refill).toEqual({ more: true });
+  });
+  it('remembers drawn songs so they are not added again', () => {
+    let g = createGame({ playerNames: ['A'], targetCards: 5, songs, rng: noShuffle });
+    const first = g.current!;
+    g = skipSong(g);
+    expect(addSongs(g, [first], undefined).deck).toHaveLength(g.deck.length);
   });
 });
