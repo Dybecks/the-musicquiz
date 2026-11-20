@@ -12,24 +12,47 @@ import { uriFor, type Playback } from './playback';
  */
 
 const NOTHING_ACTIVE =
-  'Spotify isn’t playing anywhere right now. Open the Spotify app, pick the speaker (the speaker icon at the bottom of a playing song), start any song, then press Play here again.';
+  'The Spotify app isn’t open anywhere Spotify can see. Open the Spotify app, pick the speaker (the speaker icon at the bottom of a playing song), start any song, then press Play here again.';
 
 const restricted = (d: SpotifyDevice) =>
   `Spotify won’t let other apps control “${d.name}”. If it’s a Sonos, pick it in the Spotify app’s device list (the speaker icon), not in the Sonos app, start a song there and try again. Otherwise choose another speaker under 🔊.`;
 
 const premiumNeeded = 'Steering the Spotify app needs Spotify Premium.';
 
+/** The game's own in-browser player. Spotify keeps listing it for a while after it's gone. */
+const OWN_PLAYER = 'The Music Quiz';
+
+/**
+ * The device to play on: the one the Spotify app is using now, or else one
+ * that is open but idle (the phone's app often isn't "active" until it plays).
+ */
+export function chooseDevice(all: SpotifyDevice[]): SpotifyDevice {
+  const devices = all.filter((d) => d.name !== OWN_PLAYER);
+  const active = devices.find((d) => d.is_active);
+  if (active) {
+    if (active.is_restricted || !active.id) throw new Error(restricted(active));
+    return active;
+  }
+  const usable = devices.filter((d) => d.id && !d.is_restricted);
+  const pick = usable.find((d) => d.type === 'Smartphone') ?? usable[0];
+  if (pick) return pick;
+  const locked = devices.find((d) => d.is_restricted);
+  throw new Error(locked ? restricted(locked) : NOTHING_ACTIVE);
+}
+
 async function activeDevice(): Promise<SpotifyDevice> {
-  const active = (await getDevices()).find((d) => d.is_active);
-  if (!active) throw new Error(NOTHING_ACTIVE);
-  if (active.is_restricted || !active.id) throw new Error(restricted(active));
-  return active;
+  return chooseDevice(await getDevices());
 }
 
 function explain(e: unknown, device: SpotifyDevice | null): never {
   if (e instanceof SpotifyError) {
-    if (e.status === 404) throw new Error(NOTHING_ACTIVE);
-    if (e.status === 403) throw new Error(device ? restricted(device) : premiumNeeded);
+    // Spotify's own words help when the guess below is wrong.
+    const why = ` (${e.message.replace(/^Spotify: /, '')})`;
+    if (e.status === 404) throw new Error(NOTHING_ACTIVE + why);
+    if (e.status === 403) {
+      if (/premium/i.test(e.message) || !device) throw new Error(premiumNeeded + why);
+      throw new Error(restricted(device) + why);
+    }
   }
   throw e;
 }

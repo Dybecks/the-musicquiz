@@ -12,7 +12,7 @@ It runs in the browser on a phone, tablet or laptop that everyone gathers around
 
 1. Add the players or teams and choose how many cards are needed to win.
 2. Everyone gets one random face-up starting card (title, artist, year).
-3. On your turn, press **Play song** and listen. The title stays hidden.
+3. On your turn the song starts by itself (or press **Play song**) and you listen. The title stays hidden.
 4. Tap the gap on your timeline where you think the song belongs and **Lock in guess**.
 5. The song is revealed. A correct placement adds the card to your timeline; a
    wrong one discards it and shows where it really belonged. Songs from the same
@@ -204,9 +204,11 @@ the game picks another place to play:
 
 - **Spotify app** (needs the login and Premium): the game steers the Spotify app instead
   of playing itself. The music plays wherever the app plays: the phone, or a speaker
-  picked in the app's device list, like a Sonos or a TV. Start any song in the app
-  first; each song is then started on the device the app uses at that moment
-  (`src/spotify/remote.ts`). The app shows the title, so keep it out of sight. Spotify
+  picked in the app's device list, like a Sonos or a TV. Open the app first (start
+  any song if it doesn't show up); each song is then started on the device the app
+  uses at that moment, or else on an open but idle app, a phone first
+  (`src/spotify/remote.ts`). The game's own old in-browser player, which Spotify keeps
+  listing for a while, is skipped. The app shows the title, so keep it out of sight. Spotify
   refuses some speakers ("won't let other apps control"), Sonos ones in particular,
   most often when the music was started from the Sonos app rather than the Spotify app.
 - **A Sonos through the Sonos bridge**, see [Playing on a Sonos](#playing-on-a-sonos) below.

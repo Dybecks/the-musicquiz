@@ -14,7 +14,7 @@ vi.mock('./api', () => {
 vi.mock('./playback', () => ({ uriFor: vi.fn(async () => 'spotify:track:abc') }));
 
 import * as api from './api';
-import { createSpotifyAppPlayback } from './remote';
+import { chooseDevice, createSpotifyAppPlayback } from './remote';
 
 const mocked = vi.mocked(api);
 const song = { id: 's1', title: 'T', artist: 'A', year: 1990 };
@@ -44,11 +44,11 @@ describe('steering the Spotify app', () => {
     expect(states).toEqual([false, true, false, true]);
   });
 
-  it('says how to start the app when nothing is playing', async () => {
-    mocked.getDevices.mockResolvedValue([{ ...phone, is_active: false }]);
+  it('says how to start the app when Spotify sees no app', async () => {
+    mocked.getDevices.mockResolvedValue([{ ...phone, name: 'The Music Quiz', is_active: true }]);
     const p = createSpotifyAppPlayback();
     await p.prepare(song);
-    await expect(p.play()).rejects.toThrow(/isn’t playing anywhere/);
+    await expect(p.play()).rejects.toThrow(/isn’t open anywhere/);
     expect(mocked.playOnDevice).not.toHaveBeenCalled();
   });
 
@@ -64,7 +64,15 @@ describe('steering the Spotify app', () => {
     mocked.playOnDevice.mockRejectedValueOnce(new api.SpotifyError('Restriction violated', 403));
     const p = createSpotifyAppPlayback();
     await p.prepare(song);
-    await expect(p.play()).rejects.toThrow(/won’t let other apps control “Pixel”/);
+    await expect(p.play()).rejects.toThrow(/won’t let other apps control “Pixel”.*\(Restriction violated\)/);
+  });
+
+  it('says when Premium is missing', async () => {
+    mocked.getDevices.mockResolvedValue([phone]);
+    mocked.playOnDevice.mockRejectedValueOnce(new api.SpotifyError('Spotify: Player command failed: Premium required', 403));
+    const p = createSpotifyAppPlayback();
+    await p.prepare(song);
+    await expect(p.play()).rejects.toThrow(/needs Spotify Premium/);
   });
 
   it('asks the device again for the next song', async () => {
@@ -76,5 +84,25 @@ describe('steering the Spotify app', () => {
     expect(mocked.pauseDevice).toHaveBeenCalledWith('phone1');
     await p.play();
     expect(mocked.getDevices).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe('choosing the device', () => {
+  const d = (over: Partial<api.SpotifyDevice>) => ({ id: 'x', name: 'X', type: 'Computer', is_active: false, is_restricted: false, ...over });
+
+  it('skips the game’s own old player, even when Spotify still calls it active', () => {
+    expect(chooseDevice([d({ id: 'own', name: 'The Music Quiz', is_active: true }), d({ id: 'p', type: 'Smartphone' })]).id).toBe('p');
+  });
+
+  it('prefers the active device, else an idle phone, else any open one', () => {
+    expect(chooseDevice([d({ id: 'tv', type: 'TV' }), d({ id: 'a', is_active: true })]).id).toBe('a');
+    expect(chooseDevice([d({ id: 'tv', type: 'TV' }), d({ id: 'p', type: 'Smartphone' })]).id).toBe('p');
+    expect(chooseDevice([d({ id: 'tv', type: 'TV' })]).id).toBe('tv');
+  });
+
+  it('explains a locked active device or a locked only device', () => {
+    expect(() => chooseDevice([d({ name: 'Kitchen', is_active: true, is_restricted: true })])).toThrow(/“Kitchen”/);
+    expect(() => chooseDevice([d({ name: 'Kitchen', is_restricted: true })])).toThrow(/“Kitchen”/);
+    expect(() => chooseDevice([])).toThrow(/isn’t open anywhere/);
   });
 });

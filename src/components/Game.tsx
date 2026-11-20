@@ -143,7 +143,11 @@ export function Game({ state, mode, onModeChange, speaker, onSpeakerChange, onCh
     setShowPlayer(false);
     playback
       .prepare(state.current)
-      .then(() => !cancelled && setSongStatus('ready'))
+      .then(() => {
+        if (cancelled) return;
+        setSongStatus('ready');
+        void autoStart(playback);
+      })
       .catch((e) => {
         if (cancelled) return;
         setSongStatus('error');
@@ -196,6 +200,27 @@ export function Game({ state, mode, onModeChange, speaker, onSpeakerChange, onCh
   }, [songId]);
 
   const player = currentPlayer(state);
+
+  /**
+   * Start each new song by itself once it is loaded. Not right after the page
+   * was (re)loaded: browsers only allow sound once someone has tapped the page.
+   * In this browser a refused start just leaves the Play button; on a speaker
+   * or the Spotify app the reason is shown.
+   */
+  const autoStart = async (p: Playback) => {
+    if (p.kind === 'none') return;
+    const tapped = (navigator as Navigator & { userActivation?: { hasBeenActive: boolean } }).userActivation?.hasBeenActive ?? true;
+    if (!tapped) return;
+    const remoteKind = p.kind === 'sonos' || p.kind === 'spotify-app';
+    setStarting(true);
+    try {
+      await p.play();
+    } catch (e) {
+      if (remoteKind) setSongError(message(e));
+    } finally {
+      setStarting(false);
+    }
+  };
 
   const togglePlay = async () => {
     if (!playback) return;
