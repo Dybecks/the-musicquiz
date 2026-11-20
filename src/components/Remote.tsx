@@ -1,7 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { joinRoom, type ClientLink, type ClientStatus } from '../multiplayer/connection';
 import {
+  cleanTeamName,
   HOST_ID,
+  KICKED_REASON,
+  MAX_TEAM_NAME,
+  nextVotes,
+  turnOf,
   isValidCode,
   label,
   normalizeCode,
@@ -231,7 +236,7 @@ function Joined({
     return (
       <main className="remote">
         <section className="panel center">
-          <h1>{t.gameOver}</h1>
+          <h1>{status.reason === KICKED_REASON ? t.removed : t.gameOver}</h1>
           <p>{closedReason(status.reason)}</p>
           {view?.game && view.game.phase === 'finished' && <Finished state={view.game} />}
           <button className="primary big" onClick={onLeave}>
@@ -296,6 +301,7 @@ function Joined({
               t.pickTeam
             )}
           </p>
+          {myTeam && <TeamName team={myTeam} onRename={(name) => send({ type: 'team-name', name })} />}
           {view.pendingSongs > 0 && <p className="hint">{t.pendingSongs(view.pendingSongs)}</p>}
         </section>
         {teamPicker}
@@ -350,7 +356,10 @@ function Joined({
               <span className="muted">{tt.game.turnSuffix(active.name)}</span>
             </h1>
             {game.phase === 'revealed' && game.lastGuess ? (
-              <Reveal correct={game.lastGuess.correct} song={game.lastGuess.song} />
+              <>
+                <Reveal correct={game.lastGuess.correct} song={game.lastGuess.song} />
+                <NextSong view={view} me={me} send={send} />
+              </>
             ) : (
               <>
                 <div className="now-playing">
@@ -358,6 +367,11 @@ function Joined({
                     ?
                   </div>
                   <span className="hint">{view.live.playing ? t.playing : t.waitingSong}</span>
+                  {view.nextRule !== 'host' && (
+                    <button className="ghost" onClick={() => send({ type: 'play', playing: !view.live.playing })}>
+                      {view.live.playing ? tt.game.pause : t.playShort}
+                    </button>
+                  )}
                 </div>
                 {myTurn ? (
                   <p>{t.voteHint}</p>
@@ -416,15 +430,22 @@ function Joined({
           {t.changeTeam}
         </button>
       </p>
+      <TeamName team={myTeam} onRename={(name) => send({ type: 'team-name', name })} />
       {addMusic}
     </main>
   );
 }
 
-/** Why the game ended. Hosts send a code (see connection.ts); older hosts sent English text. */
+/**
+ * Why the game ended, in this phone's language. Hosts send a code (see
+ * connection.ts); older hosts sent the English text, which is matched too.
+ */
 function closedReason(reason: string): string {
   const t = msg().remote;
-  return reason === 'ended' ? t.hostEnded : reason === 'stopped' ? t.hostStopped : reason;
+  if (reason === 'ended' || reason === 'The host ended the game.') return t.hostEnded;
+  if (reason === 'stopped' || reason === 'The host stopped sharing the game.') return t.hostStopped;
+  if (reason === KICKED_REASON) return t.removedText;
+  return reason;
 }
 
 function Who({ member }: { member: Member }) {
@@ -435,5 +456,82 @@ function Who({ member }: { member: Member }) {
       {member.name}
       {member.id === HOST_ID && t.share.host}
     </span>
+  );
+}
+
+/** Lets a team member rename their team; the host's screen and every phone follow. */
+function TeamName({ team, onRename }: { team: { id: string; name: string }; onRename: (name: string) => void }) {
+  const [editing, setEditing] = useState(false);
+  const t = useT().remote;
+  const [name, setName] = useState(team.name);
+  if (!editing)
+    return (
+      <p className="hint center">
+        <button
+          className="link"
+          onClick={() => {
+            setName(team.name);
+            setEditing(true);
+          }}
+        >
+          {t.renameTeam(team.name)}
+        </button>
+      </p>
+    );
+  const clean = cleanTeamName(name);
+  return (
+    <form
+      className="team-rename"
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (clean && clean !== team.name) onRename(clean);
+        setEditing(false);
+      }}
+    >
+      <input value={name} maxLength={MAX_TEAM_NAME} onChange={(e) => setName(e.target.value)} aria-label={t.teamName} autoFocus />
+      <button type="submit" className="primary" disabled={!clean}>
+        {t.save}
+      </button>
+      <button type="button" className="ghost" onClick={() => setEditing(false)}>
+        {t.cancel}
+      </button>
+    </form>
+  );
+}
+
+/** After the reveal: move on to the next song, as the host allows (one tap, or most players). */
+function NextSong({ view, me, send }: { view: RoomView; me: string; send: (msg: ClientMessage) => void }) {
+  const tt = useT();
+  const t = tt.remote;
+  const game = view.game!;
+  const turn = turnOf(game);
+  const nextTeam = game.players[(game.currentPlayerIndex + 1) % game.players.length];
+  const label = game.winnerIds.length ? tt.game.seeWinner : t.nextSong(nextTeam.name);
+  if (view.nextRule === 'host') return <p className="hint center">{t.hostStartsNext}</p>;
+  if (view.nextRule === 'anyone')
+    return (
+      <div className="action-bar">
+        <button className="primary big" onClick={() => send({ type: 'next', turn })}>
+          {label}
+        </button>
+      </div>
+    );
+  const want = view.members.find((m) => m.id === me)?.next === turn;
+  const { yes, needed } = nextVotes(view.members, turn);
+  return (
+    <div className="action-bar">
+      {want ? (
+        <button className="ghost big" onClick={() => send({ type: 'next', turn, want: false })}>
+          {t.readyTapToWait}
+        </button>
+      ) : (
+        <button className="primary big" onClick={() => send({ type: 'next', turn, want: true })}>
+          {label}
+        </button>
+      )}
+      <p className="hint center vote-status">
+        {t.wantNext(yes, needed)}
+      </p>
+    </div>
   );
 }

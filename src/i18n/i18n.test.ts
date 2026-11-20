@@ -56,10 +56,10 @@ function findHardcodedText(path: string): string[] {
         if (text && wordy(text)) found.push(`${where(part)} ${text}`);
       }
     }
-    // new Error('Some text'), confirm('Some text'), alert('Some text')
+    // new Error('Some text'), confirm('Some text'), alert('Some text'), prompt('Some text')
     if ((ts.isNewExpression(node) || ts.isCallExpression(node)) && node.arguments?.length) {
       const callee = node.expression.getText();
-      if (/(^|\.)(\w*Error|confirm|alert)$/.test(callee)) {
+      if (/(^|\.)(\w*Error|confirm|alert|prompt)$/.test(callee)) {
         const text = literalText(node.arguments[0]);
         if (text && wordy(text)) found.push(`${where(node)} ${node.getText()}`);
       }

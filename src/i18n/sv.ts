@@ -207,6 +207,8 @@ export const sv: Messages = {
     playHere: 'Spela på den här enheten i stället',
     playingOnSonos: (name) => `Spelas i ${name} (Sonos).`,
     playingInApp: 'Spelas i Spotify-appen, var den nu spelar. Den visar titeln, så håll den utom synhåll.',
+    playingOnDevice: (name) =>
+      `Spelas på ${name} via Spotify. Spotify-appen (och en tv-skärm) visar titeln, så håll den utom synhåll.`,
     lockedTapToChange: 'Låst · tryck för att ändra',
     tapToVote: 'Tryck på en plats för att rösta',
     lockMyVote: 'Lås min röst',
@@ -241,6 +243,9 @@ export const sv: Messages = {
     playAgain: 'Spela igen',
     refillFallback: (why) => `${why} Tills dess använder spelet sina egna klassiska hits för de här genrerna och åren.`,
     refillFailed: (why) => `Det gick inte att hämta fler låtar: ${why}`,
+    phonesWantNext: (yes, needed) => `Mobiler: ${yes} av ${needed} som behövs vill ha nästa låt`,
+    anyoneMovesOn: 'Vilken spelare som helst kan gå vidare från sin mobil.',
+    openApp: 'Öppna Spotify-appen',
   },
 
   timeline: {
@@ -257,11 +262,16 @@ export const sv: Messages = {
     thisDevice: 'Den här enheten',
     spotifyApp: 'Spotify-appen',
     playOn: 'Spela musiken på',
-    appHintTitle: 'Spotify-appen:',
-    appHint:
-      'spelet styr Spotify-appen, och musiken spelas där appen spelar: i mobilen, eller i en högtalare du väljer i appen (högtalarikonen), till exempel en Sonos eller en TV. Starta valfri låt där först. Kräver Spotify Premium. Appen visar titeln, så håll den utom synhåll.',
-    appNeedsLoginTitle: 'Spotify-appen',
-    appNeedsLogin: 'kräver Spotify-inloggning (Premium): avsluta spelet och välj ”Logga in med Spotify” i förberedelserna.',
+    whereverSpotify: 'Där Spotify spelar',
+    lockedOne: 'Spotify låter inte andra appar styra den här',
+    locked: 'låst',
+    lookingSpotify: 'Letar efter Spotify-högtalare…',
+    connectHint:
+      '**Spotify-högtalare och appar:** högtalare, tv-apparater och Spotify-appen på datorer (PC eller Mac) och mobiler som ditt Spotify-konto kan spela på. Spelet startar varje låt där; inget spelas på den här enheten. Kräver Spotify Premium. Spotify visar titeln i sin app (och på en tv), så håll den utom synhåll.',
+    missingOne: 'Saknas någon? Slå på den, öppna Spotify-appen, välj den i enhetslistan (högtalarikonen) och starta valfri låt. Kom sedan tillbaka hit.',
+    lockedList: (names) =>
+      `🔒 Spotify låter inte andra appar styra ${names.map((n) => `”${n}”`).join(', ')}. För en Sonos, använd Sonos-bryggan nedan.`,
+    needsLogin: 'Spotify-högtalare, tv-apparater och datorer kräver Spotify-inloggning (Premium): avsluta spelet och välj ”Logga in med Spotify” i förberedelserna.',
     sonosBridge: 'Sonos via Sonos-bryggan',
     bridgeCode: 'Kod till Sonos-bryggan',
     looking: 'Letar…',
@@ -296,6 +306,25 @@ export const sv: Messages = {
     notConnected: 'Inte ansluten',
     host: ' (värd)',
     memberSongs: (n) => ` · ${n} låtar`,
+    rename: (team) => `Byt namn på ${team}`,
+    newName: (team) => `Nytt namn för ${team}`,
+    manage: (name) => `Hantera ${name}`,
+    moveTo: (name) => `Flytta **${name}** till:`,
+    noTeam: 'Inget lag',
+    confirmRemove: (name) => `Ta bort ${name} från spelet? Hen kan inte gå med igen om du inte släpper in hen.`,
+    remove: 'Ta bort från spelet',
+    done: 'Klar',
+    tapName: 'Tryck på ett namn för att flytta spelaren till ett annat lag eller ta bort hen.',
+    removed: 'Borttagna:',
+    letBackIn: 'släpp in igen',
+    nextRuleQuestion: 'Vem startar nästa låt efter avslöjandet (förutom du, på den här skärmen)?',
+    nextRuleLabel: 'Vem startar nästa låt',
+    nextRules: { majority: 'De flesta spelarna', anyone: 'Vilken spelare som helst', host: 'Bara jag' },
+    nextRuleHints: {
+      majority: 'Mer än hälften av spelarna trycker på ”Nästa låt” på sina mobiler. Vem som helst kan spela eller pausa.',
+      anyone: 'Ett tryck på vilken mobil som helst startar nästa låt. Vem som helst kan spela eller pausa.',
+      host: 'Mobilerna kan inte gå vidare, spela eller pausa.',
+    },
   },
 
   remote: {
@@ -336,6 +365,17 @@ export const sv: Messages = {
     changeTeam: 'Byt lag',
     hostEnded: 'Värden avslutade spelet.',
     hostStopped: 'Värden slutade dela spelet.',
+    removed: 'Borttagen från spelet',
+    removedText: 'Värden tog bort dig från spelet.',
+    playShort: '▶ Spela',
+    renameTeam: (team) => `✎ Byt namn på ${team}`,
+    teamName: 'Lagets namn',
+    save: 'Spara',
+    cancel: 'Avbryt',
+    nextSong: (team) => `Nästa låt: ${team}`,
+    hostStartsNext: 'Värden startar nästa låt.',
+    readyTapToWait: 'Redo ✓ · tryck för att vänta',
+    wantNext: (yes, needed) => `${yes} av ${needed} som behövs vill ha nästa låt`,
   },
 
   addMusic: {
@@ -377,11 +417,19 @@ export const sv: Messages = {
     songNotFound: 'Den här låten hittades inte på Spotify. Hoppa över den för att dra en ny.',
     playerTimeout: 'Spotify-spelaren startade inte i tid.',
     premiumNeeded: 'Spotify Premium krävs för uppspelning i webbläsaren.',
-    appNotOpen:
-      'Spotify-appen är inte öppen någonstans där Spotify ser den. Öppna Spotify-appen, välj högtalare (högtalarikonen längst ned när en låt spelas), starta valfri låt och tryck sedan på Spela här igen.',
-    appRestricted: (device) =>
-      `Spotify låter inte andra appar styra ”${device}”. Om det är en Sonos, välj den i Spotify-appens enhetslista (högtalarikonen), inte i Sonos-appen, starta en låt där och försök igen. Annars kan du välja en annan högtalare under 🔊.`,
-    appPremium: 'Att styra Spotify-appen kräver Spotify Premium.',
+    connectNothingOpen:
+      'Spotify ser ingen högtalare eller Spotify-app att spela på. Slå på högtalaren, eller öppna Spotify-appen på en mobil eller dator (en mobil stänger den i bakgrunden efter ett tag när inget spelas) och starta valfri låt där. Tryck sedan på Spela här igen.',
+    connectScopeMissing:
+      'Spotify-inloggningen saknar behörighet att spela på högtalare och appar. Avsluta spelet, logga ut från Spotify i förberedelserna och logga in igen.',
+    connectNotListed: (name) =>
+      `Spotify ser inte ”${name}” just nu. Kontrollera att den är påslagen, öppna sedan Spotify-appen, välj ”${name}” i enhetslistan (högtalarikonen), starta valfri låt där och tryck på Spela här igen. Högtalare med Google Cast syns bara medan något spelas på dem.`,
+    connectRestricted: (name) =>
+      `Spotify låter inte andra appar styra ”${name}”. Om det är en Sonos, använd Sonos-bryggan under 🔊, eller välj den i Spotify-appens enhetslista (inte i Sonos-appen) och starta en låt där först. Annars kan du välja en annan högtalare under 🔊.`,
+    connectSeveralOpen: (names) =>
+      `Spotify spelar inte någonstans just nu, så spelet vet inte var det ska spela (${names.map((n) => `”${n}”`).join(', ')}). Välj en under 🔊.`,
+    connectDidNotStart: (name) =>
+      `”${name}” började inte spela. Kontrollera att den är påslagen och vaken (om den har somnat, starta valfri låt på den från Spotify-appen) och tryck sedan på Spela här igen.`,
+    connectPremium: 'Att spela på Spotify-högtalare och appar kräver Spotify Premium.',
     serverUnreachable: 'Når inte anslutningsservern.',
     serverUnreachableType: (type) => `Når inte anslutningsservern (${type}).`,
     serverRetrying: 'Når inte anslutningsservern. Försöker igen…',

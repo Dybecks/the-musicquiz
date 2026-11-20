@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import type { HostRoom } from '../multiplayer/useHostRoom';
-import { HOST_ID, type Member } from '../multiplayer/protocol';
+import { HOST_ID, nextRuleOf, type Member } from '../multiplayer/protocol';
 import { useT } from '../i18n';
+import { Rich } from '../i18n/Rich';
 
 /** The link a phone opens to join this game. */
 export const joinLink = (code: string) => `${new URL(import.meta.env.BASE_URL, window.location.origin)}?join=${code}`;
@@ -11,12 +12,14 @@ export const joinLink = (code: string) => `${new URL(import.meta.env.BASE_URL, w
  * which team they are on, and the host's own name and team.
  */
 export function SharePanel({ host, lobby }: { host: HostRoom; lobby?: boolean }) {
-  const tt = useT();
-  const t = tt.share;
+  const texts = useT();
+  const s = texts.share;
   const [copied, setCopied] = useState(false);
   const { room, status, teams } = host;
   const me = room?.members.find((m) => m.id === HOST_ID);
   const [name, setName] = useState(me?.name ?? '');
+  /** The member the host tapped, to move or remove. */
+  const [picked, setPicked] = useState<string | null>(null);
   useEffect(() => {
     if (me && !name) setName(me.name);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -25,10 +28,10 @@ export function SharePanel({ host, lobby }: { host: HostRoom; lobby?: boolean })
   if (!room) {
     return (
       <section className="panel share">
-        <h2>{lobby ? t.inviteTitle : t.playTogether}</h2>
-        <p className="hint">{t.intro}</p>
+        <h2>{lobby ? s.inviteTitle : s.playTogether}</h2>
+        <p className="hint">{s.intro}</p>
         <button className="ghost" onClick={host.share}>
-          {t.shareCode}
+          {s.shareCode}
         </button>
       </section>
     );
@@ -36,7 +39,7 @@ export function SharePanel({ host, lobby }: { host: HostRoom; lobby?: boolean })
 
   const link = joinLink(room.code);
   const shareLink = async () => {
-    const data = { title: tt.app.name, text: t.shareText(room.code), url: link };
+    const data = { title: texts.app.name, text: s.shareText(room.code), url: link };
     try {
       if (navigator.share) await navigator.share(data);
       else {
@@ -50,36 +53,38 @@ export function SharePanel({ host, lobby }: { host: HostRoom; lobby?: boolean })
   const others = room.members.filter((m) => m.id !== HOST_ID);
   const unassigned = others.filter((m) => !m.teamId || !teams.some((t) => t.id === m.teamId));
   const pending = room.pending?.length ?? 0;
+  const pickedMember = others.find((m) => m.id === picked) ?? null;
+  const pick = (id: string) => setPicked((cur) => (cur === id ? null : id));
 
   return (
     <section className="panel share">
       <div className="share-head">
         <div>
-          <p className="hint">{t.gameCode}</p>
-          <p className="room-code" aria-label={t.gameCodeSpelled(room.code)}>
+          <p className="hint">{s.gameCode}</p>
+          <p className="room-code" aria-label={s.gameCodeSpelled(room.code)}>
             {room.code}
           </p>
         </div>
         <button className="ghost" onClick={shareLink}>
-          {copied ? t.linkCopied : t.shareLink}
+          {copied ? s.linkCopied : s.shareLink}
         </button>
       </div>
       <p className="hint">
         {status?.kind === 'open'
-          ? t.howToJoin
+          ? s.howToJoin
           : status?.kind === 'error'
             ? status.message
-            : t.opening}
+            : s.opening}
       </p>
 
       <div className="host-me">
         {me?.emoji && (
-          <button className="avatar-button" title={t.anotherPicture} onClick={() => host.act({ type: 'reroll' })}>
+          <button className="avatar-button" title={s.anotherPicture} onClick={() => host.act({ type: 'reroll' })}>
             {me.emoji}
           </button>
         )}
         <label className="field">
-          <span>{t.yourName}</span>
+          <span>{s.yourName}</span>
           <input
             value={name}
             maxLength={24}
@@ -87,7 +92,7 @@ export function SharePanel({ host, lobby }: { host: HostRoom; lobby?: boolean })
             onBlur={() => name.trim() && host.act({ type: 'hello', memberId: HOST_ID, name })}
           />
         </label>
-        <p className="hint">{t.yourTeam}</p>
+        <p className="hint">{s.yourTeam}</p>
         <div className="chips">
           {teams.map((t) => (
             <button
@@ -104,7 +109,7 @@ export function SharePanel({ host, lobby }: { host: HostRoom; lobby?: boolean })
             aria-pressed={!me?.teamId}
             onClick={() => host.act({ type: 'team', teamId: null })}
           >
-            {t.justRunning}
+            {s.justRunning}
           </button>
         </div>
       </div>
@@ -115,38 +120,145 @@ export function SharePanel({ host, lobby }: { host: HostRoom; lobby?: boolean })
           return (
             <li key={t.id}>
               <strong>{t.name}</strong>
-              <span>{members.length ? members.map((m) => <MemberName key={m.id} member={m} />) : <span className="muted">{tt.share.nobodyYet}</span>}</span>
+              <button
+                className="link small"
+                aria-label={s.rename(t.name)}
+                onClick={() => {
+                  const next = window.prompt(s.newName(t.name), t.name);
+                  if (next !== null) host.renameTeam(t.id, next);
+                }}
+              >
+                ✎
+              </button>
+              <span>
+                {members.length ? (
+                  members.map((m) => <MemberName key={m.id} member={m} picked={picked === m.id} onPick={pick} />)
+                ) : (
+                  <span className="muted">{s.nobodyYet}</span>
+                )}
+              </span>
             </li>
           );
         })}
         {unassigned.length > 0 && (
           <li>
-            <strong className="muted">{t.choosingTeam}</strong>
+            <strong className="muted">{s.choosingTeam}</strong>
             <span>
               {unassigned.map((m) => (
-                <MemberName key={m.id} member={m} />
+                <MemberName key={m.id} member={m} picked={picked === m.id} onPick={pick} />
               ))}
             </span>
           </li>
         )}
       </ul>
-      {pending > 0 && <p className="hint">{t.pending(pending)}</p>}
+      {pickedMember && (
+        <div className="member-manage" role="group" aria-label={s.manage(pickedMember.name)}>
+          <p className="hint">
+            <Rich text={s.moveTo(pickedMember.name)} />
+          </p>
+          <div className="chips">
+            {teams.map((t) => (
+              <button
+                key={t.id}
+                className={`chip ${pickedMember.teamId === t.id ? 'selected' : ''}`}
+                aria-pressed={pickedMember.teamId === t.id}
+                onClick={() => {
+                  host.move(pickedMember.id, t.id);
+                  setPicked(null);
+                }}
+              >
+                {t.name}
+              </button>
+            ))}
+            <button
+              className={`chip ${!pickedMember.teamId ? 'selected' : ''}`}
+              aria-pressed={!pickedMember.teamId}
+              onClick={() => {
+                host.move(pickedMember.id, null);
+                setPicked(null);
+              }}
+            >
+              {s.noTeam}
+            </button>
+          </div>
+          <p>
+            <button
+              className="link danger"
+              onClick={() => {
+                if (!window.confirm(s.confirmRemove(pickedMember.name))) return;
+                host.kick(pickedMember.id);
+                setPicked(null);
+              }}
+            >
+              {s.remove}
+            </button>{' '}
+            ·{' '}
+            <button className="link" onClick={() => setPicked(null)}>
+              {s.done}
+            </button>
+          </p>
+        </div>
+      )}
+      {others.length > 0 && !pickedMember && <p className="hint">{s.tapName}</p>}
+      {(room.kicked?.length ?? 0) > 0 && (
+        <p className="hint">
+          {s.removed}{' '}
+          {room.kicked!.map((k, i) => (
+            <span key={k.id}>
+              {i > 0 && ', '}
+              {k.name} (
+              <button className="link" onClick={() => host.letBackIn(k.id)}>
+                {s.letBackIn}
+              </button>
+              )
+            </span>
+          ))}
+        </p>
+      )}
+      <div className="next-rule">
+        <p className="hint">{s.nextRuleQuestion}</p>
+        <div className="chips" role="radiogroup" aria-label={s.nextRuleLabel}>
+          {(['majority', 'anyone', 'host'] as const).map((r) => (
+            <button key={r} role="radio" aria-checked={nextRuleOf(room) === r} className={`chip ${nextRuleOf(room) === r ? 'selected' : ''}`} onClick={() => host.setNextRule(r)}>
+              {s.nextRules[r]}
+            </button>
+          ))}
+        </div>
+        <p className="hint">
+          {s.nextRuleHints[nextRuleOf(room)]}
+        </p>
+      </div>
+      {pending > 0 && <p className="hint">{s.pending(pending)}</p>}
       <button className="link" onClick={() => host.stop('stopped')}>
-        {t.stop}
+        {s.stop}
       </button>
     </section>
   );
 }
 
-function MemberName({ member }: { member: Member }) {
-  const t = useT().share;
-  return (
-    <span className={`member ${member.connected ? '' : 'offline'}`} title={member.connected ? undefined : t.notConnected}>
+function MemberName({ member, picked, onPick }: { member: Member; picked: boolean; onPick: (id: string) => void }) {
+  const s = useT().share;
+  const content = (
+    <>
       {member.emoji && <span className="avatar">{member.emoji}</span>}
       {member.name}
-      {member.id === HOST_ID && t.host}
+      {member.id === HOST_ID && s.host}
       {member.locked && ' ✓'}
-      {member.songs ? <span className="muted">{t.memberSongs(member.songs)}</span> : null}
-    </span>
+      {member.songs ? <span className="muted">{s.memberSongs(member.songs)}</span> : null}
+    </>
+  );
+  const cls = `member ${member.connected ? '' : 'offline'} ${picked ? 'picked' : ''}`;
+  const title = member.connected ? undefined : s.notConnected;
+  // The host's own device is managed above (name and team), not here.
+  if (member.id === HOST_ID)
+    return (
+      <span className={cls} title={title}>
+        {content}
+      </span>
+    );
+  return (
+    <button className={`${cls} member-button`} title={title} aria-pressed={picked} onClick={() => onPick(member.id)}>
+      {content}
+    </button>
   );
 }

@@ -214,6 +214,8 @@ export const en = {
     playHere: 'Play on this device instead',
     playingOnSonos: (name: string) => `Playing on ${name} (Sonos).`,
     playingInApp: 'Playing in the Spotify app, wherever it plays. It shows the title, so keep it out of sight.',
+    playingOnDevice: (name: string) =>
+      `Playing on ${name} through Spotify. The Spotify app (and a TV’s screen) shows the title, so keep it out of sight.`,
     lockedTapToChange: 'Locked in · tap to change',
     tapToVote: 'Tap a spot to vote',
     lockMyVote: 'Lock in my vote',
@@ -248,6 +250,9 @@ export const en = {
     playAgain: 'Play again',
     refillFallback: (why: string) => `${why} Until then the game uses its own classic hits for these genres and years.`,
     refillFailed: (why: string) => `No more songs could be fetched: ${why}`,
+    phonesWantNext: (yes: number, needed: number) => `Phones: ${yes} of ${needed} needed want the next song`,
+    anyoneMovesOn: 'Any player can move on from their phone.',
+    openApp: 'Open the Spotify app',
   },
 
   timeline: {
@@ -264,11 +269,16 @@ export const en = {
     thisDevice: 'This device',
     spotifyApp: 'Spotify app',
     playOn: 'Play the music on',
-    appHintTitle: 'Spotify app:',
-    appHint:
-      'the game steers the Spotify app, and the music plays wherever the app plays: the phone, or a speaker you pick in the app (the speaker icon), like a Sonos or a TV. Start any song there first. Needs Spotify Premium. The app shows the title, so keep it out of sight.',
-    appNeedsLoginTitle: 'Spotify app',
-    appNeedsLogin: 'needs the Spotify login (Premium): end the game and choose “Log in with Spotify” in setup.',
+    whereverSpotify: 'Wherever Spotify plays',
+    lockedOne: 'Spotify won’t let other apps control this one',
+    locked: 'locked',
+    lookingSpotify: 'Looking for Spotify speakers…',
+    connectHint:
+      '**Spotify speakers and apps:** speakers, TVs and the Spotify app on computers (PC or Mac) and phones that your Spotify account can play on. The game starts each song there; nothing plays on this device. Needs Spotify Premium. Spotify shows the title in its app (and on a TV), so keep it out of sight.',
+    missingOne: 'Missing one? Switch it on, open the Spotify app, pick it in the device list (the speaker icon) and start any song, then come back here.',
+    lockedList: (names: string[]) =>
+      `🔒 Spotify won’t let other apps control ${names.map((n) => `“${n}”`).join(', ')}. For a Sonos, use the Sonos bridge below.`,
+    needsLogin: 'Spotify speakers, TVs and computers need the Spotify login (Premium): end the game and choose “Log in with Spotify” in setup.',
     sonosBridge: 'Sonos through the Sonos bridge',
     bridgeCode: 'Sonos bridge code',
     looking: 'Looking…',
@@ -303,6 +313,25 @@ export const en = {
     notConnected: 'Not connected',
     host: ' (host)',
     memberSongs: (n: number) => ` · ${n} songs`,
+    rename: (team: string) => `Rename ${team}`,
+    newName: (team: string) => `New name for ${team}`,
+    manage: (name: string) => `Manage ${name}`,
+    moveTo: (name: string) => `Move **${name}** to:`,
+    noTeam: 'No team',
+    confirmRemove: (name: string) => `Remove ${name} from the game? They can’t join again unless you let them back in.`,
+    remove: 'Remove from the game',
+    done: 'Done',
+    tapName: 'Tap a name to move that player to another team or remove them.',
+    removed: 'Removed:',
+    letBackIn: 'let back in',
+    nextRuleQuestion: 'Who starts the next song after the reveal (besides you, on this screen)?',
+    nextRuleLabel: 'Who starts the next song',
+    nextRules: { majority: 'Most players', anyone: 'Any player', host: 'Only me' },
+    nextRuleHints: {
+      majority: 'More than half of the players tap “Next song” on their phones. Anyone can play or pause.',
+      anyone: 'One tap on any phone starts the next song. Anyone can play or pause.',
+      host: 'Phones can’t move on, play or pause.',
+    },
   },
 
   remote: {
@@ -343,6 +372,17 @@ export const en = {
     changeTeam: 'Change team',
     hostEnded: 'The host ended the game.',
     hostStopped: 'The host stopped sharing the game.',
+    removed: 'Removed from the game',
+    removedText: 'The host removed you from the game.',
+    playShort: '▶ Play',
+    renameTeam: (team: string) => `✎ Rename ${team}`,
+    teamName: 'Team name',
+    save: 'Save',
+    cancel: 'Cancel',
+    nextSong: (team: string) => `Next song: ${team}`,
+    hostStartsNext: 'The host starts the next song.',
+    readyTapToWait: 'Ready ✓ · tap to wait',
+    wantNext: (yes: number, needed: number) => `${yes} of ${needed} needed want the next song`,
   },
 
   addMusic: {
@@ -385,11 +425,19 @@ export const en = {
     songNotFound: 'This song could not be found on Spotify. Skip it to draw another.',
     playerTimeout: 'The Spotify player did not start in time.',
     premiumNeeded: 'Spotify Premium is needed for in-browser playback.',
-    appNotOpen:
-      'The Spotify app isn’t open anywhere Spotify can see. Open the Spotify app, pick the speaker (the speaker icon at the bottom of a playing song), start any song, then press Play here again.',
-    appRestricted: (device: string) =>
-      `Spotify won’t let other apps control “${device}”. If it’s a Sonos, pick it in the Spotify app’s device list (the speaker icon), not in the Sonos app, start a song there and try again. Otherwise choose another speaker under 🔊.`,
-    appPremium: 'Steering the Spotify app needs Spotify Premium.',
+    connectNothingOpen:
+      'Spotify can’t see any speaker or Spotify app to play on. Switch the speaker on, or open the Spotify app on a phone or computer (a phone closes it in the background after a while when nothing plays) and start any song there, then press Play here again.',
+    connectScopeMissing:
+      'The Spotify login is missing permission to play on speakers and apps. End the game, log out of Spotify in setup and log in again.',
+    connectNotListed: (name: string) =>
+      `Spotify can’t see “${name}” right now. Make sure it’s switched on, then open the Spotify app, pick “${name}” in its device list (the speaker icon), start any song there and press Play here again. Speakers with Google Cast only show up while something plays on them.`,
+    connectRestricted: (name: string) =>
+      `Spotify won’t let other apps control “${name}”. If it’s a Sonos, use the Sonos bridge under 🔊, or pick it in the Spotify app’s device list (not in the Sonos app) and start a song there first. Otherwise choose another speaker under 🔊.`,
+    connectSeveralOpen: (names: string[]) =>
+      `Spotify isn’t playing anywhere right now, so the game doesn’t know where to play (${names.map((n) => `“${n}”`).join(', ')}). Pick one under 🔊.`,
+    connectDidNotStart: (name: string) =>
+      `“${name}” didn’t start playing. Make sure it’s switched on and awake (if it has gone to sleep, start any song on it from the Spotify app), then press Play here again.`,
+    connectPremium: 'Playing on Spotify speakers and apps needs Spotify Premium.',
     serverUnreachable: 'Can’t reach the connection server.',
     serverUnreachableType: (type: string) => `Can’t reach the connection server (${type}).`,
     serverRetrying: 'Can’t reach the connection server. Retrying…',

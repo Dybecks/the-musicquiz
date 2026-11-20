@@ -19,10 +19,11 @@ export type PlaybackKind = 'premium' | 'embed' | 'none';
 export interface Playback {
   /**
    * Not in this browser: 'sonos' plays on a Sonos through the bridge
-   * (src/sonos/playback.ts), 'spotify-app' steers the Spotify app
+   * (src/sonos/playback.ts), 'spotify-connect' on a Spotify Connect device
+   * such as a speaker, TV or the Spotify app on a computer or phone
    * (src/spotify/remote.ts).
    */
-  kind: PlaybackKind | 'sonos' | 'spotify-app';
+  kind: PlaybackKind | 'sonos' | 'spotify-connect';
   /** Look up and load the song. Rejects with a readable message if it can't be played. */
   prepare(song: Song): Promise<void>;
   play(): Promise<void>;
