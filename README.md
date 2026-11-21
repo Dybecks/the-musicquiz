@@ -296,10 +296,6 @@ This works in Chrome, Edge and Firefox on computers and Android. On iPhone and i
 silent clip is left out, since Safari may pause the song for it, so the title may still
 show there, also on a Sonos the iPhone AirPlays to. Safari on a Mac is untested.
 
-During a song, **Open in Spotify ↗** opens it in the Spotify app instead, which can play
-on any speaker it reaches (Sonos included). Spotify shows the title there, so someone who
-isn't guessing should tap it.
-
 Every song in the catalogue has a Spotify id, so the ready-made decks play without a
 login.
 

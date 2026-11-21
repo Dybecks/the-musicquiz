@@ -201,8 +201,6 @@ export const sv: Messages = {
     play: '▶ Spela låten',
     noAudio: 'Utan ljud: spela låten på ditt eget sätt, eller gissa bara året.',
     skip: 'Hoppa över låten',
-    openInSpotify: 'Öppna i Spotify ↗',
-    openInSpotifyHint: 'för att spela den i valfri högtalare, till exempel en Sonos. Spotify visar titeln, så låt någon som inte gissar trycka.',
     useHiddenPlayer: 'Använd den dolda Spotify-spelaren i stället',
     tryAgain: 'Försök igen',
     lockedTapToChange: 'Låst · tryck för att ändra',

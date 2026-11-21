@@ -333,6 +333,4 @@ button.link.small { font-size: 0.9rem; text-decoration: none; }
 .add-music .info, .add-music .progress { margin-bottom: 10px; }
 .lobby h1 { font-size: 1.25rem; }
 .voters .who-chip { margin-right: 0; }
-.open-spotify { text-align: center; margin-top: 10px; }
-.open-spotify a { color: var(--accent-2); font-weight: 600; }
 

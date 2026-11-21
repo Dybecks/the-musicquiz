@@ -199,6 +199,11 @@ export async function getPlaybackState(): Promise<PlaybackState | null> {
   return text ? (JSON.parse(text) as PlaybackState) : null;
 }
 
+/** Moves playback to the device and makes it the active one. `play: false` keeps it paused if it was. */
+export async function transferPlayback(deviceId: string, play: boolean): Promise<void> {
+  await spotifyFetch('/me/player', { method: 'PUT', body: JSON.stringify({ device_ids: [deviceId], play }) });
+}
+
 export async function pauseDevice(deviceId: string): Promise<void> {
   await spotifyFetch(`/me/player/pause${onDevice(deviceId)}`, { method: 'PUT' });
 }

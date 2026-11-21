@@ -208,8 +208,6 @@ export const en = {
     play: '▶ Play song',
     noAudio: 'No audio mode: play the song your own way, or just guess the year.',
     skip: 'Skip song',
-    openInSpotify: 'Open in Spotify ↗',
-    openInSpotifyHint: 'to play it on any speaker, like a Sonos. Spotify shows the title, so let someone who isn’t guessing tap it.',
     useHiddenPlayer: 'Use the hidden Spotify player instead',
     tryAgain: 'Try again',
     lockedTapToChange: 'Locked in · tap to change',
