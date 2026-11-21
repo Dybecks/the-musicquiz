@@ -11,6 +11,7 @@ import { Remote, savedRemote } from './components/Remote';
 import { isValidCode, lobbyTeams, normalizeCode, renameLobbyTeam } from './multiplayer/protocol';
 import { useHostRoom } from './multiplayer/useHostRoom';
 import { SharePanel } from './components/SharePanel';
+import { RoomCode } from './components/RoomCode';
 import { mergeSongs } from './spotify/personalDeck';
 import { msg, useT } from './i18n';
 import { LanguagePicker } from './i18n/LanguagePicker';
@@ -143,6 +144,7 @@ export function App() {
     <div className="app">
       <header className="brand">
         <span className="brand-mark">♪</span> <span className="brand-name">{t.app.name}</span>
+        {!remote && host.room && <RoomCode code={host.room.code} small />}
         <LanguagePicker />
       </header>
       {remote ? (

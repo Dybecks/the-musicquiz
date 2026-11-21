@@ -10,11 +10,17 @@
  * Songs without a known id are found via search, which needs the login.
  */
 import type { Song } from '../game/engine';
-import { findTrackUri, getPlaybackState, pauseDevice, playOnDevice, RateLimitError, resumeDevice, SpotifyError, transferPlayback } from './api';
+import { findTrackUri, getPlaybackState, pauseDevice, playOnDevice, RateLimitError, resumeDevice, seekDevice, SpotifyError, transferPlayback, type PlaybackState } from './api';
 import { getAccessToken } from './auth';
 import { msg } from '../i18n';
 
 export type PlaybackKind = 'premium' | 'embed' | 'none';
+
+/** Where in the song playback is, as last reported by the player. `durationMs` is 0 while unknown. */
+export interface Progress {
+  positionMs: number;
+  durationMs: number;
+}
 
 export interface Playback {
   kind: PlaybackKind;
@@ -23,7 +29,11 @@ export interface Playback {
   play(): Promise<void>;
   pause(): Promise<void>;
   stop(): Promise<void>;
+  /** Jumps `ms` into the song. */
+  seek(ms: number): Promise<void>;
   onStateChange(cb: (playing: boolean) => void): void;
+  /** Called whenever the player says where in the song it is. */
+  onProgress(cb: (p: Progress) => void): void;
   destroy(): void;
 }
 
@@ -61,6 +71,7 @@ interface SdkPlayer {
   disconnect(): void;
   pause(): Promise<void>;
   resume(): Promise<void>;
+  seek(positionMs: number): Promise<void>;
   activateElement(): Promise<void>;
   /** null when this player isn't the one Spotify plays on. */
   getCurrentState(): Promise<unknown | null>;
@@ -95,8 +106,20 @@ export async function createPremiumPlayback(): Promise<Playback> {
     },
   });
   let listener: (playing: boolean) => void = () => {};
+  let progress: (p: Progress) => void = () => {};
   let uri: string | null = null;
   let started = false;
+  let durationMs = 0;
+  const report = (positionMs: number, duration: number) => {
+    if (duration > 0) durationMs = duration;
+    progress({ positionMs, durationMs });
+  };
+  /** Progress from Spotify's report, if it is about this song. */
+  const reportFrom = (s: PlaybackState | null) => {
+    const item = s?.item;
+    if (!item || !uri || (item.uri !== uri && item.linked_from?.uri !== uri)) return;
+    report(s!.progress_ms ?? 0, item.duration_ms ?? 0);
+  };
 
   const deviceId = await new Promise<string>((resolve, reject) => {
     const timer = setTimeout(() => reject(new Error(msg().errors.playerTimeout)), 15000);
@@ -137,15 +160,28 @@ export async function createPremiumPlayback(): Promise<Playback> {
   };
 
   player.addListener('player_state_changed', (state) => {
+    if (state && typeof state.position === 'number') report(state.position, state.duration ?? 0);
     if (state && !state.paused) return listener(true);
     // Paused or gone here: paused, or moved to another device in the app.
     void getPlaybackState()
       .then((s) => {
         if (!s) return; // Spotify says nothing (a hidden device): leave the button as it is.
+        reportFrom(s);
         listener(s.device?.id !== deviceId && s.is_playing);
       })
       .catch(() => {});
   });
+
+  /**
+   * Music on another device reports no progress by itself: ask Spotify once,
+   * a moment after a command, so the bar shows where the song is.
+   */
+  let syncTimer: ReturnType<typeof setTimeout> | undefined;
+  const syncSoon = async () => {
+    if (await playingHere()) return;
+    clearTimeout(syncTimer);
+    syncTimer = setTimeout(() => void getPlaybackState().then(reportFrom).catch(() => {}), 1200);
+  };
 
   /**
    * Plays the song in this browser. Spotify answers "Device not found" while
@@ -201,6 +237,7 @@ export async function createPremiumPlayback(): Promise<Playback> {
       await pauseNow().catch(() => {});
       uri = await uriFor(song);
       started = false;
+      durationMs = 0;
     },
     async play() {
       if (!uri) return;
@@ -220,6 +257,20 @@ export async function createPremiumPlayback(): Promise<Playback> {
         }
       }
       listener(true);
+      void syncSoon();
+    },
+    async seek(ms) {
+      if (!uri || !started) return;
+      if (await playingHere()) await player.seek(Math.round(ms));
+      else {
+        try {
+          await seekDevice(target(), ms);
+        } catch (e) {
+          throw refused(e) ? cantControl() : e;
+        }
+        void syncSoon();
+      }
+      report(ms, durationMs);
     },
     async pause() {
       await pauseNow();
@@ -234,7 +285,11 @@ export async function createPremiumPlayback(): Promise<Playback> {
     onStateChange(cb) {
       listener = cb;
     },
+    onProgress(cb) {
+      progress = cb;
+    },
     destroy() {
+      clearTimeout(syncTimer);
       if (startedHere) void pauseNow().catch(() => {});
       player.disconnect();
     },
@@ -248,6 +303,8 @@ interface EmbedController {
   play(): void;
   resume(): void;
   pause(): void;
+  /** Seconds into the song. */
+  seek(seconds: number): void;
   togglePlay(): void;
   addListener(event: string, cb: (e: any) => void): void;
   destroy(): void;
@@ -271,6 +328,7 @@ export async function createEmbedPlayback(host: HTMLElement): Promise<Playback> 
   host.replaceChildren(mount);
   let controller: EmbedController | null = null;
   let listener: (playing: boolean) => void = () => {};
+  let progress: (p: Progress) => void = () => {};
   let ready: Promise<void> = Promise.resolve();
   let loadedUri: string | null = null;
   let started = false;
@@ -283,6 +341,7 @@ export async function createEmbedPlayback(host: HTMLElement): Promise<Playback> 
         c.addListener('playback_update', (e) => {
           const { isPaused, position, duration } = e.data;
           listener(!isPaused && !(duration > 0 && position >= duration));
+          if (typeof position === 'number') progress({ positionMs: position, durationMs: duration > 0 ? duration : 0 });
         });
         c.addListener('ready', () => resolve());
       });
@@ -315,12 +374,19 @@ export async function createEmbedPlayback(host: HTMLElement): Promise<Playback> 
     async pause() {
       controller?.pause();
     },
+    async seek(ms) {
+      await ready;
+      if (started) controller?.seek(ms / 1000);
+    },
     async stop() {
       controller?.pause();
       started = false;
     },
     onStateChange(cb) {
       listener = cb;
+    },
+    onProgress(cb) {
+      progress = cb;
     },
     destroy() {
       controller?.destroy();
@@ -338,7 +404,9 @@ export function createSilentPlayback(): Playback {
     async play() {},
     async pause() {},
     async stop() {},
+    async seek() {},
     onStateChange() {},
+    onProgress() {},
     destroy() {},
   };
 }
