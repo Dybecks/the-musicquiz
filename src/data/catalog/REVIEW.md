@@ -164,23 +164,23 @@ The catalogue year was kept. Spotify is often wrong (it dates songs by album), b
 
 ## Songs per genre ("By genre")
 
-Genres from MusicBrainz/Last.fm tags: 6 songs; hand-set: 648; changed by hand: 0.
+Genres from MusicBrainz/Last.fm tags: 465 songs; hand-set: 189; changed by hand: 0.
 
 | Genre | 50s | 60s | 70s | 80s | 90s | 00s | 10s | 20s | Total |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| pop | 5 | 9 | 9 | 14 | 17 | 14 | 19 | 14 | 103 |
-| rock | 9 | 16 | 18 | 13 | 9 | 9 | 3 | 1 | 78 |
-| hiphop | 0 | 0 | 1 | 4 | 9 | 13 | 6 | 3 | 36 |
-| rnb | 2 | 2 | 3 | 3 | 5 | 6 | 4 | 3 | 28 |
-| soul | 1 | 11 | 12 | 6 | 1 | 5 | 5 | 1 | 42 |
-| disco | 0 | 0 | 20 | 4 | 0 | 1 | 3 | 1 | 29 |
-| dance | 0 | 0 | 3 | 7 | 14 | 6 | 11 | 4 | 45 |
+| pop | 5 | 12 | 22 | 24 | 24 | 26 | 32 | 23 | 168 |
+| rock | 11 | 21 | 29 | 32 | 22 | 23 | 15 | 3 | 156 |
+| hiphop | 0 | 0 | 1 | 4 | 10 | 14 | 7 | 4 | 40 |
+| rnb | 4 | 3 | 3 | 4 | 5 | 7 | 4 | 3 | 33 |
+| soul | 1 | 11 | 16 | 10 | 5 | 7 | 5 | 1 | 56 |
+| disco | 0 | 0 | 20 | 4 | 0 | 2 | 3 | 1 | 30 |
+| dance | 0 | 0 | 3 | 8 | 14 | 10 | 20 | 5 | 60 |
 | country | 1 | 4 | 4 | 3 | 4 | 3 | 4 | 5 | 28 |
-| metal | 0 | 0 | 4 | 9 | 4 | 8 | 3 | 0 | 28 |
+| metal | 0 | 0 | 4 | 9 | 4 | 10 | 3 | 0 | 30 |
 | indie | 0 | 0 | 0 | 5 | 5 | 8 | 10 | 2 | 30 |
 | schlager | 0 | 2 | 4 | 7 | 2 | 3 | 2 | 1 | 21 |
 | swedishpop | 0 | 0 | 6 | 7 | 7 | 3 | 9 | 1 | 33 |
-| jazz | 9 | 9 | 3 | 1 | 0 | 4 | 0 | 2 | 32 |
+| jazz | 10 | 10 | 3 | 1 | 0 | 4 | 0 | 2 | 33 |
 | reggae | 0 | 4 | 9 | 5 | 5 | 4 | 2 | 0 | 29 |
 | latin | 2 | 2 | 1 | 2 | 6 | 3 | 8 | 3 | 28 |
-| punk | 0 | 0 | 7 | 4 | 6 | 7 | 0 | 1 | 25 |
+| punk | 0 | 0 | 7 | 5 | 6 | 8 | 0 | 1 | 27 |
