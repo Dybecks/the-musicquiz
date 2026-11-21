@@ -81,6 +81,10 @@ interface Progress {
   wikidata?: Record<string, string>;
   /** Songs that matched nothing and were taken out of the catalogue, with why. */
   unmatched?: Record<string, string>;
+  /** Deck songs whose Spotify page names another artist (title|artist → id), for a look by hand. */
+  suspect?: Record<string, string>;
+  /** Wikidata ids checked against their Spotify page (title|artist → when). */
+  audited?: Record<string, string>;
   /** Songs whose Spotify year differs from the catalogue's year. */
   yearNotes?: Record<string, string>;
 }
@@ -313,6 +317,72 @@ function uniqueTracksKeepAll(items: SpotifyTrack[]): (SpotifyTrack & { id: strin
  * endpoint (not part of the API quota): the id must exist and have the
  * song's title. Only songs left over after this are searched on Spotify.
  */
+/**
+ * Whether the track's public Spotify page (not part of the API quota) names
+ * the song's artist; null when the page can't tell.
+ */
+async function pageArtist(id: string, row: Row): Promise<boolean | null> {
+  try {
+    if (!process.env.NO_SLEEP) await sleep(300);
+    const res = await fetch(`https://open.spotify.com/track/${id}`, { headers: { 'User-Agent': 'the-musicquiz-precompute/1.0 (https://github.com/Dybecks/the-musicquiz)' } });
+    if (!res.ok) return null;
+    const html = await res.text();
+    const meta = (p: string) => html.match(new RegExp(`<meta[^>]+property="${p}"[^>]+content="([^"]*)"`))?.[1] ?? '';
+    const text = normalizeKey(`${meta('og:description')} ${meta('og:title')} ${(html.match(/<title>([^<]*)<\/title>/) ?? [])[1] ?? ''}`);
+    if (!text) return null;
+    return artistParts(row.artist).some((a) => text.includes(a));
+  } catch {
+    return null;
+  }
+}
+
+/** Takes an id away from a song (and from the decks): it goes back to the candidates to be searched. */
+function dropId(row: Row, why: string): void {
+  console.log(`✗ ${row.title} – ${row.artist}: ${row.id} dropped (${why})`);
+  for (const [deck, list] of Object.entries(decks)) {
+    const i = row.id ? list.indexOf(row.id) : -1;
+    if (i >= 0) {
+      list.splice(i, 1);
+      console.log(`  also taken out of the ${deck} deck`);
+    }
+  }
+  row.id = null;
+}
+
+/**
+ * Ids taken from Wikidata were only checked by title, so some belong to
+ * another artist's song of the same name. Each one is checked once against
+ * its Spotify page (free); a wrong one, or one two songs share, is dropped and
+ * the song is searched again.
+ */
+async function auditIds(): Promise<void> {
+  progress.audited ??= {};
+  progress.suspect ??= {};
+  const byId = new Map<string, Row[]>();
+  for (const r of rows) if (r.id) byId.set(r.id, [...(byId.get(r.id) ?? []), r]);
+  for (const r of rows) {
+    const key = keyOf(r);
+    if (!r.id) continue;
+    const shared = (byId.get(r.id) ?? []).length > 1;
+    const fromWikidata = progress.wikidata![key] && !progress.tried[key];
+    if (!shared && (!fromWikidata || progress.audited[key])) continue;
+    const ok = await pageArtist(r.id, r);
+    progress.audited[key] = today();
+    if (ok !== false) continue;
+    // A deck song is only flagged (in REVIEW.md), never dropped by this check alone.
+    if (!shared && Object.values(decks).some((ids) => ids.includes(r.id!))) progress.suspect![key] = r.id;
+    else dropId(r, "its Spotify page names another artist");
+  }
+  // Still shared (the page couldn't tell): keep the first, search the others.
+  const seen = new Set<string>();
+  for (const r of rows) {
+    if (!r.id) continue;
+    if (seen.has(r.id)) dropId(r, 'another song has this id');
+    else seen.add(r.id);
+  }
+  save();
+}
+
 async function fromWikidata(): Promise<void> {
   const todo = rows.filter((r) => !r.id && !progress.tried[keyOf(r)] && !progress.wikidata![keyOf(r)]);
   if (todo.length === 0) return;
@@ -326,13 +396,13 @@ async function fromWikidata(): Promise<void> {
       ?item rdfs:label ?label; wdt:P2207 ?sp.
       OPTIONAL { ?item wdt:P175 ?performer. ?performer rdfs:label ?performerLabel. FILTER(LANG(?performerLabel) = "en") }
     }`;
-    let rows: { label: { value: string }; sp: { value: string }; performerLabel?: { value: string } }[] = [];
+    let bindings: { label: { value: string }; sp: { value: string }; performerLabel?: { value: string } }[] = [];
     try {
       const res = await fetch(`https://query.wikidata.org/sparql?${new URLSearchParams({ query, format: 'json' })}`, {
         headers: { ...agent, Accept: 'application/sparql-results+json' },
       });
       if (!res.ok) throw new Error(`Wikidata answered ${res.status}`);
-      rows = ((await res.json()) as { results: { bindings: typeof rows } }).results.bindings;
+      bindings = ((await res.json()) as { results: { bindings: typeof bindings } }).results.bindings;
     } catch (e) {
       console.log(`Wikidata not available (${(e as Error).message}); searching Spotify instead.`);
       return;
@@ -341,11 +411,12 @@ async function fromWikidata(): Promise<void> {
       const key = keyOf(song);
       const candidates = [
         ...new Set(
-          rows
+          bindings
             .filter((r) => r.label.value === song.title)
-            .filter((r) => !r.performerLabel || sameArtist({ artists: [{ id: '', name: r.performerLabel.value }] } as SpotifyTrack, song.artist))
+            // The performer must be known and match: a title alone matched other songs (Creep by TLC got Radiohead's).
+            .filter((r) => r.performerLabel && sameArtist({ artists: [{ id: '', name: r.performerLabel.value }] } as SpotifyTrack, song.artist))
             .map((r) => r.sp.value)
-            .filter((id) => /^[0-9A-Za-z]{22}$/.test(id)),
+            .filter((id) => /^[0-9A-Za-z]{22}$/.test(id) && !rows.some((o) => o !== song && o.id === id)),
         ),
       ];
       for (const id of candidates) {
@@ -354,7 +425,7 @@ async function fromWikidata(): Promise<void> {
           const res = await fetch(`https://open.spotify.com/oembed?url=${encodeURIComponent(`https://open.spotify.com/track/${id}`)}`, { headers: agent });
           if (!res.ok) continue;
           const { title } = (await res.json()) as { title?: string };
-          if (title && normalizeKey(cleanTitle(title)) === normalizeKey(cleanTitle(song.title))) {
+          if (title && normalizeKey(cleanTitle(title)) === normalizeKey(cleanTitle(song.title)) && (await pageArtist(id, song)) !== false) {
             setId(song, id);
             console.log(`✓ ${song.title} – ${song.artist}: ${id} (Wikidata)`);
             break;
@@ -573,6 +644,12 @@ function review(): string {
     '',
     ...(unmatched.length ? unmatched.map(item) : ['None.']),
     '',
+    '## Deck songs that may have the wrong recording',
+    '',
+    "Their Spotify page names another artist. Check the id by hand (open.spotify.com/track/<id>).",
+    '',
+    ...(Object.entries(progress.suspect ?? {}).filter(([k, id]) => byKey.get(k)?.id === id).map(([k, id]) => `- ${k.replace('|', ' – ')}: ${id}`) || []),
+    '',
     '## Year differs from Spotify',
     '',
     'The catalogue year was kept. Spotify is often wrong (it dates songs by album), but these are worth a check.',
@@ -605,6 +682,7 @@ function review(): string {
 async function main(): Promise<void> {
   let stopped: string | null = null;
   try {
+    await auditIds();
     await fromWikidata();
     await fillIds();
     await recheckOddYears();
@@ -614,6 +692,7 @@ async function main(): Promise<void> {
       throw e;
     }
     stopped = e.message;
+    console.log(`\nSpotify stopped the run: ${stopped} (${requests} requests). Genres are looked up next.`);
   }
   // Genres cost no Spotify requests, so they are looked up even when Spotify stopped the run.
   if (process.env.GENRES !== '0') await fillGenres();
