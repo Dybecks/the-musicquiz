@@ -29,12 +29,17 @@ describe('genresFromTags', () => {
   it('counts each source the same', () => {
     expect(genresFromTags([['pop', 100]], [['dance', 3]])).toEqual(['pop', 'dance']);
   });
+  it('ignores a genre with a single vote', () => {
+    expect(genresFromTags([['rock', 3], ['dance', 1]])).toEqual(['rock']);
+    expect(genresFromTags([['dance', 1]])).toEqual([]);
+  });
   it('is empty without known tags', () => expect(genresFromTags([['seen live', 100]], [])).toEqual([]));
 });
 
 describe('mergeGenres', () => {
-  it('uses the tags, keeping the hand-set Swedish genres', () => {
+  it('adds the tags to the hand-set genres, never removing one', () => {
     expect(mergeGenres(['pop', 'swedishpop'], ['dance', 'pop'], ORDER)).toEqual(['pop', 'dance', 'swedishpop']);
+    expect(mergeGenres(['rock'], ['dance'], ORDER)).toEqual(['rock', 'dance']);
   });
   it('keeps the hand-set genres when the tags have nothing', () => {
     expect(mergeGenres(['rock'], [], ORDER)).toEqual(['rock']);

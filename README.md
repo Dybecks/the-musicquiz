@@ -133,10 +133,10 @@ yet, years that differ from Spotify's, and how many songs each genre has per dec
 The same script sets each song's genres from the tags people gave that recording on
 MusicBrainz (no key needed) and, if `LASTFM_API_KEY=…` is in `.env.local`, Last.fm. The
 tags are mapped to the 16 genres in `src/data/genreTags.ts`; this costs no Spotify
-requests, and `MAX_REQUESTS=0 npm run spotify-data` does only this part. Songs the
-sources know nothing about keep their hand-set genres, Swedish pop and schlager are
-always kept (tags rarely say where an artist is from), and a song whose genres you change
-by hand in `songs.json` is left alone from then on. What the sources said is kept in
+requests, and `MAX_REQUESTS=0 npm run spotify-data` does only this part. Tags only
+add genres, never take a hand-set one away, and only a genre with at least two votes
+counts. Film, TV, game and stage songs keep their hand-set genres, and a song whose
+genres you change by hand in `songs.json` is left alone from then on. What the sources said is kept in
 `scripts/genre-progress.json`, so each song is only asked about once.
 
 It is a local script. Put your Spotify app's values in `.env.local` (never committed) as

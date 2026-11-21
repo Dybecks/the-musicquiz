@@ -16,7 +16,7 @@
  * It also gives every song its genres from MusicBrainz (no key needed) and,
  * when LASTFM_API_KEY is set, Last.fm: the tags people gave that recording,
  * mapped to the catalogue's genres (src/data/genreTags.ts). This costs no
- * Spotify requests. Songs the sources know nothing about keep their hand-set
+ * Spotify requests. Tags only add genres to the hand-set ones; songs the sources know nothing about keep their hand-set
  * genres, as do film, TV, game and stage songs, and a song whose genres were changed by hand in songs.json is left
  * alone from then on.
  *
