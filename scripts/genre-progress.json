@@ -1,0 +1,16 @@
+{
+ "Dream a Little Dream of Me|Ella Fitzgerald & Louis Armstrong": {"handSet":["jazz"],"mb":[["jazz",2],["swing",2],["vocal jazz",2]],"mbAt":"2026-11-21","applied":["jazz"]},
+ "Hound Dog|Big Mama Thornton": {"handSet":["rnb"],"mb":[["rock",1],["blues",3],["chicago blues",1],["electric blues",1],["classic blues",1]],"mbAt":"2026-11-21","applied":["rock"]},
+ "Luck Be a Lady|Robert Alda": {"handSet":[],"mb":[],"mbAt":"2026-11-21","applied":[]},
+ "Mambo No. 5|Pérez Prado": {"handSet":["latin"],"mb":[["instrumental",1],["jazz",2],["latin",5],["mambo",1],["instrumental jazz",1],["anison",1],["big band",1],["latin jazz",1],["latin pop",1],["cuban",1]],"mbAt":"2026-11-21","applied":["jazz","latin"]},
+ "Oh, What a Beautiful Mornin'|Alfred Drake": {"handSet":[],"mb":[],"mbAt":"2026-11-21","applied":[]},
+ "Over the Rainbow|Judy Garland": {"handSet":[],"mb":[["soundtrack",1],["vocal",1],["musical",1],["oldies",1]],"mbAt":"2026-11-21","applied":[]},
+ "Shall We Dance?|Gertrude Lawrence, Yul Brynner": {"handSet":[],"mb":[],"mbAt":"2026-11-21","applied":[]},
+ "Sing, Sing, Sing|Benny Goodman": {"handSet":["jazz"],"mb":[],"mbAt":"2026-11-21","applied":["jazz"]},
+ "Some Enchanted Evening|Ezio Pinza": {"handSet":[],"mb":[],"mbAt":"2026-11-21","applied":[]},
+ "Strange Fruit|Billie Holiday": {"handSet":["jazz"],"mb":[["jazz",9],["vocal jazz",5],["jazz vocals",2],["jazz: jazz vocals",2],["blues",2],["covered by 3",1],["swing",1],["modernjazz",1]],"mbAt":"2026-11-21","applied":["jazz"]},
+ "There's No Business Like Show Business|Ethel Merman": {"handSet":[],"mb":[["soundtrack",1],["pop",1],["jazz",2],["easy listening",1]],"mbAt":"2026-11-21","applied":["pop","jazz"]},
+ "When You Wish Upon a Star|Cliff Edwards": {"handSet":[],"mb":[["soundtrack",5],["pop",1],["musical",2],["stage and screen",1]],"mbAt":"2026-11-21","applied":["pop"]},
+ "You'll Never Walk Alone|Christine Johnson": {"handSet":[],"mb":[],"mbAt":"2026-11-21","applied":[]},
+ "Your Cheatin' Heart|Hank Williams": {"handSet":["country"]}
+}
