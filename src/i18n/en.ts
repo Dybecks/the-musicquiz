@@ -437,6 +437,8 @@ export const en = {
       `Spotify isn’t playing anywhere right now, so the game doesn’t know where to play (${names.map((n) => `“${n}”`).join(', ')}). Pick one under 🔊.`,
     connectDidNotStart: (name: string) =>
       `“${name}” didn’t start playing. Make sure it’s switched on and awake (if it has gone to sleep, start any song on it from the Spotify app), then press Play here again.`,
+    connectCantControl:
+      'Spotify won’t let the game control the speaker the music is on now (often a Sonos). Pause and play in the Spotify app instead, or pick “The Music Quiz” in its device list to play in the browser again.',
     connectPremium: 'Playing on Spotify speakers and apps needs Spotify Premium.',
     serverUnreachable: 'Can’t reach the connection server.',
     serverUnreachableType: (type: string) => `Can’t reach the connection server (${type}).`,

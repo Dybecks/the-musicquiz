@@ -429,6 +429,8 @@ export const sv: Messages = {
       `Spotify spelar inte någonstans just nu, så spelet vet inte var det ska spela (${names.map((n) => `”${n}”`).join(', ')}). Välj en under 🔊.`,
     connectDidNotStart: (name) =>
       `”${name}” började inte spela. Kontrollera att den är påslagen och vaken (om den har somnat, starta valfri låt på den från Spotify-appen) och tryck sedan på Spela här igen.`,
+    connectCantControl:
+      'Spotify låter inte spelet styra högtalaren som musiken spelas på nu (ofta en Sonos). Pausa och spela i Spotify-appen i stället, eller välj ”The Music Quiz” i appens enhetslista för att spela i webbläsaren igen.',
     connectPremium: 'Att spela på Spotify-högtalare och appar kräver Spotify Premium.',
     serverUnreachable: 'Når inte anslutningsservern.',
     serverUnreachableType: (type) => `Når inte anslutningsservern (${type}).`,
