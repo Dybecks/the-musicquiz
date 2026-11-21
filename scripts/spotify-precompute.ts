@@ -440,6 +440,31 @@ async function fromWikidata(): Promise<void> {
   }
 }
 
+/**
+ * Deck songs whose Spotify page names another artist are searched once on
+ * Spotify; a match by the right artist replaces the id, in the decks too.
+ */
+async function fixSuspects(): Promise<void> {
+  for (const [key, id] of Object.entries(progress.suspect ?? {})) {
+    const song = rows.find((r) => keyOf(r) === key);
+    if (!song || song.id !== id) {
+      delete progress.suspect![key];
+      continue;
+    }
+    const firstArtist = song.artist.split(/\s*(?:,|&|feat\.|ft\.)\s*/i)[0];
+    const found = bestMatch(song, (await search(`track:"${quoteless(song.title)}" artist:"${quoteless(firstArtist)}"`)).items);
+    progress.tried[key] = today();
+    if (found && found.track.id !== id && !rows.some((o) => o !== song && o.id === found.track.id)) {
+      console.log(`↻ ${song.title} – ${song.artist}: ${id} → ${found.track.id} (the old id was another artist's)`);
+      setId(song, found.track.id);
+      delete progress.suspect![key];
+    } else if (found?.track.id === id) {
+      delete progress.suspect![key]; // Spotify's own search agrees: the page check was wrong
+    }
+    save();
+  }
+}
+
 async function fillIds(): Promise<void> {
   for (const song of [...rows]) {
     const key = keyOf(song);
@@ -684,6 +709,7 @@ async function main(): Promise<void> {
   try {
     await auditIds();
     await fromWikidata();
+    await fixSuspects();
     await fillIds();
     await recheckOddYears();
   } catch (e) {
