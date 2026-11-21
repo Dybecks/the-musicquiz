@@ -1,0 +1,482 @@
+# Song catalogue: needs a look
+
+Written by `scripts/spotify-precompute.ts` from `songs.json` and `decks.json`.
+
+Songs with a Spotify id: **325 of 669**. classic 160, movies 49, musicals 45, tv 33, games 38.
+
+## Not looked up yet
+
+These stay out of the game until `npm run spotify-data` finds them.
+
+- Sing, Sing, Sing – Benny Goodman
+- Strange Fruit – Billie Holiday
+- Mambo No. 5 – Pérez Prado
+- Dream a Little Dream of Me – Ella Fitzgerald & Louis Armstrong
+- Hound Dog – Big Mama Thornton
+- Your Cheatin' Heart – Hank Williams
+- Shake, Rattle and Roll – Big Joe Turner
+- Misty – Erroll Garner
+- Only You (And You Alone) – The Platters
+- Cheek to Cheek – Ella Fitzgerald & Louis Armstrong
+- Love Me Tender – Elvis Presley
+- Walk the Line – Johnny Cash
+- Summertime – Ella Fitzgerald & Louis Armstrong
+- Diana – Paul Anka
+- Moanin' – Art Blakey & The Jazz Messengers
+- Volare (Nel blu dipinto di blu) – Domenico Modugno
+- My Baby Just Cares for Me – Nina Simone
+- Tequila – The Champs
+- Dream Lover – Bobby Darin
+- Mack the Knife – Bobby Darin
+- So What – Miles Davis
+- Take Five – The Dave Brubeck Quartet
+- Itsy Bitsy Teenie Weenie Yellow Polkadot Bikini – Brian Hyland
+- Georgia on My Mind – Ray Charles
+- Can't Help Falling in Love – Elvis Presley
+- Crazy – Patsy Cline
+- Watermelon Man – Herbie Hancock
+- Ring of Fire – Johnny Cash
+- She Loves You – The Beatles
+- Cantaloupe Island – Herbie Hancock
+- Ack Värmeland, du sköna – Jan Johansson
+- Downtown – Petula Clark
+- A Change Is Gonna Come – Sam Cooke
+- The Girl from Ipanema – Stan Getz & João Gilberto
+- You Really Got Me – The Kinks
+- I Got You (I Feel Good) – James Brown
+- A Love Supreme, Pt. I – Acknowledgement – John Coltrane
+- Feeling Good – Nina Simone
+- King of the Road – Roger Miller
+- My Generation – The Who
+- These Boots Are Made for Walkin' – Nancy Sinatra
+- Mas que nada – Sérgio Mendes & Brasil '66
+- I'm a Believer – The Monkees
+- Paint It Black – The Rolling Stones
+- Soul Man – Sam & Dave
+- Purple Haze – The Jimi Hendrix Experience
+- Det börjar verka kärlek, banne mej – Claes-Göran Hederström
+- Israelites – Desmond Dekker & The Aces
+- I Heard It Through the Grapevine – Marvin Gaye
+- Stand by Your Man – Tammy Wynette
+- 54-46 That's My Number – Toots & The Maytals
+- Hej clown – Jan Malmsjö
+- Many Rivers to Cross – Jimmy Cliff
+- Pressure Drop – Toots & The Maytals
+- Iron Man – Black Sabbath
+- Paranoid – Black Sabbath
+- Coal Miner's Daughter – Loretta Lynn
+- Oye como va – Santana
+- Rivers of Babylon – The Melodians
+- Let's Stay Together – Al Green
+- Ain't No Sunshine – Bill Withers
+- Take Me Home, Country Roads – John Denver
+- What's Going On – Marvin Gaye
+- Lean on Me – Bill Withers
+- Spain – Chick Corea
+- Smoke on the Water – Deep Purple
+- Crocodile Rock – Elton John
+- The Harder They Come – Jimmy Cliff
+- Love Train – The O'Jays
+- Get Up, Stand Up – Bob Marley & The Wailers
+- Jolene – Dolly Parton
+- Midnight Train to Georgia – Gladys Knight & the Pips
+- Chameleon – Herbie Hancock
+- Search and Destroy – The Stooges
+- No Woman, No Cry – Bob Marley & The Wailers
+- Kung Fu Fighting – Carl Douglas
+- Rock the Boat – The Hues Corporation
+- S.O.S. – ABBA
+- Moviestar – Harpo
+- Get Down Tonight – KC and the Sunshine Band
+- Ding-a-dong – Teach-In
+- Daddy Cool – Boney M.
+- Police and Thieves – Junior Murvin
+- Blitzkrieg Bop – Ramones
+- Car Wash – Rose Royce
+- Anarchy in the U.K. – Sex Pistols
+- Lovely Day – Bill Withers
+- One Love / People Get Ready – Bob Marley & The Wailers
+- Three Little Birds – Bob Marley & The Wailers
+- I Feel Love – Donna Summer
+- Got to Give It Up – Marvin Gaye
+- God Save the Queen – Sex Pistols
+- Birdland – Weather Report
+- Is This Love – Bob Marley & The Wailers
+- Satisfy My Soul – Bob Marley & The Wailers
+- Rasputin – Boney M.
+- Ever Fallen in Love (With Someone You Shouldn't've) – Buzzcocks
+- The Gambler – Kenny Rogers
+- I Wanna Be Sedated – Ramones
+- Teenage Kicks – The Undertones
+- Leende guldbruna ögon – Vikingarna
+- Gimme! Gimme! Gimme! (A Man After Midnight) – ABBA
+- Highway to Hell – AC/DC
+- Hot Stuff – Donna Summer
+- Boogie Wonderland – Earth, Wind & Fire
+- Funkytown – Lipps Inc.
+- We Are Family – Sister Sledge
+- Satellit – Ted Gärdestad
+- Rapper's Delight – The Sugarhill Gang
+- The Winner Takes It All – ABBA
+- Back in Black – AC/DC
+- Could You Be Loved – Bob Marley & The Wailers
+- Holiday in Cambodia – Dead Kennedys
+- Upside Down – Diana Ross
+- 9 to 5 – Dolly Parton
+- Bad Reputation – Joan Jett
+- Love Will Tear Us Apart – Joy Division
+- Breaking the Law – Judas Priest
+- Celebration – Kool & the Gang
+- Ace of Spades – Motörhead
+- Crazy Train – Ozzy Osbourne
+- On the Road Again – Willie Nelson
+- Rise Above – Black Flag
+- Staten och kapitalet – Ebba Grön
+- Super Freak – Rick James
+- Dag efter dag – Chips
+- The Message – Grandmaster Flash and the Furious Five
+- Sommartider – Gyllene Tider
+- Run to the Hills – Iron Maiden
+- The Number of the Beast – Iron Maiden
+- Give It Up – KC and the Sunshine Band
+- Sexual Healing – Marvin Gaye
+- Billie Jean – Michael Jackson
+- Pass the Dutchie – Musical Youth
+- Should I Stay or Should I Go – The Clash
+- Buffalo Soldier – Bob Marley & The Wailers
+- Främling – Carola
+- Electric Avenue – Eddy Grant
+- Islands in the Stream – Kenny Rogers & Dolly Parton
+- Blue Monday – New Order
+- Ain't Nobody – Rufus and Chaka Khan
+- Sommaren är kort – Tomas Ledin
+- Red Red Wine – UB40
+- Diggi-Loo Diggi-Ley – Herreys
+- Smooth Operator – Sade
+- La det swinge – Bobbysocks!
+- Bra vibrationer – Kikki Danielsson
+- Conga – Miami Sound Machine
+- Kärleken är evig – Lena Philipsson
+- Master of Puppets – Metallica
+- Walk This Way – Run-DMC
+- There Is a Light That Never Goes Out – The Smiths
+- Bamboléo – Gipsy Kings
+- Welcome to the Jungle – Guns N' Roses
+- Dansa i neon – Lena Philipsson
+- Fyra Bugg & en Coca Cola – Lotta Engberg
+- It Must Have Been Love – Roxette
+- Just Like Heaven – The Cure
+- I Wanna Dance with Somebody (Who Loves Me) – Whitney Houston
+- Venus Butterfly – Pernilla Wahlgren
+- Where Is My Mind? – Pixies
+- It Takes Two – Rob Base and DJ E-Z Rock
+- Listen to Your Heart – Roxette
+- Debaser – Pixies
+- Fight the Power – Public Enemy
+- Back to Life (However Do You Want Me) – Soul II Soul
+- Pump Up the Jam – Technotronic
+- Friends in Low Places – Garth Brooks
+- U Can't Touch This – MC Hammer
+- Show Me Love – Robin S.
+- Ice Ice Baby – Vanilla Ice
+- Fångad av en stormvind – Carola
+- Vem tänder stjärnorna – Eva Dahlgren
+- Nothing Else Matters – Metallica
+- Achy Breaky Heart – Billy Ray Cyrus
+- End of the Road – Boyz II Men
+- Murder She Wrote – Chaka Demus & Pliers
+- Nuthin' but a "G" Thang – Dr. Dre
+- Walk – Pantera
+- Creep – Radiohead
+- Under the Bridge – Red Hot Chili Peppers
+- Rhythm Is a Dancer – Snap!
+- Informer – Snow
+- Eloise – Arvingarna
+- Vi får väl se – Arvingarna
+- The Rhythm of the Night – Corona
+- Mr. Vain – Culture Beat
+- Macarena – Los del Río
+- Basket Case – Green Day
+- Here Comes the Hotstepper – Ini Kamoze
+- Juicy – The Notorious B.I.G.
+- Self Esteem – The Offspring
+- California Love – 2Pac
+- Shy Guy – Diana King
+- Common People – Pulp
+- Ruby Soho – Rancid
+- Mr. Boombastic – Shaggy
+- No Diggity – Blackstreet
+- Dammit – blink-182
+- Song 2 – Blur
+- Du hast – Rammstein
+- Better Off Alone – Alice Deejay
+- La Vida Es un Carnaval – Celia Cruz
+- Blue (Da Ba Dee) – Eiffel 65
+- Suavemente – Elvis Crespo
+- You're Still the One – Shania Twain
+- The Kids Aren't Alright – The Offspring
+- I Want It That Way – Backstreet Boys
+- All the Small Things – blink-182
+- Take Me to Your Heaven – Charlotte Nilsson
+- Genie in a Bottle – Christina Aguilera
+- Sandstorm – Darude
+- Say My Name – Destiny's Child
+- Bailamos – Enrique Iglesias
+- Smooth – Santana
+- Man! I Feel Like a Woman! – Shania Twain
+- One More Time – Daft Punk
+- Down with the Sickness – Disturbed
+- In the End – Linkin Park
+- Ms. Jackson – OutKast
+- It Wasn't Me – Shaggy
+- Hate to Say I Told You So – The Hives
+- Main Offender – The Hives
+- Fallin' – Alicia Keys
+- Feuer frei! – Rammstein
+- Whenever, Wherever – Shakira
+- Fat Lip – Sum 41
+- Chop Suey! – System of a Down
+- Last Nite – The Strokes
+- Lassie – Ainbusk
+- Satisfaction – Benny Benassi
+- Without Me – Eminem
+- Come Away with Me – Norah Jones
+- Don't Know Why – Norah Jones
+- Get Busy – Sean Paul
+- In da Club – 50 Cent
+- Toxic – Britney Spears
+- Bring Me to Life – Evanescence
+- Mr. Brightside – The Killers
+- Rebellion (Lies) – Arcade Fire
+- Gasolina – Daddy Yankee
+- Call on Me – Eric Prydz
+- Take Me Out – Franz Ferdinand
+- American Idiot – Green Day
+- Boulevard of Broken Dreams – Green Day
+- Since U Been Gone – Kelly Clarkson
+- Det gör ont – Lena Philipsson
+- Ghost Love Score – Nightwish
+- Duality – Slipknot
+- I Bet You Look Good on the Dancefloor – Arctic Monkeys
+- Welcome to Jamrock – Damian Marley
+- Sugar, We're Goin Down – Fall Out Boy
+- Gold Digger – Kanye West
+- Hung Up – Madonna
+- Primo Victoria – Sabaton
+- Temperature – Sean Paul
+- Back to Black – Amy Winehouse
+- Irreplaceable – Beyoncé
+- Before He Cheats – Carrie Underwood
+- Hard Rock Hallelujah – Lordi
+- Alcastar – Magnus Uggla
+- Welcome to the Black Parade – My Chemical Romance
+- Young Folks – Peter Bjorn and John
+- Valerie – Mark Ronson
+- Kids – MGMT
+- Misery Business – Paramore
+- With Every Heartbeat – Robyn
+- Hero – Charlotte Perrelli
+- Mercy – Duffy
+- Gods of War – Sabaton
+- Love Story – Taylor Swift
+- Empire State of Mind – Jay-Z
+- Need You Now – Lady A
+- Uprising – Muse
+- Danza Kuduro – Don Omar
+- Pumped Up Kicks – Foster the People
+- Hold Yuh – Gyptian
+- Waka Waka (This Time for Africa) – Shakira
+- Call Me Maybe – Carly Rae Jepsen
+- Titanium – David Guetta
+- Little Talks – Of Monsters and Men
+- Jag kommer – Veronica Maggio
+- Cruise – Florida Georgia Line
+- Thinking About You – Frank Ocean
+- I Love It – Icona Pop
+- Thrift Shop – Macklemore & Ryan Lewis
+- Ho Hey – The Lumineers
+- Sweater Weather – The Neighbourhood
+- Do I Wanna Know? – Arctic Monkeys
+- Cigarette Daydreams – Cage the Elephant
+- Wagon Wheel – Darius Rucker
+- Rude – MAGIC!
+- Vivir Mi Vida – Marc Anthony
+- Habits (Stay High) – Tove Lo
+- Riptide – Vance Joy
+- Summer – Calvin Harris
+- Bailando – Enrique Iglesias
+- Stay with Me – Sam Smith
+- Tennessee Whiskey – Chris Stapleton
+- The Sound of Silence – Disturbed
+- Hotline Bling – Drake
+- The Less I Know the Better – Tame Impala
+- Can't Feel My Face – The Weeknd
+- La Bicicleta – Carlos Vives & Shakira
+- Redbone – Childish Gambino
+- Square Hammer – Ghost
+- Die For You – The Weeknd
+- Believer – Imagine Dragons
+- Mi Gente – J Balvin
+- HUMBLE. – Kendrick Lamar
+- Beggin' – Måneskin
+- Motion Sickness – Phoebe Bridgers
+- One Kiss – Calvin Harris & Dua Lipa
+- Taki Taki – DJ Snake
+- God's Plan – Drake
+- Toast – Koffee
+- Sicko Mode – Travis Scott
+- Don't Start Now – Dua Lipa
+- Mary on a Cross – Ghost
+- Old Town Road – Lil Nas X
+- Blinding Lights – The Weeknd
+- Dákiti – Bad Bunny
+- WAP – Cardi B
+- Heat Waves – Glass Animals
+- Kyoto – Phoebe Bridgers
+- Pepas – Farruko
+- Industry Baby – Lil Nas X
+- Seven – Måneskin
+- Zitti e buoni – Måneskin
+- good 4 u – Olivia Rodrigo
+- Leave the Door Open – Silk Sonic
+- Tití Me Preguntó – Bad Bunny
+- Kill Bill – SZA
+- Bzrp Music Sessions, Vol. 53 – Bizarrap & Shakira
+- Padam Padam – Kylie Minogue
+- Bewitched – Laufey
+- From the Start – Laufey
+- Fast Car – Luke Combs
+- Last Night – Morgan Wallen
+- Water – Tyla
+- Texas Hold 'Em – Beyoncé
+- Not Like Us – Kendrick Lamar
+- I Had Some Help – Post Malone
+- A Bar Song (Tipsy) – Shaboozey
+
+## Not found on Spotify
+
+Taken out of the catalogue. Add one back with the right title and artist (and "id": null) to try again.
+
+- A Whole New World – Peabo Bryson, Regina Belle: no recording with this title by this artist.
+- The Impossible Dream – Richard Kiley: no recording with this title by this artist.
+- Sun and Moon – Lea Salonga, Simon Bowman: no recording with this title by this artist.
+- The Origin of Love – John Cameron Mitchell: no recording with this title by this artist.
+- You Can't Stop the Beat – Marissa Jaret Winokur: no recording with this title by this artist.
+- Mama Who Bore Me – Lea Michele: no recording with this title by this artist.
+- The Fishin' Hole – Earle Hagen: no recording with this title by this artist.
+- Thunderbirds March – Barry Gray: no recording with this title by this artist.
+- Won't You Be My Neighbor? – Fred Rogers: no recording with this title by this artist.
+- Movin' On Up – Ja'Net DuBois: no recording with this title by this artist.
+- The Love Boat – Jack Jones: no recording with this title by this artist.
+- Dallas – Jerrold Immel: no recording with this title by this artist.
+- Hill Street Blues Theme – Mike Post: no recording with this title by this artist.
+- DuckTales Theme – Jeff Pescetto: no recording with this title by this artist.
+- The X-Files – Mark Snow: no recording with this title by this artist.
+- Buffy the Vampire Slayer Theme – Nerf Herder: no recording with this title by this artist.
+- Futurama Theme – Christopher Tyng: no recording with this title by this artist.
+- SpongeBob SquarePants Theme Song – Painty the Pirate: no recording with this title by this artist.
+- The Office Theme – The Scrantones: no recording with this title by this artist.
+- Phineas and Ferb Theme Song – Bowling for Soup: no recording with this title by this artist.
+- Breaking Bad Main Title Theme – Dave Porter: no recording with this title by this artist.
+- Way Back Then – Jung Jae Il: no recording with this title by this artist.
+- Severance Main Title – Theodore Shapiro: no recording with this title by this artist.
+- The Legend of Zelda Theme – Koji Kondo: no recording with this title by this artist.
+- Magical Sound Shower – Hiroshi Kawaguchi: no recording with this title by this artist.
+- Dr. Wily Stage 1 – Takashi Tateishi: no recording with this title by this artist.
+- Tetris (Type A) – Hirokazu Tanaka: no recording with this title by this artist.
+- Green Hill Zone – Masato Nakamura: no recording with this title by this artist.
+- Super Mario 64 Main Theme – Koji Kondo: no recording with this title by this artist.
+- Moon Over the Castle – Masahiro Andoh: no recording with this title by this artist.
+- Grand Theft Auto: San Andreas Theme – Michael Hunter: no recording with this title by this artist.
+- Legends of Azeroth – Jason Hayes: no recording with this title by this artist.
+- The Opened Way – Kow Otani: no recording with this title by this artist.
+- Vigil – Sam Hulick: no recording with this title by this artist.
+- Build That Wall – Darren Korb: no recording with this title by this artist.
+
+## Year differs from Spotify
+
+The catalogue year was kept. Spotify is often wrong (it dates songs by album), but these are worth a check.
+
+- Rock Around the Clock – Bill Haley & His Comets (classic): the catalogue says 1954; the recording used is from 2019 (Rock and Roll Revolution, Vol. 1, Part I (1954-1955)).
+- Tutti Frutti – Little Richard (classic): the catalogue says 1955; the recording used is from 2023 (Tutti Frutti).
+- Heartbreak Hotel – Elvis Presley (classic): the catalogue says 1956; the recording used is from 1958 (Elvis' Golden Records).
+- Great Balls of Fire – Jerry Lee Lewis (classic): the catalogue says 1957; the recording used is from 2020 (Great Balls of Fire).
+- What'd I Say – Ray Charles (classic): the catalogue says 1959; the recording used is from 2011 (The Genious of Soul - Ray Charles).
+- Y.M.C.A. – Village People (classic): the catalogue says 1978; the recording used is from 1983 (83 Seoul International Song Festival).
+- Stay – The Kid LAROI & Justin Bieber (classic): the catalogue says 2021; the recording used is from 2024 (Hits 2025 - As Mais Tocadas).
+- When You Wish Upon a Star – Cliff Edwards (movies): the catalogue says 1940; the recording used is from 2019 (I Can't Give You Anything But Love).
+- Moon River – Audrey Hepburn (movies): the catalogue says 1961; the recording used is from 2000 (Breakfast at Tiffany's).
+- Goldfinger – Shirley Bassey (movies): the catalogue says 1964; the recording used is from 1995 (This Is My Life... the Best).
+- Supercalifragilisticexpialidocious – Julie Andrews, Dick Van Dyke (movies): the catalogue says 1964; the recording used is from 1992 (Sherman Brothers).
+- Star Wars (Main Theme) – John Williams (movies): the catalogue says 1977; the recording used is from 1980 (Star Wars: The Empire Strikes Back (Original Motion Picture Soundtrack)).
+- St. Elmo's Fire (Man in Motion) – John Parr (movies): the catalogue says 1985; the recording used is from 2018 (Filmmusik).
+- Can You Feel the Love Tonight – Elton John (movies): the catalogue says 1994; the recording used is from 2002 (Greatest Hits).
+- Glory – Common, John Legend (movies): the catalogue says 2014; the recording used is from 2016 (Glory).
+- You'll Never Walk Alone – Christine Johnson (musicals): the catalogue says 1945; the recording used is from 2005 (RODGERS: Carousel (Original Broadway Cast) (1945) / Allegro (Original Broadway Cast) (1947)).
+- Some Enchanted Evening – Ezio Pinza (musicals): the catalogue says 1949; the recording used is from 1980 (The Rodgers & Hammerstein Songbook Compilation).
+- Luck Be a Lady – Robert Alda (musicals): the catalogue says 1950; the recording used is from 2023 (Broadway musical).
+- Shall We Dance? – Gertrude Lawrence, Yul Brynner (musicals): the catalogue says 1951; the recording used is from 2000 (The King And I).
+- I Could Have Danced All Night – Julie Andrews (musicals): the catalogue says 1956; the recording used is from 1988 (A Little Bit Of Broadway).
+- Tonight – Larry Kert, Carol Lawrence (musicals): the catalogue says 1957; the recording used is from 2004 (Broadway: The American Musical).
+- America – Chita Rivera (musicals): the catalogue says 1957; the recording used is from 2025 (Fast and Loose).
+- Everything's Coming Up Roses – Ethel Merman (musicals): the catalogue says 1959; the recording used is from 2014 (Original Broadway Cast Performs Gypsy).
+- Don't Rain on My Parade – Barbra Streisand (musicals): the catalogue says 1964; the recording used is from 1968 (Funny Girl - Original Soundtrack Recording).
+- If I Were a Rich Man – Zero Mostel (musicals): the catalogue says 1964; the recording used is from 1986 (Fiddler on the Roof (Original Broadway Cast Recording)).
+- Big Spender – Helen Gallagher, Thelma Oliver (musicals): the catalogue says 1966; the recording used is from 1932 (Broadway: The Great Original Cast Recordings).
+- Aquarius – Ronnie Dyson (musicals): the catalogue says 1968; the recording used is from 2021 (Hair Musical - Broadway Version).
+- Being Alive – Dean Jones (musicals): the catalogue says 1970; the recording used is from 1993 (The Party's Over: Broadway Sings the Blues).
+- Day by Day – Robin Lamont (musicals): the catalogue says 1971; the recording used is from 1995 (Godspell (Original Off-Broadway Cast Recording)).
+- Send in the Clowns – Glynis Johns (musicals): the catalogue says 1973; the recording used is from 1957 (The Story So Far...).
+- What I Did for Love – Priscilla Lopez (musicals): the catalogue says 1975; the recording used is from 1996 (Greatest Hits of Broadway).
+- Don't Cry for Me Argentina – Julie Covington (musicals): the catalogue says 1976; the recording used is from 2018 (Unmasked: The Platinum Collection).
+- Tomorrow – Andrea McArdle (musicals): the catalogue says 1977; the recording used is from 1932 (Broadway: The Great Original Cast Recordings).
+- Somewhere That's Green – Ellen Greene (musicals): the catalogue says 1982; the recording used is from 1986 (Little Shop Of Horrors (Original Motion Picture Soundtrack)).
+- Giants in the Sky – Ben Wright (musicals): the catalogue says 1987; the recording used is from 2007 (Broadway Scene Stealers - The Men).
+- Rawhide – Frankie Laine (tv): the catalogue says 1959; the recording used is from 1961 (Hell Bent For Leather!).
+- The Ballad of Jed Clampett – Flatt & Scruggs (tv): the catalogue says 1962; the recording used is from 2020 (The Foggy Mountain Boys - 50 Classic Tracks).
+- Doctor Who Theme – Ron Grainer (tv): the catalogue says 1963; the recording used is from 2023 (TV Themes).
+- The Addams Family Theme – Vic Mizzy (tv): the catalogue says 1964; the recording used is from 2005 (AMEB Piano For Leisure Series 2 Grade 1).
+- Batman Theme – Neal Hefti (tv): the catalogue says 1966; the recording used is from 2003 (Fanfarras de Ópio).
+- Mission: Impossible Theme – Lalo Schifrin (tv): the catalogue says 1966; the recording used is from 2010 (It`s time).
+- Theme from Star Trek – Alexander Courage (tv): the catalogue says 1966; the recording used is from 2013 (トランペットラブレター).
+- Hawaii Five-O – Morton Stevens (tv): the catalogue says 1968; the recording used is from 2025 (FILM, MUSICAL & TV MUSIC, vol.1).
+- Sesame Street Theme – Sesame Street (tv): the catalogue says 1969; the recording used is from 2003 (Sesame Street: Songs From The Street, Vol. 1).
+- The Muppet Show Theme – The Muppets (tv): the catalogue says 1976; the recording used is from 2011 (The Muppets (Original Motion Picture Soundtrack)).
+- Knight Rider Theme – Stu Phillips (tv): the catalogue says 1982; the recording used is from 2023 (TV Themes).
+- The A-Team – Mike Post, Pete Carpenter (tv): the catalogue says 1983; the recording used is from 2012 (The "A" Team - Theme from the Television Series (Mike Post)).
+- The Simpsons Theme – Danny Elfman (tv): the catalogue says 1989; the recording used is from 2023 (TV Themes).
+- Twin Peaks Theme – Angelo Badalamenti (tv): the catalogue says 1990; the recording used is from 2017 (Twin Peaks (Limited Event Series Soundtrack)).
+- The Fresh Prince of Bel-Air – DJ Jazzy Jeff & The Fresh Prince (tv): the catalogue says 1990; the recording used is from 1998 (Greatest Hits).
+- Pokémon Theme – Jason Paige (tv): the catalogue says 1998; the recording used is from 2017 (POKÉJON).
+- The Game Is On – David Arnold, Michael Price (tv): the catalogue says 2010; the recording used is from 2012 (Sherlock (Soundtrack from the TV series)).
+- Bluey Theme Tune – Joff Bush (tv): the catalogue says 2018; the recording used is from 2026 (The Bluey Album Collection).
+- Super Mario Bros. Theme – Koji Kondo (games): the catalogue says 1985; the recording used is from 2022 (Gaming Music).
+- Vampire Killer – Konami Kukeiha Club (games): the catalogue says 1986; the recording used is from 2023 (Dead Cells Return To Castlevania).
+- Guile's Theme – Yoko Shimomura (games): the catalogue says 1991; the recording used is from 2018 (The Essential Games Music Collection Vol.2).
+- At Doom's Gate – Bobby Prince (games): the catalogue says 1993; the recording used is from 2026 (DOOM (1993) [Original Game Soundtrack]).
+- Song of Storms – Koji Kondo (games): the catalogue says 1998; the recording used is from 2021 (Acoustica: The Legend of Zelda).
+- Spiral Mountain – Grant Kirkhope (games): the catalogue says 1998; the recording used is from 2021 (Banjo Kazooie: Re-Jiggyed).
+- To Zanarkand – Nobuo Uematsu (games): the catalogue says 2001; the recording used is from 2016 (Fleeting Symphony).
+- Live and Learn – Crush 40 (games): the catalogue says 2001; the recording used is from 2009 (Super Sonic Songs - The Best Of Crush 40 (Bonus Tracks)).
+- Baba Yetu – Christopher Tin (games): the catalogue says 2005; the recording used is from 2009 (Calling All Dawns).
+
+## Songs per genre ("By genre")
+
+| Genre | 50s | 60s | 70s | 80s | 90s | 00s | 10s | 20s | Total |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| pop | 0 | 3 | 8 | 13 | 15 | 12 | 17 | 14 | 82 |
+| rock | 8 | 12 | 16 | 13 | 8 | 5 | 0 | 0 | 62 |
+| hiphop | 0 | 0 | 0 | 0 | 4 | 8 | 0 | 0 | 12 |
+| rnb | 1 | 2 | 1 | 1 | 2 | 4 | 0 | 0 | 11 |
+| soul | 1 | 7 | 7 | 2 | 1 | 2 | 4 | 0 | 24 |
+| disco | 0 | 0 | 7 | 0 | 0 | 0 | 2 | 1 | 10 |
+| dance | 0 | 0 | 2 | 5 | 7 | 3 | 8 | 3 | 28 |
+| country | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| metal | 0 | 0 | 0 | 1 | 1 | 0 | 0 | 0 | 2 |
+| indie | 0 | 0 | 0 | 0 | 2 | 1 | 1 | 0 | 4 |
+| schlager | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 1 | 3 |
+| swedishpop | 0 | 0 | 3 | 2 | 5 | 0 | 6 | 1 | 17 |
+| jazz | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 2 |
+| reggae | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| latin | 1 | 0 | 0 | 0 | 1 | 1 | 1 | 0 | 4 |
+| punk | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 1 |

@@ -1,37 +1,30 @@
 /**
- * Fills in Spotify data the game ships with, so it can play songs without
- * asking Spotify anything at game time:
- *
- *  1. A Spotify track id for every song in the ready-made decks that has none.
- *  2. The "By genre" lists: the hand-picked songs in scripts/genre-songs.ts,
- *     with their year and track id (songs also in a deck reuse its id).
+ * Fills in the Spotify track ids in the song catalogue
+ * (src/data/catalog/songs.json), so the game can play every song without
+ * asking Spotify anything at game time. Rows with "id": null are looked up:
+ * first on Wikidata (free, checked with Spotify's oEmbed), then with at most
+ * two Spotify searches each. Songs Spotify doesn't have are taken out of the
+ * catalogue and listed in src/data/catalog/REVIEW.md, never guessed.
  *
  * Run locally with the app's Client ID and Secret (Client Credentials flow,
- * no user login). Spotify's request quota is
- * shared by every app on the developer account, so the script is slow on
- * purpose, stops after MAX_REQUESTS, and stops early if Spotify asks for a
- * long pause. Everything it learns is saved as it goes, and the next run
- * carries on where this one stopped.
+ * no user login). Spotify's request quota is shared by every app on the
+ * developer account, so the script is slow on purpose, stops after
+ * MAX_REQUESTS, and stops early if Spotify asks for a long pause. Everything
+ * it learns is saved as it goes, and the next run carries on where this one
+ * stopped.
  *
- * Songs it can't match are listed in src/data/spotify/REVIEW.md, never guessed.
- *
- * Locally: put SPOTIFY_CLIENT_ID=… and SPOTIFY_CLIENT_SECRET=… in .env.local
- * (never committed), then `npm run spotify-data`. Environment variables work too.
+ * Put SPOTIFY_CLIENT_ID=… and SPOTIFY_CLIENT_SECRET=… in .env.local (never
+ * committed), then `npm run spotify-data`. Environment variables work too.
  */
 import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import type { Song } from '../src/game/engine';
-import { DEFAULT_SONGS } from '../src/data/songs';
-import { GAME_SONGS, MOVIE_SONGS, MUSICAL_SONGS, TV_SONGS } from '../src/data/soundtracks';
-import { premadeKey, type GenrePools, type PoolRow } from '../src/data/spotifyData';
+import type { BuiltInDeckId, CatalogRow } from '../src/data/catalog';
 import { SEARCH_GENRE_DEFS as SEARCH_GENRES } from '../src/data/searchGenres';
-import { GENRE_SONGS } from './genre-songs';
 import {
   cleanTitle,
   needsYearCheck,
   normalizeKey,
   releaseYear,
-  songKey,
   type SpotifyTrack,
 } from '../src/spotify/personalDeck';
 
@@ -46,9 +39,9 @@ try {
 } catch {
   /* no .env.local */
 }
-const IDS_FILE = file('../src/data/spotify/track-ids.json');
-const POOLS_FILE = file('../src/data/spotify/genre-pools.json');
-const REVIEW_FILE = file('../src/data/spotify/REVIEW.md');
+const SONGS_FILE = file('../src/data/catalog/songs.json');
+const DECKS_FILE = file('../src/data/catalog/decks.json');
+const REVIEW_FILE = file('../src/data/catalog/REVIEW.md');
 const PROGRESS_FILE = file('./spotify-progress.json');
 
 /** Requests per run. The next run carries on. */
@@ -68,21 +61,15 @@ const NOT_ORIGINAL = /\b(karaoke|instrumental|tribute|cover|remix|re-?mix|acoust
 // ---- Files ----
 
 interface Progress {
-  /** Ready-made songs already searched for (key → when). */
+  /** Songs already searched for on Spotify (title|artist → when). */
   tried: Record<string, string>;
-  /** Genre searches made: "genre|decade" → offsets fetched and the total Spotify reported. */
-  searched: Record<string, { offsets: number[]; total: number | null }>;
-  /** Ready-made songs searched again with the closest-year rule (key → when). */
+  /** Songs searched again with the closest-year rule (title|artist → when). */
   rechecked?: Record<string, string>;
-  /** Spotify ids checked with oEmbed: the title Spotify gives, or "" when the id doesn't work. */
-  oembed?: Record<string, string>;
-  /** Ready-made songs already looked up on Wikidata (key → when). */
+  /** Songs already looked up on Wikidata (title|artist → when). */
   wikidata?: Record<string, string>;
-  /** Ids of hand-picked genre songs that aren't in a deck (title|artist → id). */
-  genreIds?: Record<string, string>;
-  /** Ready-made songs that matched nothing, with why. */
+  /** Songs that matched nothing and were taken out of the catalogue, with why. */
   unmatched?: Record<string, string>;
-  /** Ready-made songs whose Spotify year differs from the deck's year. */
+  /** Songs whose Spotify year differs from the catalogue's year. */
   yearNotes?: Record<string, string>;
 }
 
@@ -94,39 +81,46 @@ const readJson = <T,>(path: string, fallback: T): T => {
   }
 };
 
-const ids = readJson<Record<string, string>>(IDS_FILE, {});
-const pools = readJson<GenrePools>(POOLS_FILE, {});
-const progress = readJson<Progress>(PROGRESS_FILE, { tried: {}, searched: {} });
+const rows = readJson<CatalogRow[]>(SONGS_FILE, []);
+const decks = readJson<Record<BuiltInDeckId, string[]>>(DECKS_FILE, {} as Record<BuiltInDeckId, string[]>);
+const progress = readJson<Progress>(PROGRESS_FILE, { tried: {} });
 progress.unmatched ??= {};
 progress.yearNotes ??= {};
 progress.wikidata ??= {};
 progress.rechecked ??= {};
-progress.oembed ??= {};
-progress.genreIds ??= {};
-Object.assign(ids, progress.genreIds);
 
+const keyOf = (r: Pick<CatalogRow, 'title' | 'artist'>) => `${r.title}|${r.artist}`;
 const sortKeys = <T,>(o: Record<string, T>) => Object.fromEntries(Object.entries(o).sort(([a], [b]) => a.localeCompare(b)));
+const today = () => new Date().toISOString().slice(0, 10);
+
+/** Which ready-made deck a song is in, for messages. */
+function deckOf(row: CatalogRow): string {
+  const deck = row.id ? Object.entries(decks).find(([, ids]) => ids.includes(row.id!)) : undefined;
+  return deck ? deck[0] : 'catalogue';
+}
+
+/** Gives a song a new id, also in the decks that list it. */
+function setId(row: CatalogRow, id: string): void {
+  for (const list of Object.values(decks)) {
+    const i = row.id ? list.indexOf(row.id) : -1;
+    if (i >= 0) list[i] = id;
+  }
+  row.id = id;
+  delete progress.unmatched![keyOf(row)];
+}
 
 function save(): void {
-  // Deck songs' ids go in track-ids.json (the game reads it); the rest only feed the genre lists.
-  const deckKeys = new Set(DECKS.flatMap(([, songs]) => songs.map(premadeKey)));
-  const deckIds = Object.fromEntries(Object.entries(ids).filter(([k]) => deckKeys.has(k)));
-  progress.genreIds = sortKeys(Object.fromEntries(Object.entries(ids).filter(([k]) => !deckKeys.has(k))));
-  buildGenrePools();
-  writeFileSync(IDS_FILE, JSON.stringify(sortKeys(deckIds), null, 1) + '\n');
-  const sortedPools = Object.fromEntries(
-    Object.entries(pools)
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([g, rows]) => [g, [...rows].sort((a, b) => a[2] - b[2] || a[0].localeCompare(b[0]))]),
-  );
+  rows.sort((a, b) => a.year - b.year || a.artist.localeCompare(b.artist) || a.title.localeCompare(b.title));
   // One song per line keeps the diffs readable.
-  const poolJson =
+  writeFileSync(SONGS_FILE, '[\n' + rows.map((r) => ' ' + JSON.stringify(r)).join(',\n') + '\n]\n');
+  writeFileSync(
+    DECKS_FILE,
     '{\n' +
-    Object.entries(sortedPools)
-      .map(([g, rows]) => ` ${JSON.stringify(g)}: [\n${rows.map((r) => '  ' + JSON.stringify(r)).join(',\n')}\n ]`)
-      .join(',\n') +
-    '\n}\n';
-  writeFileSync(POOLS_FILE, Object.keys(sortedPools).length ? poolJson : '{}\n');
+      Object.entries(decks)
+        .map(([d, ids]) => ` ${JSON.stringify(d)}: [\n${ids.map((id) => '  ' + JSON.stringify(id)).join(',\n')}\n ]`)
+        .join(',\n') +
+      '\n}\n',
+  );
   writeFileSync(PROGRESS_FILE, JSON.stringify({ ...progress, tried: sortKeys(progress.tried) }, null, 1) + '\n');
   writeFileSync(REVIEW_FILE, review());
 }
@@ -211,15 +205,7 @@ async function search(q: string, offset = 0): Promise<{ items: SpotifyTrack[]; t
   }
 }
 
-// ---- 1. Ids for the ready-made decks ----
-
-const DECKS: [name: string, songs: Song[]][] = [
-  ['Classic hits', DEFAULT_SONGS],
-  ['Movie songs', MOVIE_SONGS],
-  ['Musicals', MUSICAL_SONGS],
-  ['TV themes', TV_SONGS],
-  ['Video game music', GAME_SONGS],
-];
+// ---- Matching ----
 
 const quoteless = (s: string) => s.replace(/["]/g, '');
 const artistParts = (artist: string) =>
@@ -245,7 +231,7 @@ function sameTitle(track: SpotifyTrack, title: string): boolean {
  * or live version, preferring the original album or single over reissues,
  * then the earliest release.
  */
-export function bestMatch(song: Song, items: SpotifyTrack[]): { track: SpotifyTrack & { id: string }; earliest: number | null } | null {
+export function bestMatch(song: Pick<CatalogRow, 'title' | 'artist' | 'year'>, items: SpotifyTrack[]): { track: SpotifyTrack & { id: string }; earliest: number | null } | null {
   const ok = uniqueTracksKeepAll(items).filter(
     (t) => sameTitle(t, song.title) && sameArtist(t, song.artist) && (NOT_ORIGINAL.test(song.title) || !NOT_ORIGINAL.test(`${t.name} ${t.album.name ?? ''}`)),
   );
@@ -284,10 +270,7 @@ function uniqueTracksKeepAll(items: SpotifyTrack[]): (SpotifyTrack & { id: strin
  * song's title. Only songs left over after this are searched on Spotify.
  */
 async function fromWikidata(): Promise<void> {
-  const todo = GROUPS.flatMap(([, songs]) => songs).filter((s) => {
-    const key = premadeKey(s);
-    return !s.spotifyId && !ids[key] && !progress.tried[key] && !progress.wikidata![key];
-  });
+  const todo = rows.filter((r) => !r.id && !progress.tried[keyOf(r)] && !progress.wikidata![keyOf(r)]);
   if (todo.length === 0) return;
   const agent = { 'User-Agent': 'the-musicquiz-precompute/1.0 (https://github.com/Dybecks/the-musicquiz)' };
   const literal = (t: string) => JSON.stringify(t) + '@en';
@@ -311,7 +294,7 @@ async function fromWikidata(): Promise<void> {
       return;
     }
     for (const song of chunk) {
-      const key = premadeKey(song);
+      const key = keyOf(song);
       const candidates = [
         ...new Set(
           rows
@@ -328,8 +311,7 @@ async function fromWikidata(): Promise<void> {
           if (!res.ok) continue;
           const { title } = (await res.json()) as { title?: string };
           if (title && normalizeKey(cleanTitle(title)) === normalizeKey(cleanTitle(song.title))) {
-            ids[key] = id;
-            delete progress.unmatched![key];
+            setId(song, id);
             console.log(`✓ ${song.title} – ${song.artist}: ${id} (Wikidata)`);
             break;
           }
@@ -337,79 +319,38 @@ async function fromWikidata(): Promise<void> {
           /* try the next id, or search later */
         }
       }
-      progress.wikidata![key] = new Date().toISOString().slice(0, 10);
+      progress.wikidata![key] = today();
     }
     save();
   }
 }
 
-async function fillPremadeIds(): Promise<void> {
-  for (const [deck, songs] of GROUPS) {
-    for (const song of songs) {
-      const key = premadeKey(song);
-      if (song.spotifyId || ids[key] || progress.tried[key]) continue;
-      const firstArtist = song.artist.split(/\s*(?:,|&|feat\.|ft\.)\s*/i)[0];
-      // At most two searches: the exact one, then a looser one.
-      const queries = [`track:"${quoteless(song.title)}" artist:"${quoteless(firstArtist)}"`, `${quoteless(song.title)} ${quoteless(firstArtist)}`];
-      let found: ReturnType<typeof bestMatch> = null;
-      for (const q of queries) {
-        found = bestMatch(song, (await search(q)).items);
-        if (found) break;
+async function fillIds(): Promise<void> {
+  for (const song of [...rows]) {
+    const key = keyOf(song);
+    if (song.id || progress.tried[key]) continue;
+    const firstArtist = song.artist.split(/\s*(?:,|&|feat\.|ft\.)\s*/i)[0];
+    // At most two searches: the exact one, then a looser one.
+    const queries = [`track:"${quoteless(song.title)}" artist:"${quoteless(firstArtist)}"`, `${quoteless(song.title)} ${quoteless(firstArtist)}`];
+    let found: ReturnType<typeof bestMatch> = null;
+    for (const q of queries) {
+      found = bestMatch(song, (await search(q)).items);
+      if (found) break;
+    }
+    progress.tried[key] = today();
+    if (found) {
+      setId(song, found.track.id);
+      if (found.earliest !== null && Math.abs(found.earliest - song.year) > 1) {
+        progress.yearNotes![key] = `the catalogue says ${song.year}, Spotify's earliest release is ${found.earliest} (${found.track.album.name}).`;
       }
-      progress.tried[key] = new Date().toISOString().slice(0, 10);
-      if (found) {
-        ids[key] = found.track.id;
-        delete progress.unmatched![key];
-        if (found.earliest !== null && Math.abs(found.earliest - song.year) > 1) {
-          progress.yearNotes![key] = `${deck}: the deck says ${song.year}, Spotify's earliest release is ${found.earliest} (${found.track.album.name}).`;
-        }
-        console.log(`✓ ${song.title} – ${song.artist}: ${found.track.id}`);
-      } else {
-        progress.unmatched![key] = `${deck}: no recording with this title by this artist.`;
-        console.log(`✗ ${song.title} – ${song.artist}: no match`);
-      }
-      save();
+      console.log(`✓ ${song.title} – ${song.artist}: ${found.track.id}`);
+    } else {
+      // Not on Spotify: out of the catalogue, listed in the review.
+      progress.unmatched![key] = `${song.year}, ${song.genres.join(', ') || 'no genre'}: no recording with this title by this artist.`;
+      rows.splice(rows.indexOf(song), 1);
+      console.log(`✗ ${song.title} – ${song.artist}: no match, taken out`);
     }
-  }
-}
-
-// ---- 2. Genre lists ----
-
-/** Deck songs by song key: their checked year and id win. */
-const CURATED = new Map(DECKS.flatMap(([, songs]) => songs.map((s) => [songKey(s.title, s.artist), s] as const)));
-
-/** Hand-picked genre songs that aren't in a deck: these need their own id. */
-const GENRE_ONLY: Song[] = (() => {
-  const seen = new Set<string>();
-  const out: Song[] = [];
-  for (const rows of Object.values(GENRE_SONGS)) {
-    for (const [title, artist, year] of rows) {
-      const key = songKey(title, artist);
-      if (CURATED.has(key) || seen.has(key)) continue;
-      seen.add(key);
-      out.push({ id: `g${out.length + 1}`, title, artist, year });
-    }
-  }
-  return out;
-})();
-
-const GROUPS: [name: string, songs: Song[]][] = [...DECKS, ['Genre lists', GENRE_ONLY]];
-
-/** Rebuilds genre-pools.json from scripts/genre-songs.ts and the ids found. Songs without an id are left out. */
-function buildGenrePools(): void {
-  for (const key of Object.keys(pools)) delete pools[key];
-  for (const [genre, rows] of Object.entries(GENRE_SONGS)) {
-    const seen = new Set<string>();
-    const out: PoolRow[] = [];
-    for (const [title, artist, year] of rows) {
-      const key = songKey(title, artist);
-      if (seen.has(key)) continue;
-      seen.add(key);
-      const deck = CURATED.get(key);
-      const id = deck ? (deck.spotifyId ?? ids[premadeKey(deck)]) : ids[premadeKey({ title, artist })];
-      if (id) out.push(deck ? [deck.title, deck.artist, deck.year, id] : [title, artist, year, id]);
-    }
-    pools[genre] = out;
+    save();
   }
 }
 
@@ -419,20 +360,19 @@ function buildGenrePools(): void {
  * searched once more and get the release closest to their known year.
  */
 async function recheckOddYears(): Promise<void> {
-  const all = new Map(DECKS.flatMap(([deck, songs]) => songs.map((s) => [premadeKey(s), { s, deck }] as const)));
+  const byKey = new Map(rows.map((r) => [keyOf(r), r]));
   for (const key of Object.keys(progress.yearNotes ?? {})) {
-    const entry = all.get(key);
-    if (!entry || progress.rechecked![key] || !ids[key]) continue;
-    const { s: song, deck } = entry;
+    const song = byKey.get(key);
+    if (!song?.id || progress.rechecked![key]) continue;
     const firstArtist = song.artist.split(/\s*(?:,|&|feat\.|ft\.)\s*/i)[0];
     const found = bestMatch(song, (await search(`track:"${quoteless(song.title)}" artist:"${quoteless(firstArtist)}"`)).items);
-    progress.rechecked![key] = new Date().toISOString().slice(0, 10);
+    progress.rechecked![key] = today();
     if (found) {
       const year = releaseYear(found.track.album.release_date);
-      if (found.track.id !== ids[key]) console.log(`↻ ${song.title} – ${song.artist}: ${ids[key]} → ${found.track.id} (${found.track.album.name}, ${year})`);
-      ids[key] = found.track.id;
+      if (found.track.id !== song.id) console.log(`↻ ${song.title} – ${song.artist}: ${song.id} → ${found.track.id} (${found.track.album.name}, ${year})`);
+      setId(song, found.track.id);
       if (year !== null && Math.abs(year - song.year) > 1) {
-        progress.yearNotes![key] = `${deck}: the deck says ${song.year}; the recording used is from ${year} (${found.track.album.name}).`;
+        progress.yearNotes![key] = `the catalogue says ${song.year}; the recording used is from ${year} (${found.track.album.name}).`;
       } else delete progress.yearNotes![key];
     }
     save();
@@ -442,45 +382,49 @@ async function recheckOddYears(): Promise<void> {
 // ---- Report ----
 
 function review(): string {
-  const all = DECKS.flatMap(([, s]) => s);
-  // Songs taken out of the decks since are left out.
-  const inDecks = new Set(all.map(premadeKey));
-  const unmatched = Object.entries(progress.unmatched ?? {}).filter(([k]) => inDecks.has(k));
-  const genreKeys = new Set(GENRE_ONLY.map(premadeKey));
-  const genreMissing = Object.entries(progress.unmatched ?? {}).filter(([k]) => genreKeys.has(k));
-  const years = Object.entries(progress.yearNotes ?? {}).filter(([k]) => inDecks.has(k));
-  const withId = all.filter((s) => s.spotifyId || ids[premadeKey(s)]).length;
+  const byKey = new Map(rows.map((r) => [keyOf(r), r]));
+  const unmatched = Object.entries(progress.unmatched ?? {}).filter(([k]) => !byKey.get(k)?.id);
+  const years = Object.entries(progress.yearNotes ?? {}).filter(([k]) => byKey.get(k)?.id);
+  const missing = rows.filter((r) => !r.id);
+  const item = ([k, why]: [string, string]) => {
+    const row = byKey.get(k);
+    return `- ${k.replace('|', ' – ')}${row ? ` (${deckOf(row)})` : ''}: ${why}`;
+  };
+  const playable = rows.filter((r) => r.id);
   const lines = [
-    '# Spotify data: needs a look',
+    '# Song catalogue: needs a look',
     '',
-    'Written by `scripts/spotify-precompute.ts`. Songs listed here have no Spotify id',
-    'yet and stay out of the no-login game. Fix them by hand in `track-ids.json`',
-    '(key `title|artist`), or correct the song in its deck.',
+    'Written by `scripts/spotify-precompute.ts` from `songs.json` and `decks.json`.',
     '',
-    `Ready-made songs with an id: **${withId} of ${all.length}**.`,
+    `Songs with a Spotify id: **${playable.length} of ${rows.length}**. ` +
+      Object.entries(decks).map(([d, ids]) => `${d} ${ids.length}`).join(', ') + '.',
+    '',
+    '## Not looked up yet',
+    '',
+    'These stay out of the game until `npm run spotify-data` finds them.',
+    '',
+    ...(missing.length ? missing.map((r) => `- ${r.title} – ${r.artist}`) : ['None.']),
     '',
     '## Not found on Spotify',
     '',
-    ...(unmatched.length ? unmatched.map(([k, why]) => `- ${k.replace('|', ' – ')}: ${why}`) : ['None.']),
+    'Taken out of the catalogue. Add one back with the right title and artist (and "id": null) to try again.',
+    '',
+    ...(unmatched.length ? unmatched.map(item) : ['None.']),
     '',
     '## Year differs from Spotify',
     '',
-    'The deck year was kept. Spotify is often wrong (it dates songs by album), but these are worth a check.',
+    'The catalogue year was kept. Spotify is often wrong (it dates songs by album), but these are worth a check.',
     '',
-    ...(years.length ? years.map(([k, why]) => `- ${k.replace('|', ' – ')}: ${why}`) : ['None.']),
+    ...(years.length ? years.map(item) : ['None.']),
     '',
-    '## Genre lists',
-    '',
-    'From `scripts/genre-songs.ts`. Songs not found on Spotify are left out of the lists:',
-    '',
-    ...(genreMissing.length ? genreMissing.map(([k]) => `- ${k.replace('|', ' – ')}`) : ['None.']),
+    '## Songs per genre ("By genre")',
     '',
     `| Genre | ${DECADES.map((d) => `${String(d).slice(2)}s`).join(' | ')} | Total |`,
     `|---|${DECADES.map(() => '---:').join('|')}|---:|`,
     ...SEARCH_GENRES.map((g) => {
-      const rows = pools[g.id] ?? [];
-      const counts = DECADES.map((d) => rows.filter((r) => r[2] >= d && r[2] <= d + 9).length);
-      return `| ${g.id} | ${counts.join(' | ')} | ${rows.length} |`;
+      const songs = playable.filter((r) => r.genres.includes(g.id));
+      const counts = DECADES.map((d) => songs.filter((r) => r.year >= d && r.year <= d + 9).length);
+      return `| ${g.id} | ${counts.join(' | ')} | ${songs.length} |`;
     }),
     '',
   ];
@@ -493,7 +437,7 @@ async function main(): Promise<void> {
   let stopped: string | null = null;
   try {
     await fromWikidata();
-    await fillPremadeIds();
+    await fillIds();
     await recheckOddYears();
   } catch (e) {
     if (!(e instanceof StopRun)) {

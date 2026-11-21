@@ -1,10 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { chooseSongs, deckSongs, normalizeDecks, parseSavedDecks } from './decks';
-import { DEFAULT_SONGS, NO_LOGIN_SONGS } from './songs';
-import { GAME_SONGS, MOVIE_SONGS, MUSICAL_SONGS, TV_SONGS } from './soundtracks';
+import { BUILT_IN, chooseSongs, deckSongs, normalizeDecks, parseSavedDecks } from './decks';
 import { mergeSongs, songKey, type PersonalDeck } from '../spotify/personalDeck';
 
-const soundtracks = { movies: MOVIE_SONGS, musicals: MUSICAL_SONGS, tv: TV_SONGS, games: GAME_SONGS };
+const { classic: DEFAULT_SONGS, movies: MOVIE_SONGS, tv: TV_SONGS, ...rest } = BUILT_IN;
+const soundtracks = { movies: MOVIE_SONGS, tv: TV_SONGS, ...rest };
 
 describe('soundtrack decks', () => {
   for (const [name, songs] of Object.entries(soundtracks)) {
@@ -48,9 +47,9 @@ describe('deck choice', () => {
 
   it('only keeps songs with a Spotify id for the hidden player without login', () => {
     const songs = chooseSongs({ decks: ['classic', 'games'], mode: 'embed', loggedIn: false, personal: null });
-    expect(songs.length).toBeGreaterThanOrEqual(NO_LOGIN_SONGS.length);
+    expect(songs).toHaveLength(DEFAULT_SONGS.length + BUILT_IN.games.length);
     expect(songs.every((s) => s.spotifyId)).toBe(true);
-    expect(songs.slice(0, NO_LOGIN_SONGS.length)).toEqual(NO_LOGIN_SONGS);
+    expect(songs.slice(0, DEFAULT_SONGS.length)).toEqual(DEFAULT_SONGS);
   });
 
   it("puts the person's own copy of a song first", () => {

@@ -95,38 +95,44 @@ shuffled together, and a song that appears in two decks is only used once.
 | TV themes | 33 | Peter Gunn (1958) to Arcane (2021) |
 | Video game music | 38 | Super Mario Bros. (1985) to Baldur's Gate 3 (2023) |
 
-The four soundtrack decks are in `src/data/soundtracks.ts`. They only hold songs written
+All decks are lists of songs from the song catalogue (see **The song catalogue** below).
+The four soundtrack decks only hold songs written
 for the film, show, game or musical, so the year on the card is the year that work first
 came out: the film's release, the show's premiere, the game's first release, or the
 musical's first major production (or concept album, as for Evita). Cards say where the
-song is from. Their Spotify ids are looked up ahead of time (see **Spotify data shipped
-with the game** below); a song without one is found with the Spotify search at play time,
-which needs a login. Some video game music, Nintendo's in particular, isn't on Spotify;
+song is from. Some video game music, Nintendo's in particular, isn't on Spotify;
 songs Spotify doesn't have under their title and artist were taken out of the decks.
 
-## Spotify data shipped with the game
+## The song catalogue
 
-`scripts/spotify-precompute.ts` looks things up on Spotify once, so games don't have to:
+Every song the game knows is one row in `src/data/catalog/songs.json`:
 
-- a Spotify track id for every ready-made song that has none pinned by hand
-  (`src/data/spotify/track-ids.json`), so every song plays in the hidden player without
-  a login or a request. Ids are taken from Wikidata first (checked with Spotify's public
-  oEmbed, which costs no API requests); only the rest are searched, at most twice each;
-- the genre lists for **By genre** (`src/data/spotify/genre-pools.json`), built from the
-  hand-picked songs in `scripts/genre-songs.ts`: about 30 well-known songs per genre,
-  spread over the decades, each with the year it first came out. Songs also in a
-  ready-made deck reuse the deck's id and year; the rest are looked up like the decks
-  (Wikidata first, then at most two searches each). Songs not found are left out of the
-  lists.
+```json
+{"id":"5kI61e8YOAxhQO7UBKQ0CW","title":"Waterloo","artist":"ABBA","year":1974,"genres":["pop","swedishpop"]}
+```
 
-Every song in a ready-made deck must have a Spotify id (a test checks this). Songs the
-script can't match are listed in `src/data/spotify/REVIEW.md`, never guessed: find the
-id by hand (`track-ids.json`, key `title|artist`) or take the song out of its deck. The
-review also lists songs whose Spotify year differs from the deck's.
+- `id`: the Spotify track id, so the song plays in the hidden player without a login or
+  a request;
+- `title`, `artist`, and `year`: the original release year (single or album, whichever
+  came first), not a remaster's;
+- `genres`: the **By genre** genres it belongs to (`src/data/searchGenres.ts`);
+- `from`: for soundtracks, the film, show, game or musical.
+
+The ready-made decks are lists of Spotify ids from the catalogue, in
+`src/data/catalog/decks.json`. **By genre** picks from the whole catalogue
+(`src/data/catalog.ts`). Tests check that every row is valid, that no song is in twice,
+and that every deck song is in the catalogue with an id.
+
+To add a song, add a row with `"id": null` (and add it to a deck by id once it has one).
+Rows without an id stay out of the game until `scripts/spotify-precompute.ts` looks them
+up: Wikidata first (checked with Spotify's public oEmbed, which costs no API requests),
+then at most two Spotify searches each. Songs Spotify doesn't have are taken out of the
+catalogue, never guessed. `src/data/catalog/REVIEW.md` lists them, songs not looked up
+yet, years that differ from Spotify's, and how many songs each genre has per decade.
 
 It is a local script. Put your Spotify app's values in `.env.local` (never committed) as
 `SPOTIFY_CLIENT_ID=…` and `SPOTIFY_CLIENT_SECRET=…`, then run `npm run spotify-data` and
-commit `src/data/spotify` and `scripts/spotify-progress.json`. Spotify's request quota is
+commit `src/data/catalog` and `scripts/spotify-progress.json`. Spotify's request quota is
 shared by every app on the developer account, so a run makes at most 300 requests
 (`MAX_REQUESTS=…` changes that), one every 1.5 seconds, and stops by itself if Spotify asks
 for a long pause. Running it again carries on where it stopped, and once everything is
@@ -159,11 +165,10 @@ with the songs from last time and fetches new ones from where it left off.
 
 ### By genre
 
-Pick 1 to 4 genres and a year span. The list comes from the game's own genre lists
-(`src/data/spotify/genre-pools.json`): well-known songs per genre and decade, each with
-its original year and Spotify id, so building it makes **no Spotify requests** and works
-without a login. Only when those lists hold fewer than 40 songs for the pick (and you are
-logged in) does the game mix in its classic hits for the same wider genres and fetch
+Pick 1 to 4 genres and a year span. The list comes from the song catalogue: every
+song tagged with one of the genres, from those years, each with its Spotify id, so
+building it makes **no Spotify requests** and works without a login. Only when the
+catalogue has fewer than 40 songs for the pick (and you are logged in) does the game fetch
 batches from Spotify while you play. Each batch is one Spotify search such as
 `genre:"rock" year:1980-1989`: the decades take turns (the one searched least so far, wide
 spans with many genres search neighbouring decades together), with a random genre and a
@@ -323,8 +328,8 @@ During a song, **Open in Spotify ↗** opens it in the Spotify app instead, whic
 on any speaker it reaches (Sonos included). Spotify shows the title there, so someone who
 isn't guessing should tap it.
 
-Songs with a Spotify id in `SPOTIFY_IDS` (`src/data/songs.ts`) play without a login.
-Other songs are looked up with the Spotify search API, which needs the login.
+Every song in the catalogue has a Spotify id, so the ready-made decks play without a
+login.
 
 ### Playing on a Sonos
 
@@ -435,10 +440,9 @@ npm run build      # type check + production build in dist/
 The project is Vite + React + TypeScript. The pieces:
 
 - `src/game/engine.ts`: the rules as pure functions (deal, place, reveal, next turn, win).
-- `src/data/songs.ts`: the classic deck. Add `[title, artist, year]` rows to extend it.
-  Years are the original release year, not a remaster's.
-- `src/data/soundtracks.ts`: the movie, musical, TV and video game decks, as
-  `[title, artist, year, from]` rows. `src/data/decks.ts` combines the chosen decks.
+- `src/data/catalog/`: the song catalogue (`songs.json`) and the ready-made decks as id
+  lists (`decks.json`); see [The song catalogue](#the-song-catalogue).
+  `src/data/decks.ts` combines the chosen decks.
 - `src/spotify/`: login (`auth.ts`), Web API calls (`api.ts`) and the playback options (`playback.ts`).
 - `src/components/`: setup screen, game screen and timeline.
 - `src/i18n/`: the English and Swedish texts (see [Languages](#languages)).

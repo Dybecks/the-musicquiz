@@ -6,10 +6,8 @@
 import type { Song } from '../game/engine';
 import { RateLimitError, spotifyGet, SpotifyError } from './api';
 import { msg } from '../i18n';
-import { filterSongs } from '../data/genres';
-import { DEFAULT_SONGS } from '../data/songs';
 import { SEARCH_GENRE_DEFS, type SearchGenre } from '../data/searchGenres';
-import { loadGenrePools, poolSongs } from '../data/spotifyData';
+import { catalogSongs } from '../data/catalog';
 import {
   earliestYear,
   needsYearCheck,
@@ -322,37 +320,24 @@ export function fetchBatch(plan: RefillPlan): Promise<Batch> {
 }
 
 /**
- * The game's own classic hits for the chosen genres and years. They are
- * mixed into a genre list so it needs fewer Spotify requests, and carry it
- * on their own when Spotify can't be asked. Only songs with a known Spotify
- * link are used: they play without any request.
+ * The songs the game already has for these genres and years: every song in
+ * its catalogue (src/data/catalog) tagged with one of them. They all have a
+ * Spotify id, so they play without any request. They start a genre list, and
+ * carry it on their own when Spotify can't be asked.
  */
 export function builtInForGenres(genreIds: readonly string[], from: number, to: number): Song[] {
-  const genres = [...new Set(SEARCH_GENRES.filter((g) => genreIds.includes(g.id) && g.genre).map((g) => g.genre!))];
-  if (genres.length === 0) return [];
-  return filterSongs(DEFAULT_SONGS, { genres, fromYear: from, toYear: to }).filter((s) => s.spotifyId);
+  return catalogSongs(genreIds, from, to);
 }
 
 /**
- * With at least this many songs from the game's own genre lists, a genre
+ * With at least this many songs from the game's own catalogue, a genre
  * list asks Spotify nothing at all.
  */
 export const ENOUGH_OWN_SONGS = 40;
 
-/**
- * The songs the game already has for these genres and years, with no
- * requests: its own genre lists (looked up on Spotify ahead of time), and,
- * when those are thin, its classic hits in the same wider genres.
- */
+/** The game's own songs for these genres and years, with no requests. */
 export async function ownGenreSongs(genreIds: readonly string[], from: number, to: number): Promise<Song[]> {
-  let pools = {};
-  try {
-    pools = await loadGenrePools();
-  } catch {
-    /* the lists didn't load (offline with an old cache): use the classic hits */
-  }
-  const pooled = poolSongs(pools, genreIds, from, to);
-  return pooled.length >= ENOUGH_OWN_SONGS ? mergeById(pooled) : mergeById([...pooled, ...builtInForGenres(genreIds, from, to)]);
+  return mergeById(catalogSongs(genreIds, from, to));
 }
 
 /**
