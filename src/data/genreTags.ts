@@ -36,7 +36,7 @@ export function tagGenres(tag: string): string[] {
 /**
  * Catalogue genres from one or more sources' tags. Each source counts the
  * same: its weights are scaled so its strongest genre is 1. A genre is kept
- * when it has at least a third of the strongest genre's weight; at most three.
+ * when it has at least half the strongest genre's weight; at most two.
  */
 export function genresFromTags(...sources: Tags[]): string[] {
   const score = new Map<string, number>();
@@ -51,9 +51,9 @@ export function genresFromTags(...sources: Tags[]): string[] {
   }
   const best = Math.max(0, ...score.values());
   return [...score.entries()]
-    .filter(([, w]) => w >= best / 3)
+    .filter(([, w]) => w >= best / 2)
     .sort((a, b) => b[1] - a[1])
-    .slice(0, 3)
+    .slice(0, 2)
     .map(([g]) => g);
 }
 
@@ -65,7 +65,7 @@ export const KEPT_GENRES = ['swedishpop', 'schlager'];
  * plus the hand-set Swedish ones; otherwise the hand-set genres.
  */
 export function mergeGenres(handSet: readonly string[], fromTags: readonly string[], order: readonly string[]): string[] {
-  if (fromTags.length === 0) return [...handSet];
+  if (fromTags.length === 0) return order.filter((g) => handSet.includes(g));
   const out = new Set([...fromTags, ...handSet.filter((g) => KEPT_GENRES.includes(g))]);
   return order.filter((g) => out.has(g));
 }

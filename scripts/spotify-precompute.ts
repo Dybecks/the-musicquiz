@@ -17,7 +17,7 @@
  * when LASTFM_API_KEY is set, Last.fm: the tags people gave that recording,
  * mapped to the catalogue's genres (src/data/genreTags.ts). This costs no
  * Spotify requests. Songs the sources know nothing about keep their hand-set
- * genres, and a song whose genres were changed by hand in songs.json is left
+ * genres, as do film, TV, game and stage songs, and a song whose genres were changed by hand in songs.json is left
  * alone from then on.
  *
  * Put SPOTIFY_CLIENT_ID=… and SPOTIFY_CLIENT_SECRET=… in .env.local (never
@@ -514,7 +514,8 @@ async function fillGenres(): Promise<void> {
       }
       continue;
     }
-    const genres = mergeGenres(entry.handSet, genresFromTags(entry.mb ?? [], entry.lastfm ?? []), ORDER);
+    // Film, TV, game and stage songs keep their hand-set genres: score tags ("soundtrack", "ambient") say little.
+    const genres = row.from ? [...entry.handSet] : mergeGenres(entry.handSet, genresFromTags(entry.mb ?? [], entry.lastfm ?? []), ORDER);
     if (!sameList(genres, row.genres)) console.log(`♪ ${row.title} – ${row.artist}: ${row.genres.join(', ') || '–'} → ${genres.join(', ') || '–'}`);
     row.genres = genres;
     entry.applied = genres;
