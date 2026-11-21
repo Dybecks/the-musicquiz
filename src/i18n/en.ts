@@ -140,7 +140,7 @@ export const en = {
     classic: { title: 'Classic hits', detail: 'Well-known songs from the 1950s to today.' },
     movies: { title: 'Movie songs', detail: 'From The Wizard of Oz to Barbie.' },
     musicals: { title: 'Musicals', detail: 'From Oklahoma! to Hamilton.' },
-    tv: { title: 'TV themes', detail: 'From Peter Gunn to Severance.' },
+    tv: { title: 'TV themes', detail: 'From Peter Gunn to Arcane.' },
     games: { title: 'Video game music', detail: 'From Super Mario Bros. to Baldur’s Gate 3.' },
     mine: { title: 'My Spotify music', detail: 'Songs you actually listen to, from your Spotify account.' },
   },

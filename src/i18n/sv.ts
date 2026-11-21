@@ -138,7 +138,7 @@ export const sv: Messages = {
     classic: { title: 'Klassiska hits', detail: 'Kända låtar från 1950-talet till i dag.' },
     movies: { title: 'Filmlåtar', detail: 'Från Trollkarlen från Oz till Barbie.' },
     musicals: { title: 'Musikaler', detail: 'Från Oklahoma! till Hamilton.' },
-    tv: { title: 'TV-teman', detail: 'Från Peter Gunn till Severance.' },
+    tv: { title: 'TV-teman', detail: 'Från Peter Gunn till Arcane.' },
     games: { title: 'TV-spelsmusik', detail: 'Från Super Mario Bros. till Baldur’s Gate 3.' },
     mine: { title: 'Min Spotify-musik', detail: 'Låtar du faktiskt lyssnar på, från ditt Spotify-konto.' },
   },

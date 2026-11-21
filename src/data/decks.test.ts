@@ -9,7 +9,7 @@ const soundtracks = { movies: MOVIE_SONGS, musicals: MUSICAL_SONGS, tv: TV_SONGS
 describe('soundtrack decks', () => {
   for (const [name, songs] of Object.entries(soundtracks)) {
     describe(name, () => {
-      it('has 50 songs', () => expect(songs).toHaveLength(50));
+      it('has at least 30 songs', () => expect(songs.length).toBeGreaterThanOrEqual(30));
       it('says where every song is from, with a plausible year', () => {
         for (const s of songs) {
           expect(s.from, s.title).toBeTruthy();
@@ -43,7 +43,7 @@ describe('deck choice', () => {
 
   it('combines decks', () => {
     const songs = chooseSongs({ decks: ['movies', 'tv'], mode: 'premium', loggedIn: true, personal: null });
-    expect(songs).toHaveLength(100);
+    expect(songs).toHaveLength(MOVIE_SONGS.length + TV_SONGS.length);
   });
 
   it('only keeps songs with a Spotify id for the hidden player without login', () => {
@@ -68,7 +68,7 @@ describe('deck choice', () => {
     };
     expect(deckSongs('mine', personal)).toHaveLength(1);
     const songs = chooseSongs({ decks: ['movies', 'mine'], mode: 'premium', loggedIn: true, personal });
-    expect(songs).toHaveLength(50);
+    expect(songs).toHaveLength(MOVIE_SONGS.length);
     expect(songs[0].id).toBe('sp:1');
   });
 });

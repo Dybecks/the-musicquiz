@@ -600,9 +600,11 @@ async function fillGenrePools(): Promise<void> {
 // ---- Report ----
 
 function review(): string {
-  const unmatched = Object.entries(progress.unmatched ?? {});
-  const years = Object.entries(progress.yearNotes ?? {});
   const all = DECKS.flatMap(([, s]) => s);
+  // Songs taken out of the decks since are left out.
+  const inDecks = new Set(all.map(premadeKey));
+  const unmatched = Object.entries(progress.unmatched ?? {}).filter(([k]) => inDecks.has(k));
+  const years = Object.entries(progress.yearNotes ?? {}).filter(([k]) => inDecks.has(k));
   const withId = all.filter((s) => s.spotifyId || ids[premadeKey(s)]).length;
   const lines = [
     '# Spotify data: needs a look',

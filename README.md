@@ -90,10 +90,10 @@ shuffled together, and a song that appears in two decks is only used once.
 | Deck | Songs | Range |
 | --- | --- | --- |
 | Classic hits | 160 | Well-known songs from the 1950s to today |
-| Movie songs | 50 | The Wizard of Oz (1939) to Barbie (2023) |
-| Musicals | 50 | Oklahoma! (1943) to Beetlejuice (2019) |
-| TV themes | 50 | Peter Gunn (1958) to Severance (2022) |
-| Video game music | 50 | Super Mario Bros. (1985) to Baldur's Gate 3 (2023) |
+| Movie songs | 49 | The Wizard of Oz (1939) to Barbie (2023) |
+| Musicals | 45 | Oklahoma! (1943) to Beetlejuice (2019) |
+| TV themes | 33 | Peter Gunn (1958) to Arcane (2021) |
+| Video game music | 38 | Super Mario Bros. (1985) to Baldur's Gate 3 (2023) |
 
 The four soundtrack decks are in `src/data/soundtracks.ts`. They only hold songs written
 for the film, show, game or musical, so the year on the card is the year that work first
@@ -102,7 +102,7 @@ musical's first major production (or concept album, as for Evita). Cards say whe
 song is from. Their Spotify ids are looked up ahead of time (see **Spotify data shipped
 with the game** below); a song without one is found with the Spotify search at play time,
 which needs a login. Some video game music, Nintendo's in particular, isn't on Spotify;
-such songs are listed for review instead of being matched to a cover.
+songs Spotify doesn't have under their title and artist were taken out of the decks.
 
 ## Spotify data shipped with the game
 
