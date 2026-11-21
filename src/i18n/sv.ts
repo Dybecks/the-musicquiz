@@ -250,6 +250,19 @@ export const sv: Messages = {
     openApp: 'Öppna Spotify-appen',
   },
 
+  spotifyLog: {
+    title: 'Spotifys svar',
+    hint: 'Vad Spotify svarade på spelets uppspelningskommandon: vilken enhet som är aktiv (is_active), om Spotify låser den för appar (is_restricted) och statusen för varje play och paus. 2xx betyder att Spotify tog emot kommandot.',
+    check: 'Fråga Spotify nu',
+    checking: 'Frågar…',
+    copy: 'Kopiera',
+    copied: 'Kopierat',
+    clear: 'Rensa',
+    empty: 'Inget än. Tryck Spela, eller fråga Spotify nu.',
+    sent: 'skickat',
+    noAnswer: 'inget svar',
+  },
+
   timeline: {
     placeHere: 'Placera här',
     before: (year) => `Före ${year}`,

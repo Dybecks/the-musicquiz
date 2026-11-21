@@ -257,6 +257,19 @@ export const en = {
     openApp: 'Open the Spotify app',
   },
 
+  spotifyLog: {
+    title: 'Spotify’s replies',
+    hint: 'What Spotify answered to the game’s player commands: which device is active (is_active), whether Spotify locks it for apps (is_restricted), and the status of each play and pause. 2xx means Spotify accepted it.',
+    check: 'Ask Spotify now',
+    checking: 'Asking…',
+    copy: 'Copy',
+    copied: 'Copied',
+    clear: 'Clear',
+    empty: 'Nothing yet. Press Play, or ask Spotify now.',
+    sent: 'sent',
+    noAnswer: 'no answer',
+  },
+
   timeline: {
     placeHere: 'Place here',
     before: (year: number) => `Before ${year}`,

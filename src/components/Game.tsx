@@ -16,6 +16,7 @@ import type { HostRoom } from '../multiplayer/useHostRoom';
 import { HOST_ID, activeVoters, nextRuleOf, nextVotes, turnOf, votesBySlot } from '../multiplayer/protocol';
 import { SharePanel } from './SharePanel';
 import { SpeakerPicker } from './SpeakerPicker';
+import { SpotifyLog } from './SpotifyLog';
 import { createSonosPlayback } from '../sonos/playback';
 import { createSpotifyConnectPlayback } from '../spotify/remote';
 import { sameSpeaker, speakerKey, speakerLabel, type SpeakerChoice } from '../speakers';
@@ -418,6 +419,7 @@ export function Game({ state, mode, onModeChange, speaker, onSpeakerChange, onCh
                           : tg.playingInApp}
                     </p>
                   )}
+                  {(playback?.kind === 'spotify-connect' || playback?.kind === 'premium') && <SpotifyLog />}
                 </div>
               ) : (
                 state.lastGuess && <Reveal correct={state.lastGuess.correct} song={state.lastGuess.song} />

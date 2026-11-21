@@ -86,14 +86,81 @@ async function waitForGate(): Promise<void> {
   while (blockedUntil > Date.now()) await wait(blockedUntil - Date.now());
 }
 
+/* ---------------- Log of the player commands, to see Spotify's own answers ---------------- */
+
+/** One request to Spotify's player and its answer, as shown under "Spotify's replies". */
+export interface SpotifyLogEntry {
+  at: number;
+  method: string;
+  path: string;
+  /** What was sent, if anything. */
+  sent?: string;
+  /** The HTTP status, or 0 when no answer came. */
+  status: number;
+  /** Spotify's answer as it came, cut short if long. */
+  body: string;
+}
+
+const LOG_SIZE = 40;
+const BODY_CHARS = 4000;
+const log: SpotifyLogEntry[] = [];
+const logListeners = new Set<() => void>();
+
+/** The player requests so far, oldest first. Only /me/player… requests are kept; logging them costs no extra requests. */
+export const spotifyLog = (): readonly SpotifyLogEntry[] => log;
+
+/** Calls `fn` when a new entry is logged; returns an unsubscribe function. */
+export function onSpotifyLog(fn: () => void): () => void {
+  logListeners.add(fn);
+  return () => void logListeners.delete(fn);
+}
+
+export function clearSpotifyLog(): void {
+  log.length = 0;
+  for (const fn of logListeners) fn();
+}
+
+function addToLog(entry: SpotifyLogEntry): void {
+  log.push(entry);
+  if (log.length > LOG_SIZE) log.splice(0, log.length - LOG_SIZE);
+  for (const fn of logListeners) fn();
+}
+
+const logged = (path: string) => path.startsWith('/me/player');
+
+async function record(path: string, init: RequestInit, res: Response | null): Promise<void> {
+  if (!logged(path)) return;
+  let body = '';
+  try {
+    body = res ? await res.clone().text() : '';
+  } catch {
+    /* unreadable */
+  }
+  addToLog({
+    at: Date.now(),
+    method: init.method ?? 'GET',
+    path,
+    sent: typeof init.body === 'string' ? init.body : undefined,
+    status: res?.status ?? 0,
+    body: body.length > BODY_CHARS ? `${body.slice(0, BODY_CHARS)}…` : body,
+  });
+}
+
 async function spotifyFetch(path: string, init: RequestInit = {}, attempt = 0): Promise<Response> {
   await waitForGate();
   const token = await getAccessToken();
   if (!token) throw new SpotifyError(msg().errors.notLoggedIn, 401);
-  const res = await fetch(`https://api.spotify.com/v1${path}`, {
-    ...init,
-    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json', ...init.headers },
-  });
+  let res: Response;
+  try {
+    res = await fetch(`https://api.spotify.com/v1${path}`, {
+      ...init,
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json', ...init.headers },
+    });
+  } catch (e) {
+    await record(path, init, null);
+    throw e;
+  }
+  await record(path, init, res);
   if (res.status === 429) {
     let reason = '';
     try {

@@ -54,8 +54,11 @@ function fakeSpotify(devices: SpotifyDevice[]) {
     state: null as PlaybackState | null,
     ignorePlays: 0,
     idleRefuses: false,
+    /** A device Spotify marks restricted refuses commands (403), as some Sonos do. */
+    lockedRefuses: false,
   };
-  const byId = (id: string) => s.devices.find((d) => d.id === id)!;
+  /** '' is the active device, as when no device id is sent. */
+  const byId = (id: string) => (id ? s.devices.find((d) => d.id === id) : s.devices.find((d) => d.is_active))!;
   mocked.getDevices.mockImplementation(async () => s.devices.map((d) => ({ ...d, is_active: d.id === s.active })));
   mocked.getPlaybackState.mockImplementation(async () => s.state);
   mocked.transferPlayback.mockImplementation(async (id) => {
@@ -63,8 +66,11 @@ function fakeSpotify(devices: SpotifyDevice[]) {
     s.state = { device: byId(id), is_playing: false, item: s.state?.item ?? null };
   });
   mocked.playOnDevice.mockImplementation(async (id, uri) => {
-    if (s.idleRefuses && s.active !== id) throw new api.SpotifyError('Spotify: Device not found', 404);
+    if (!id && !byId(id)) throw new api.SpotifyError('Spotify: Player command failed: No active device found', 404);
+    if (s.lockedRefuses && byId(id).is_restricted) throw new api.SpotifyError('Spotify: Player command failed: Restriction violated', 403);
+    if (s.idleRefuses && id && s.active !== id) throw new api.SpotifyError('Spotify: Device not found', 404);
     if (s.ignorePlays > 0) return void s.ignorePlays--;
+    id ||= byId(id).id ?? '';
     s.active = id;
     s.state = { device: byId(id), is_playing: true, item: { uri } };
   });
@@ -238,11 +244,38 @@ describe('playing on a Spotify Connect device', () => {
     expect(mocked.getPlaybackState).not.toHaveBeenCalled();
   });
 
-  it('explains a speaker Spotify locks, like a Sonos', async () => {
-    fakeSpotify([{ id: null, name: 'Kitchen', type: 'Speaker', is_active: true, is_restricted: true }]);
+  it('explains a speaker Spotify locks, like a Sonos, with Spotify’s own words', async () => {
+    const spotify = fakeSpotify([{ id: null, name: 'Kitchen', type: 'Speaker', is_active: true, is_restricted: true }]);
+    spotify.lockedRefuses = true;
     const p = createSpotifyConnectPlayback(null);
     await p.prepare(song);
-    await expect(settle(p.play())).rejects.toThrow(/won’t let other apps control “Kitchen”/);
+    await expect(settle(p.play())).rejects.toThrow(/won’t let other apps control “Kitchen”.*Restriction violated/);
+    expect(mocked.playOnDevice).toHaveBeenCalledWith('', URI, 0);
+  });
+
+  it('still tries a speaker Spotify calls restricted, sending no device id, and plays when Spotify accepts', async () => {
+    const sonos = dev({ id: 's1', name: 'Living Room', type: 'Speaker', is_active: true, is_restricted: true });
+    fakeSpotify([sonos]);
+    const p = createSpotifyConnectPlayback(null);
+    await p.prepare(song);
+    await settle(p.play());
+    expect(mocked.playOnDevice).toHaveBeenCalledWith('', URI, 0);
+    expect(mocked.transferPlayback).not.toHaveBeenCalled();
+    await settle(p.pause());
+    expect(mocked.pauseDevice).toHaveBeenCalledWith('');
+    await settle(p.play());
+    expect(mocked.resumeDevice).toHaveBeenCalledWith('');
+  });
+
+  it('plays wherever Spotify plays even when it lists no device', async () => {
+    const spotify = fakeSpotify([]);
+    mocked.playOnDevice.mockImplementationOnce(async (_id, uri) => {
+      spotify.state = { device: null, is_playing: true, item: { uri } };
+    });
+    const p = createSpotifyConnectPlayback(null);
+    await p.prepare(song);
+    await settle(p.play());
+    expect(mocked.playOnDevice).toHaveBeenCalledWith('', URI, 0);
   });
 
   it('turns a 403 on play into the locked-speaker message', async () => {
@@ -267,7 +300,7 @@ describe('playing on a Spotify Connect device', () => {
     await p.prepare(song);
     await settle(p.play());
     await p.prepare({ ...song, id: 's2' });
-    expect(mocked.pauseDevice).toHaveBeenCalledWith('p1');
+    expect(mocked.pauseDevice).toHaveBeenCalledWith('');
     await settle(p.play());
     expect(mocked.getDevices).toHaveBeenCalledTimes(2);
   });
