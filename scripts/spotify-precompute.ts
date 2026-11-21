@@ -311,12 +311,30 @@ function uniqueTracksKeepAll(items: SpotifyTrack[]): (SpotifyTrack & { id: strin
   });
 }
 
+/** Turns HTML entities such as &#x27; and &amp; back into characters. */
+export function decodeEntities(html: string): string {
+  const named: Record<string, string> = { amp: '&', quot: '"', apos: "'", lt: '<', gt: '>', nbsp: ' ' };
+  return html.replace(/&(#x[0-9a-f]+|#[0-9]+|[a-z]+);/gi, (all, code: string) => {
+    if (code[0] === '#') {
+      const n = code[1].toLowerCase() === 'x' ? parseInt(code.slice(2), 16) : parseInt(code.slice(1), 10);
+      return Number.isFinite(n) ? String.fromCodePoint(n) : all;
+    }
+    return named[code.toLowerCase()] ?? all;
+  });
+}
+
 /**
- * Free of Spotify API requests: Wikidata lists Spotify track ids for many
- * songs (property P2207). Each one is checked against Spotify's public oEmbed
- * endpoint (not part of the API quota): the id must exist and have the
- * song's title. Only songs left over after this are searched on Spotify.
+ * Whether normalized page text names the artist. Spaces are ignored for longer
+ * names, so "Run–D.M.C." matches "Run-DMC"; short names must match whole words.
  */
+export function pageNames(text: string, artist: string): boolean {
+  const squashed = text.replace(/ /g, '');
+  return artistParts(artist).some((a) => {
+    const flat = a.replace(/ /g, '');
+    return flat.length > 3 ? squashed.includes(flat) : ` ${text} `.includes(` ${a} `);
+  });
+}
+
 /**
  * Whether the track's public Spotify page (not part of the API quota) names
  * the song's artist; null when the page can't tell.
@@ -328,9 +346,9 @@ async function pageArtist(id: string, row: Row): Promise<boolean | null> {
     if (!res.ok) return null;
     const html = await res.text();
     const meta = (p: string) => html.match(new RegExp(`<meta[^>]+property="${p}"[^>]+content="([^"]*)"`))?.[1] ?? '';
-    const text = normalizeKey(`${meta('og:description')} ${meta('og:title')} ${(html.match(/<title>([^<]*)<\/title>/) ?? [])[1] ?? ''}`);
+    const text = normalizeKey(decodeEntities(`${meta('og:description')} ${meta('og:title')} ${(html.match(/<title>([^<]*)<\/title>/) ?? [])[1] ?? ''}`));
     if (!text) return null;
-    return artistParts(row.artist).some((a) => text.includes(a));
+    return pageNames(text, row.artist);
   } catch {
     return null;
   }
@@ -383,6 +401,12 @@ async function auditIds(): Promise<void> {
   save();
 }
 
+/**
+ * Free of Spotify API requests: Wikidata lists Spotify track ids for many
+ * songs (property P2207). Each one is checked against Spotify's public oEmbed
+ * endpoint (not part of the API quota): the id must exist and have the
+ * song's title. Only songs left over after this are searched on Spotify.
+ */
 async function fromWikidata(): Promise<void> {
   const todo = rows.filter((r) => !r.id && !progress.tried[keyOf(r)] && !progress.wikidata![keyOf(r)]);
   if (todo.length === 0) return;
