@@ -21,6 +21,8 @@ import { msg } from '../i18n';
  *
  * The device is one picked under 🔊 (found again by its name if Spotify gave
  * it a new id), or, with none picked, wherever the Spotify app plays right now.
+ * Then the commands carry no device id, so a speaker Spotify marks as
+ * restricted (often a Sonos) is still tried: only Spotify's answer decides.
  *
  * Spotify's commands are unreliable on a device that has gone idle: a play
  * aimed at it can fail (404, 5xx) or be accepted and do nothing, and Spotify
@@ -97,6 +99,34 @@ export function chooseDevice(all: SpotifyDevice[], target: ConnectTarget | null,
   throw new Error(locked ? restricted(locked) : nothingOpen());
 }
 
+/** Where "Wherever Spotify plays" sends the commands. */
+export interface WhereverChoice {
+  /** The device as Spotify lists it, or null when it lists none worth naming. */
+  device: SpotifyDevice | null;
+  /** The device id to send, or '' for "the device Spotify plays on now". */
+  id: string;
+}
+
+/**
+ * The device to play on with none picked. An active device gets the commands
+ * with no device id at all, even one Spotify marks as restricted or lists
+ * without an id (often a Sonos): only Spotify's own answer to the play says
+ * whether it is really locked. With nothing active, the last device used or
+ * the only one open, and with none of those a play to wherever Spotify plays
+ * (it may play on a speaker it doesn't list).
+ */
+export function chooseWherever(all: SpotifyDevice[], lastUsed: ConnectTarget | null = null): WhereverChoice {
+  const devices = connectDevices(all);
+  const active = devices.find((d) => d.is_active);
+  if (active) return { device: active, id: '' };
+  const last = lastUsed && findTarget(devices, lastUsed);
+  if (last && usable(last)) return { device: last, id: last.id! };
+  const open = devices.filter(usable);
+  if (open.length === 1) return { device: open[0], id: open[0].id! };
+  if (open.length > 1) throw new Error(severalOpen(open));
+  return { device: devices.find((d) => d.is_restricted) ?? null, id: '' };
+}
+
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /** Spotify's answer when a device is asleep or slow: worth waking it and trying again. */
@@ -104,7 +134,7 @@ const flaky = (e: unknown) => e instanceof SpotifyError && (e.status === 404 || 
 
 /** The song (or with no uri, anything) plays on the device. */
 export const playsOn = (s: PlaybackState | null, id: string, uri?: string) =>
-  !!s && s.device?.id === id && s.is_playing && (!uri || s.item?.uri === uri || s.item?.linked_from?.uri === uri);
+  !!s && (!id || s.device?.id === id) && s.is_playing && (!uri || s.item?.uri === uri || s.item?.linked_from?.uri === uri);
 
 /** Asks Spotify what plays until `ok` holds: up to four times over about three seconds. */
 async function until(ok: (s: PlaybackState | null) => boolean): Promise<boolean> {
@@ -132,23 +162,25 @@ async function wake(d: SpotifyDevice): Promise<void> {
   await until((s) => s?.device?.id === d.id);
 }
 
-/** Starts the song on the device and makes sure it really plays there. */
-export async function startOn(d: SpotifyDevice, uri: string, positionMs = 0): Promise<void> {
-  const id = d.id!;
-  if (!d.is_active) await wake(d);
+/**
+ * Starts the song on the device and makes sure it really plays there. With
+ * `id` '' it goes to the device Spotify plays on now, with no device id.
+ */
+export async function startOn(d: SpotifyDevice | null, uri: string, positionMs = 0, id = d?.id ?? ''): Promise<void> {
+  if (id && d && !d.is_active) await wake(d);
   try {
     await playOnDevice(id, uri, positionMs);
   } catch (e) {
-    if (!flaky(e)) throw e;
+    if (!flaky(e) || !id || !d) throw e;
     await wake(d);
     await playOnDevice(id, uri, positionMs);
   }
   // In a private session Spotify doesn't say what plays, so there is nothing to check.
-  if (d.is_private_session) return;
+  if (d?.is_private_session) return;
   if (await until((s) => playsOn(s, id, uri))) return;
   // Accepted but nothing happened, as a speaker just woken sometimes does with the first command.
   await playOnDevice(id, uri, positionMs);
-  if (!(await until((s) => playsOn(s, id)))) throw new Error(didNotStart(d));
+  if (!(await until((s) => playsOn(s, id)))) throw new Error(d ? didNotStart(d) : nothingOpen());
 }
 
 function explain(e: unknown, device: SpotifyDevice | null): never {
@@ -157,8 +189,9 @@ function explain(e: unknown, device: SpotifyDevice | null): never {
     const why = ` (${e.message.replace(/^Spotify: /, '')})`;
     if (loginLacking(e)) throw new Error(scopeMissing() + why);
     if (/premium/i.test(e.message)) throw new Error(premiumNeeded() + why);
+    if (e.status === 404 && !device) throw new Error(nothingOpen() + why);
     if (flaky(e)) throw new Error((device ? didNotStart(device) : nothingOpen()) + why);
-    if (e.status === 403) throw new Error((device ? restricted(device) : premiumNeeded()) + why);
+    if (e.status === 403) throw new Error((device ? restricted(device) : msg().errors.connectCantControl) + why);
   }
   throw e;
 }
@@ -168,6 +201,8 @@ export function createSpotifyConnectPlayback(target: ConnectTarget | null): Play
   let listener: (playing: boolean) => void = () => {};
   let uri: string | null = null;
   let device: SpotifyDevice | null = null;
+  /** The device id the commands go to: '' is wherever Spotify plays now. */
+  let cmdId = '';
   /** Where the last song played, for when Spotify has forgotten the device by the next one. */
   let lastUsed: ConnectTarget | null = null;
   let started = false;
@@ -184,20 +219,24 @@ export function createSpotifyConnectPlayback(target: ConnectTarget | null): Play
 
   /** Finds the device again (it may have changed, or have a new id) and starts the song on it. */
   const begin = async (fromMs: number) => {
-    device = chooseDevice(await getDevices(), target, lastUsed);
-    await startOn(device, uri!, fromMs);
-    lastUsed = { id: device.id!, name: device.name, type: device.type };
+    const devices = await getDevices();
+    if (target) {
+      device = chooseDevice(devices, target);
+      cmdId = device.id!;
+    } else ({ device, id: cmdId } = chooseWherever(devices, lastUsed));
+    await startOn(device, uri!, fromMs, cmdId);
+    if (device?.id) lastUsed = { id: device.id, name: device.name, type: device.type };
     playedMs = fromMs;
   };
 
   const resume = async () => {
     try {
-      await resumeDevice(device!.id!);
+      await resumeDevice(cmdId);
       return;
     } catch (e) {
       if (!(e instanceof SpotifyError) || e instanceof RateLimitError) throw e;
       // Spotify sometimes refuses a command that worked anyway.
-      if (playsOn(await getPlaybackState().catch(() => null), device!.id!, uri!)) return;
+      if (playsOn(await getPlaybackState().catch(() => null), cmdId, uri!)) return;
     }
     // The device went idle during the pause (Spotify forgets a paused device after
     // a few minutes): start the song on it again, where it was.
@@ -207,7 +246,7 @@ export function createSpotifyConnectPlayback(target: ConnectTarget | null): Play
   return {
     kind: 'spotify-connect',
     async prepare(song) {
-      if (playing && device?.id) await pauseDevice(device.id).catch(() => {});
+      if (playing && started) await pauseDevice(cmdId).catch(() => {});
       set(false);
       started = false;
       playedMs = 0;
@@ -226,20 +265,20 @@ export function createSpotifyConnectPlayback(target: ConnectTarget | null): Play
       set(true);
     },
     async pause() {
-      if (device?.id) {
+      if (started) {
         try {
-          await pauseDevice(device.id);
+          await pauseDevice(cmdId);
         } catch (e) {
           // Spotify answers 403 to pausing a song that already stopped (it ended, or was
           // paused in the app), and sometimes to a pause that worked. Only a song still
           // playing there means the pause failed.
-          if (playsOn(await getPlaybackState().catch(() => null), device.id)) explain(e, device);
+          if (playsOn(await getPlaybackState().catch(() => null), cmdId)) explain(e, device);
         }
       }
       set(false);
     },
     async stop() {
-      if (playing && device?.id) await pauseDevice(device.id).catch(() => {});
+      if (playing && started) await pauseDevice(cmdId).catch(() => {});
       set(false);
       uri = null;
       started = false;
@@ -249,7 +288,7 @@ export function createSpotifyConnectPlayback(target: ConnectTarget | null): Play
       listener = cb;
     },
     destroy() {
-      if (playing && device?.id) void pauseDevice(device.id).catch(() => {});
+      if (playing && started) void pauseDevice(cmdId).catch(() => {});
       listener = () => {};
     },
   };
