@@ -5,7 +5,6 @@ import { handleRedirect, isFriendLogin, isLoggedIn, login, logout, restoreHostLo
 import { loadPersonalDeck } from './spotify/listening';
 import type { PersonalDeck } from './spotify/personalDeck';
 import type { PlaybackKind } from './spotify/playback';
-import { parseSpeakerChoice, type SpeakerChoice } from './speakers';
 import { Setup, type SetupValues } from './components/Setup';
 import { Game } from './components/Game';
 import { Remote, savedRemote } from './components/Remote';
@@ -18,9 +17,13 @@ import { LanguagePicker } from './i18n/LanguagePicker';
 
 const GAME_KEY = 'mq.game';
 const MODE_KEY = 'mq.mode';
-const SPEAKER_KEY = 'mq.speaker';
-/** Where a Sonos choice was saved before the Spotify app could be chosen. */
-const OLD_SONOS_KEY = 'mq.sonos';
+/** Where speaker choices were saved before the game stopped offering speakers. */
+const OLD_SPEAKER_KEYS = ['mq.speaker', 'mq.sonos'];
+try {
+  for (const key of OLD_SPEAKER_KEYS) localStorage.removeItem(key);
+} catch {
+  /* nothing to tidy */
+}
 const PROFILE_KEY = 'mq.profile';
 
 function loadJson<T>(key: string): T | null {
@@ -70,19 +73,6 @@ export function App() {
   });
   const [game, setGame] = useState<GameState | null>(() => loadJson<GameState>(GAME_KEY));
   const [mode, setMode] = useState<PlaybackKind>(() => loadJson<PlaybackKind>(MODE_KEY) ?? 'embed');
-  const [speaker, setSpeaker] = useState<SpeakerChoice | null>(() =>
-    parseSpeakerChoice(loadJson<unknown>(SPEAKER_KEY) ?? loadJson<unknown>(OLD_SONOS_KEY)),
-  );
-  const changeSpeaker = (c: SpeakerChoice | null) => {
-    try {
-      if (c) localStorage.setItem(SPEAKER_KEY, JSON.stringify(c));
-      else localStorage.removeItem(SPEAKER_KEY);
-      localStorage.removeItem(OLD_SONOS_KEY);
-    } catch {
-      /* not remembered */
-    }
-    setSpeaker(c);
-  };
   const [profile, setProfile] = useState<SpotifyProfile | null>(null);
   const [authMessage, setAuthMessage] = useState<string | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
@@ -165,8 +155,6 @@ export function App() {
             localStorage.setItem(MODE_KEY, JSON.stringify(m));
             setMode(m);
           }}
-          speaker={speaker}
-          onSpeakerChange={changeSpeaker}
           onChange={setGame}
           onQuit={() => setGame(null)}
           host={host}

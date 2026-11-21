@@ -15,11 +15,6 @@ import { Timeline } from './Timeline';
 import type { HostRoom } from '../multiplayer/useHostRoom';
 import { HOST_ID, activeVoters, nextRuleOf, nextVotes, turnOf, votesBySlot } from '../multiplayer/protocol';
 import { SharePanel } from './SharePanel';
-import { SpeakerPicker } from './SpeakerPicker';
-import { SpotifyLog } from './SpotifyLog';
-import { createSonosPlayback } from '../sonos/playback';
-import { createSpotifyConnectPlayback } from '../spotify/remote';
-import { sameSpeaker, speakerKey, speakerLabel, type SpeakerChoice } from '../speakers';
 import { msg, useLang, useT } from '../i18n';
 import { SongNotFoundError } from '../spotify/playback';
 
@@ -27,9 +22,6 @@ interface Props {
   state: GameState;
   mode: PlaybackKind;
   onModeChange: (mode: PlaybackKind) => void;
-  /** Where the music plays instead of this device: a Spotify Connect device, the Spotify app, or a Sonos. */
-  speaker: SpeakerChoice | null;
-  onSpeakerChange: (choice: SpeakerChoice | null) => void;
   onChange: (state: GameState) => void;
   onQuit: () => void;
   /** Phones following the game (see useHostRoom). */
@@ -81,7 +73,7 @@ function useRefill(state: GameState, onChange: (s: GameState) => void): string |
   return note;
 }
 
-export function Game({ state, mode, onModeChange, speaker, onSpeakerChange, onChange, onQuit, host }: Props) {
+export function Game({ state, mode, onModeChange, onChange, onQuit, host }: Props) {
   const t = useT();
   const tg = t.game;
   const refillNote = useRefill(state, onChange);
@@ -94,18 +86,15 @@ export function Game({ state, mode, onModeChange, speaker, onSpeakerChange, onCh
   const [playbackError, setPlaybackError] = useState<string | null>(null);
   const [songStatus, setSongStatus] = useState<SongStatus>('loading');
   const [songError, setSongError] = useState<string | null>(null);
-  /** The song isn't on Spotify: another speaker won't help, skipping will. */
+  /** The song isn't on Spotify: skipping it helps. */
   const [songMissing, setSongMissing] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
   const [showPlayer, setShowPlayer] = useState(false);
-  const [pickSpeaker, setPickSpeaker] = useState(false);
-  /** Play was tapped and the player hasn't answered yet (a Sonos can take a moment). */
+  /** Play was tapped and the player hasn't answered yet. */
   const [starting, setStarting] = useState(false);
   /** Bumped by "Try again" to load the song again. */
   const [attempt, setAttempt] = useState(0);
-  // No audio mode plays nothing, so there's no speaker to choose.
-  const remote = mode !== 'none' ? speaker : null;
 
   // Create the player for the chosen mode.
   useEffect(() => {
@@ -114,11 +103,7 @@ export function Game({ state, mode, onModeChange, speaker, onSpeakerChange, onCh
     setPlayback(null);
     setPlaybackError(null);
     const make =
-      remote?.kind === 'sonos'
-        ? Promise.resolve(createSonosPlayback(remote))
-        : remote?.kind === 'spotify-device' || remote?.kind === 'spotify-app'
-          ? Promise.resolve(createSpotifyConnectPlayback(remote.kind === 'spotify-device' ? remote.device : null))
-        : mode === 'premium'
+      mode === 'premium'
         ? createPremiumPlayback()
         : mode === 'embed'
           ? createEmbedPlayback(embedHost.current!)
@@ -136,7 +121,7 @@ export function Game({ state, mode, onModeChange, speaker, onSpeakerChange, onCh
       created?.destroy();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mode, speakerKey(remote)]);
+  }, [mode]);
 
   // Load each new song as it is drawn.
   const songId = state.phase === 'guessing' ? state.current?.id : undefined;
@@ -192,7 +177,7 @@ export function Game({ state, mode, onModeChange, speaker, onSpeakerChange, onCh
   // the song is hidden; their play/pause buttons still control the real song.
   const playbackRef = useRef<Playback | null>(null);
   playbackRef.current = playback;
-  const hidden = state.phase === 'guessing' && mode !== 'none' && !!playback && playback.kind !== 'sonos' && playback.kind !== 'spotify-connect' && songStatus === 'ready';
+  const hidden = state.phase === 'guessing' && mode !== 'none' && !!playback && songStatus === 'ready';
   useEffect(() => {
     if (!hidden) return showNowPlaying();
     hideNowPlaying(playing, {
@@ -213,19 +198,17 @@ export function Game({ state, mode, onModeChange, speaker, onSpeakerChange, onCh
   /**
    * Start each new song by itself once it is loaded. Not right after the page
    * was (re)loaded: browsers only allow sound once someone has tapped the page.
-   * In this browser a refused start just leaves the Play button; on a speaker
-   * or the Spotify app the reason is shown.
+   * A refused start just leaves the Play button.
    */
   const autoStart = async (p: Playback) => {
     if (p.kind === 'none') return;
     const tapped = (navigator as Navigator & { userActivation?: { hasBeenActive: boolean } }).userActivation?.hasBeenActive ?? true;
     if (!tapped) return;
-    const remoteKind = p.kind === 'sonos' || p.kind === 'spotify-connect';
     setStarting(true);
     try {
       await p.play();
-    } catch (e) {
-      if (remoteKind) setSongError(message(e));
+    } catch {
+      /* the Play button is still there */
     } finally {
       setStarting(false);
     }
@@ -360,7 +343,7 @@ export function Game({ state, mode, onModeChange, speaker, onSpeakerChange, onCh
                       {tg.skip}
                     </button>
                   </div>
-                  {spotifyUrl && !remote && (
+                  {spotifyUrl && (
                     <p className="hint open-spotify">
                       <a
                         href={spotifyUrl}
@@ -386,40 +369,13 @@ export function Game({ state, mode, onModeChange, speaker, onSpeakerChange, onCh
                     </div>
                   )}
                   {songError && <p className="warn">{songError}</p>}
-                  {remote && (playbackError || (songError && !songMissing)) && songStatus !== 'loading' && (
+                  {songStatus === 'error' && !songMissing && (
                     <p>
-                      {songStatus === 'error' && (
-                        <>
-                          <button className="link" onClick={() => setAttempt((n) => n + 1)}>
-                            {tg.tryAgain}
-                          </button>{' '}
-                          ·{' '}
-                        </>
-                      )}
-                      {remote.kind !== 'sonos' && (
-                        <>
-                          {/* Opens (wakes) the Spotify app without showing the song. */}
-                          <a className="link" href="spotify:">
-                            {tg.openApp}
-                          </a>{' '}
-                          ·{' '}
-                        </>
-                      )}
-                      <button className="link" onClick={() => onSpeakerChange(null)}>
-                        {tg.playHere}
+                      <button className="link" onClick={() => setAttempt((n) => n + 1)}>
+                        {tg.tryAgain}
                       </button>
                     </p>
                   )}
-                  {remote && !playbackError && !songError && (
-                    <p className="hint">
-                      {remote.kind === 'sonos'
-                        ? tg.playingOnSonos(remote.speaker.name)
-                        : remote.kind === 'spotify-device'
-                          ? tg.playingOnDevice(remote.device.name)
-                          : tg.playingInApp}
-                    </p>
-                  )}
-                  {(playback?.kind === 'spotify-connect' || playback?.kind === 'premium') && <SpotifyLog />}
                 </div>
               ) : (
                 state.lastGuess && <Reveal correct={state.lastGuess.correct} song={state.lastGuess.song} />
@@ -516,7 +472,7 @@ export function Game({ state, mode, onModeChange, speaker, onSpeakerChange, onCh
       {state.phase !== 'finished' && <SharePanel host={host} />}
 
       {/* The Spotify embed lives here. It stays covered so the title isn't spoiled. */}
-      <section className={`embed-wrap ${mode === 'embed' && !remote && state.phase !== 'finished' ? '' : 'hidden'}`}>
+      <section className={`embed-wrap ${mode === 'embed' && state.phase !== 'finished' ? '' : 'hidden'}`}>
         <div className={`embed-cover ${showPlayer || state.phase === 'revealed' ? 'off' : ''}`}>
           <span>{tg.playerHidden}</span>
           <button className="link" onClick={() => setShowPlayer(true)}>
@@ -531,29 +487,10 @@ export function Game({ state, mode, onModeChange, speaker, onSpeakerChange, onCh
         <span className="muted">
           {tg.round(state.round)} · {state.refill ? tg.moreOnTheWay : tg.songsLeft(state.deck.length)}
         </span>
-        {mode !== 'none' && (
-          <button className="link" onClick={() => setPickSpeaker(!pickSpeaker)}>
-            🔊 {speakerLabel(remote)}
-          </button>
-        )}
         <button className="link" onClick={quit}>
           {tg.endGame}
         </button>
       </footer>
-      {pickSpeaker && mode !== 'none' && (
-        <section className="panel">
-          <SpeakerPicker
-            choice={speaker}
-            onChange={(c) => {
-              setPickSpeaker(false);
-              if (sameSpeaker(c, speaker)) return;
-              // The player for the new choice is made fresh (and loads the song again).
-              setPlaying(false);
-              onSpeakerChange(c);
-            }}
-          />
-        </section>
-      )}
     </main>
   );
 }

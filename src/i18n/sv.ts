@@ -206,11 +206,6 @@ export const sv: Messages = {
     openInSpotifyHint: 'för att spela den i valfri högtalare, till exempel en Sonos. Spotify visar titeln, så låt någon som inte gissar trycka.',
     useHiddenPlayer: 'Använd den dolda Spotify-spelaren i stället',
     tryAgain: 'Försök igen',
-    playHere: 'Spela på den här enheten i stället',
-    playingOnSonos: (name) => `Spelas i ${name} (Sonos).`,
-    playingInApp: 'Spelas i Spotify-appen, var den nu spelar. Den visar titeln, så håll den utom synhåll.',
-    playingOnDevice: (name) =>
-      `Spelas på ${name} via Spotify. Spotify-appen (och en tv-skärm) visar titeln, så håll den utom synhåll.`,
     lockedTapToChange: 'Låst · tryck för att ändra',
     tapToVote: 'Tryck på en plats för att rösta',
     lockMyVote: 'Lås min röst',
@@ -247,20 +242,6 @@ export const sv: Messages = {
     refillFailed: (why) => `Det gick inte att hämta fler låtar: ${why}`,
     phonesWantNext: (yes, needed) => `Mobiler: ${yes} av ${needed} som behövs vill ha nästa låt`,
     anyoneMovesOn: 'Vilken spelare som helst kan gå vidare från sin mobil.',
-    openApp: 'Öppna Spotify-appen',
-  },
-
-  spotifyLog: {
-    title: 'Spotifys svar',
-    hint: 'Vad Spotify svarade på spelets uppspelningskommandon: vilken enhet som är aktiv (is_active), om Spotify låser den för appar (is_restricted) och statusen för varje play och paus. 2xx betyder att Spotify tog emot kommandot.',
-    check: 'Fråga Spotify nu',
-    checking: 'Frågar…',
-    copy: 'Kopiera',
-    copied: 'Kopierat',
-    clear: 'Rensa',
-    empty: 'Inget än. Tryck Spela, eller fråga Spotify nu.',
-    sent: 'skickat',
-    noAnswer: 'inget svar',
   },
 
   timeline: {
@@ -271,30 +252,6 @@ export const sv: Messages = {
     votes: (names) => `Röster: ${names.join(', ')}`,
     wrongPlace: 'Där låten egentligen hör hemma',
     belongedHere: 'hörde hemma här',
-  },
-
-  speakers: {
-    thisDevice: 'Den här enheten',
-    spotifyApp: 'Spotify-appen',
-    playOn: 'Spela musiken på',
-    whereverSpotify: 'Där Spotify spelar',
-    lockedOne: 'Spotify låter inte andra appar styra den här',
-    locked: 'låst',
-    lookingSpotify: 'Letar efter Spotify-högtalare…',
-    connectHint:
-      '**Spotify-högtalare och appar:** högtalare, tv-apparater och Spotify-appen på datorer (PC eller Mac) och mobiler som ditt Spotify-konto kan spela på. Spelet startar varje låt där; inget spelas på den här enheten. Kräver Spotify Premium. Spotify visar titeln i sin app (och på en tv), så håll den utom synhåll.',
-    missingOne: 'Saknas någon? Slå på den, öppna Spotify-appen, välj den i enhetslistan (högtalarikonen) och starta valfri låt. Kom sedan tillbaka hit.',
-    lockedList: (names) =>
-      `🔒 Spotify låter inte andra appar styra ${names.map((n) => `”${n}”`).join(', ')}. För en Sonos, använd Sonos-bryggan nedan.`,
-    needsLogin: 'Spotify-högtalare, tv-apparater och datorer kräver Spotify-inloggning (Premium): avsluta spelet och välj ”Logga in med Spotify” i förberedelserna.',
-    sonosBridge: 'Sonos via Sonos-bryggan',
-    bridgeCode: 'Kod till Sonos-bryggan',
-    looking: 'Letar…',
-    lookAgain: '↻ Leta igen',
-    findSonos: 'Hitta Sonos-högtalare',
-    noSonos: 'Bryggan hittade inga Sonos-högtalare. Är dess dator på samma wifi som högtalarna?',
-    sonosHint:
-      'För en Sonos som Spotify-appen inte kan styra. Kräver att Sonos-bryggan körs på en dator på det här wifi-nätet (se ”Playing on a Sonos” i README); den visar koden när den startar.',
   },
 
   share: {
@@ -433,30 +390,11 @@ export const sv: Messages = {
     songNotFound: 'Den här låten hittades inte på Spotify. Hoppa över den för att dra en ny.',
     playerTimeout: 'Spotify-spelaren startade inte i tid.',
     premiumNeeded: 'Spotify Premium krävs för uppspelning i webbläsaren.',
-    connectNothingOpen:
-      'Spotify ser ingen högtalare eller Spotify-app att spela på. Slå på högtalaren, eller öppna Spotify-appen på en mobil eller dator (en mobil stänger den i bakgrunden efter ett tag när inget spelas) och starta valfri låt där. Tryck sedan på Spela här igen.',
-    connectScopeMissing:
-      'Spotify-inloggningen saknar behörighet att spela på högtalare och appar. Avsluta spelet, logga ut från Spotify i förberedelserna och logga in igen.',
-    connectNotListed: (name) =>
-      `Spotify ser inte ”${name}” just nu. Kontrollera att den är påslagen, öppna sedan Spotify-appen, välj ”${name}” i enhetslistan (högtalarikonen), starta valfri låt där och tryck på Spela här igen. Högtalare med Google Cast syns bara medan något spelas på dem.`,
-    connectRestricted: (name) =>
-      `Spotify låter inte andra appar styra ”${name}”. Om det är en Sonos, använd Sonos-bryggan under 🔊, eller välj den i Spotify-appens enhetslista (inte i Sonos-appen) och starta en låt där först. Annars kan du välja en annan högtalare under 🔊.`,
-    connectSeveralOpen: (names) =>
-      `Spotify spelar inte någonstans just nu, så spelet vet inte var det ska spela (${names.map((n) => `”${n}”`).join(', ')}). Välj en under 🔊.`,
-    connectDidNotStart: (name) =>
-      `”${name}” började inte spela. Kontrollera att den är påslagen och vaken (om den har somnat, starta valfri låt på den från Spotify-appen) och tryck sedan på Spela här igen.`,
     connectCantControl:
       'Spotify låter inte spelet styra högtalaren som musiken spelas på nu (ofta en Sonos). Pausa och spela i Spotify-appen i stället, eller välj ”The Music Quiz” i appens enhetslista för att spela i webbläsaren igen.',
-    connectPremium: 'Att spela på Spotify-högtalare och appar kräver Spotify Premium.',
     serverUnreachable: 'Når inte anslutningsservern.',
     serverUnreachableType: (type) => `Når inte anslutningsservern (${type}).`,
     serverRetrying: 'Når inte anslutningsservern. Försöker igen…',
-    bridgeNotFound: 'Sonos-bryggan svarar inte. Körs den på en dator på det här wifi-nätet, med samma kod? Den visar koden när den startar.',
-    bridgeLost: 'Tappade anslutningen till Sonos-bryggan.',
-    bridgeClosed: 'Anslutningen till Sonos-bryggan är stängd.',
-    bridgeTimeout: 'Sonos-bryggan svarade inte i tid.',
-    bridgeFailed: 'Sonos-bryggan kunde inte göra det.',
-    bridgeNewer: 'Sonos-bryggan är nyare än spelet. Ladda om spelet för att uppdatera det.',
     connectionCode: (why) => `Kunde inte ladda anslutningskoden: ${why}`,
     noWebRtcShare: 'Den här webbläsaren kan inte dela spelet (ingen WebRTC).',
     noWebRtcJoin: 'Den här webbläsaren kan inte gå med (ingen WebRTC).',

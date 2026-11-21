@@ -213,11 +213,6 @@ export const en = {
     openInSpotifyHint: 'to play it on any speaker, like a Sonos. Spotify shows the title, so let someone who isn’t guessing tap it.',
     useHiddenPlayer: 'Use the hidden Spotify player instead',
     tryAgain: 'Try again',
-    playHere: 'Play on this device instead',
-    playingOnSonos: (name: string) => `Playing on ${name} (Sonos).`,
-    playingInApp: 'Playing in the Spotify app, wherever it plays. It shows the title, so keep it out of sight.',
-    playingOnDevice: (name: string) =>
-      `Playing on ${name} through Spotify. The Spotify app (and a TV’s screen) shows the title, so keep it out of sight.`,
     lockedTapToChange: 'Locked in · tap to change',
     tapToVote: 'Tap a spot to vote',
     lockMyVote: 'Lock in my vote',
@@ -254,20 +249,6 @@ export const en = {
     refillFailed: (why: string) => `No more songs could be fetched: ${why}`,
     phonesWantNext: (yes: number, needed: number) => `Phones: ${yes} of ${needed} needed want the next song`,
     anyoneMovesOn: 'Any player can move on from their phone.',
-    openApp: 'Open the Spotify app',
-  },
-
-  spotifyLog: {
-    title: 'Spotify’s replies',
-    hint: 'What Spotify answered to the game’s player commands: which device is active (is_active), whether Spotify locks it for apps (is_restricted), and the status of each play and pause. 2xx means Spotify accepted it.',
-    check: 'Ask Spotify now',
-    checking: 'Asking…',
-    copy: 'Copy',
-    copied: 'Copied',
-    clear: 'Clear',
-    empty: 'Nothing yet. Press Play, or ask Spotify now.',
-    sent: 'sent',
-    noAnswer: 'no answer',
   },
 
   timeline: {
@@ -278,30 +259,6 @@ export const en = {
     votes: (names: string[]) => `Votes: ${names.join(', ')}`,
     wrongPlace: 'Where the song really belongs',
     belongedHere: 'belonged here',
-  },
-
-  speakers: {
-    thisDevice: 'This device',
-    spotifyApp: 'Spotify app',
-    playOn: 'Play the music on',
-    whereverSpotify: 'Wherever Spotify plays',
-    lockedOne: 'Spotify won’t let other apps control this one',
-    locked: 'locked',
-    lookingSpotify: 'Looking for Spotify speakers…',
-    connectHint:
-      '**Spotify speakers and apps:** speakers, TVs and the Spotify app on computers (PC or Mac) and phones that your Spotify account can play on. The game starts each song there; nothing plays on this device. Needs Spotify Premium. Spotify shows the title in its app (and on a TV), so keep it out of sight.',
-    missingOne: 'Missing one? Switch it on, open the Spotify app, pick it in the device list (the speaker icon) and start any song, then come back here.',
-    lockedList: (names: string[]) =>
-      `🔒 Spotify won’t let other apps control ${names.map((n) => `“${n}”`).join(', ')}. For a Sonos, use the Sonos bridge below.`,
-    needsLogin: 'Spotify speakers, TVs and computers need the Spotify login (Premium): end the game and choose “Log in with Spotify” in setup.',
-    sonosBridge: 'Sonos through the Sonos bridge',
-    bridgeCode: 'Sonos bridge code',
-    looking: 'Looking…',
-    lookAgain: '↻ Look again',
-    findSonos: 'Find Sonos speakers',
-    noSonos: 'The bridge found no Sonos speakers. Is its computer on the same Wi-Fi as the speakers?',
-    sonosHint:
-      'For a Sonos the Spotify app can’t steer. Needs the Sonos bridge running on a computer on this Wi-Fi (see “Playing on a Sonos” in the README); it shows the code when it starts.',
   },
 
   share: {
@@ -441,30 +398,11 @@ export const en = {
     songNotFound: 'This song could not be found on Spotify. Skip it to draw another.',
     playerTimeout: 'The Spotify player did not start in time.',
     premiumNeeded: 'Spotify Premium is needed for in-browser playback.',
-    connectNothingOpen:
-      'Spotify can’t see any speaker or Spotify app to play on. Switch the speaker on, or open the Spotify app on a phone or computer (a phone closes it in the background after a while when nothing plays) and start any song there, then press Play here again.',
-    connectScopeMissing:
-      'The Spotify login is missing permission to play on speakers and apps. End the game, log out of Spotify in setup and log in again.',
-    connectNotListed: (name: string) =>
-      `Spotify can’t see “${name}” right now. Make sure it’s switched on, then open the Spotify app, pick “${name}” in its device list (the speaker icon), start any song there and press Play here again. Speakers with Google Cast only show up while something plays on them.`,
-    connectRestricted: (name: string) =>
-      `Spotify won’t let other apps control “${name}”. If it’s a Sonos, use the Sonos bridge under 🔊, or pick it in the Spotify app’s device list (not in the Sonos app) and start a song there first. Otherwise choose another speaker under 🔊.`,
-    connectSeveralOpen: (names: string[]) =>
-      `Spotify isn’t playing anywhere right now, so the game doesn’t know where to play (${names.map((n) => `“${n}”`).join(', ')}). Pick one under 🔊.`,
-    connectDidNotStart: (name: string) =>
-      `“${name}” didn’t start playing. Make sure it’s switched on and awake (if it has gone to sleep, start any song on it from the Spotify app), then press Play here again.`,
     connectCantControl:
       'Spotify won’t let the game control the speaker the music is on now (often a Sonos). Pause and play in the Spotify app instead, or pick “The Music Quiz” in its device list to play in the browser again.',
-    connectPremium: 'Playing on Spotify speakers and apps needs Spotify Premium.',
     serverUnreachable: 'Can’t reach the connection server.',
     serverUnreachableType: (type: string) => `Can’t reach the connection server (${type}).`,
     serverRetrying: 'Can’t reach the connection server. Retrying…',
-    bridgeNotFound: 'The Sonos bridge doesn’t answer. Is it running on a computer on this Wi-Fi, with the same code? It shows the code when it starts.',
-    bridgeLost: 'Lost the connection to the Sonos bridge.',
-    bridgeClosed: 'The Sonos bridge connection is closed.',
-    bridgeTimeout: 'The Sonos bridge didn’t answer in time.',
-    bridgeFailed: 'The Sonos bridge couldn’t do that.',
-    bridgeNewer: 'The Sonos bridge is newer than this game. Reload the game to update it.',
     connectionCode: (why: string) => `Couldn’t load the connection code: ${why}`,
     noWebRtcShare: 'This browser can’t share the game (no WebRTC).',
     noWebRtcJoin: 'This browser can’t join (no WebRTC).',
