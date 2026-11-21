@@ -6,8 +6,8 @@
  *  2. Pools of well-known songs per genre (the "By genre" screen), with their
  *     original year and track id, spread over the decades.
  *
- * Run by .github/workflows/spotify-data.yml with the app's Client ID and
- * Secret (Client Credentials flow, no user login). Spotify's request quota is
+ * Run locally with the app's Client ID and Secret (Client Credentials flow,
+ * no user login). Spotify's request quota is
  * shared by every app on the developer account, so the script is slow on
  * purpose, stops after MAX_REQUESTS, and stops early if Spotify asks for a
  * long pause. Everything it learns is saved as it goes, and the next run

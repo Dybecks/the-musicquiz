@@ -120,21 +120,18 @@ songs Spotify doesn't have under their title and artist were taken out of the de
   that deck's checked year. (`GENRE_SEARCH=1` also runs Spotify's genre search, which
   costs requests and finds less known songs.)
 
-Songs it can't match are listed in `src/data/spotify/REVIEW.md`, never guessed, along with
-ready-made songs whose Spotify year differs from the deck's.
+Every song in a ready-made deck must have a Spotify id (a test checks this). Songs the
+script can't match are listed in `src/data/spotify/REVIEW.md`, never guessed: find the
+id by hand (`track-ids.json`, key `title|artist`) or take the song out of its deck. The
+review also lists songs whose Spotify year differs from the deck's.
 
-It runs on GitHub: the **Look up Spotify data** workflow (Actions tab, or every 6 hours
-until everything is looked up). It needs two repository secrets, `SPOTIFY_CLIENT_ID` and
-`SPOTIFY_CLIENT_SECRET`, from the Spotify app's dashboard (Settings → Secrets and
-variables → Actions). Spotify's request quota is shared by every app on the developer
-account, so the genre lists take one search per genre and decade (`GENRE_PAGES` for more), and a run makes at most 300 requests, one every 1.5 seconds, and stops by itself
-if Spotify asks for a long pause; the next run carries on (`scripts/spotify-progress.json`).
-Results go to the `spotify-data` branch and a pull request from it.
-
-To run it on your own computer instead: put the two values in `.env.local` (never
-committed) as `SPOTIFY_CLIENT_ID=…` and `SPOTIFY_CLIENT_SECRET=…`, then run
-`npm run spotify-data`. Run it again to carry on after it stops; `MAX_REQUESTS=…` changes
-the cap.
+It is a local script. Put your Spotify app's values in `.env.local` (never committed) as
+`SPOTIFY_CLIENT_ID=…` and `SPOTIFY_CLIENT_SECRET=…`, then run `npm run spotify-data` and
+commit `src/data/spotify` and `scripts/spotify-progress.json`. Spotify's request quota is
+shared by every app on the developer account, so a run makes at most 300 requests
+(`MAX_REQUESTS=…` changes that), one every 1.5 seconds, and stops by itself if Spotify asks
+for a long pause. Running it again carries on where it stopped, and once everything is
+looked up it makes no requests at all.
 
 ## Setting up a game
 

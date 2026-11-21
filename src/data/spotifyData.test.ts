@@ -18,6 +18,10 @@ describe('track-ids.json', () => {
       expect(keys.has(key), `${key} is in no deck`).toBe(true);
     }
   });
+  it('gives every song in the ready-made decks a Spotify id', () => {
+    const missing = ALL_PREMADE.filter((s) => !s.spotifyId).map((s) => `${s.title} – ${s.artist}`);
+    expect(missing, 'look these up (npm run spotify-data) or take them out of their deck').toEqual([]);
+  });
   it('is applied to the decks', () => {
     for (const s of ALL_PREMADE) if (ids[premadeKey(s)]) expect(s.spotifyId).toBeTruthy();
   });

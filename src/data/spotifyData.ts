@@ -1,6 +1,6 @@
 /**
  * Spotify data the game ships with, filled in by scripts/spotify-precompute.ts
- * (run on GitHub, see .github/workflows/spotify-data.yml). With it, songs play
+ * (`npm run spotify-data`, run locally). With it, songs play
  * in the hidden Spotify player and genre lists are built without a single
  * Spotify request.
  */
