@@ -2,356 +2,13 @@
 
 Written by `scripts/spotify-precompute.ts` from `songs.json` and `decks.json`.
 
-Songs with a Spotify id: **325 of 669**. classic 160, movies 49, musicals 45, tv 33, games 38.
+Songs with a Spotify id: **654 of 654**. classic 160, movies 49, musicals 45, tv 33, games 38.
 
 ## Not looked up yet
 
 These stay out of the game until `npm run spotify-data` finds them.
 
-- Sing, Sing, Sing – Benny Goodman
-- Strange Fruit – Billie Holiday
-- Mambo No. 5 – Pérez Prado
-- Dream a Little Dream of Me – Ella Fitzgerald & Louis Armstrong
-- Hound Dog – Big Mama Thornton
-- Your Cheatin' Heart – Hank Williams
-- Shake, Rattle and Roll – Big Joe Turner
-- Misty – Erroll Garner
-- Only You (And You Alone) – The Platters
-- Cheek to Cheek – Ella Fitzgerald & Louis Armstrong
-- Love Me Tender – Elvis Presley
-- Walk the Line – Johnny Cash
-- Summertime – Ella Fitzgerald & Louis Armstrong
-- Diana – Paul Anka
-- Moanin' – Art Blakey & The Jazz Messengers
-- Volare (Nel blu dipinto di blu) – Domenico Modugno
-- My Baby Just Cares for Me – Nina Simone
-- Tequila – The Champs
-- Dream Lover – Bobby Darin
-- Mack the Knife – Bobby Darin
-- So What – Miles Davis
-- Take Five – The Dave Brubeck Quartet
-- Itsy Bitsy Teenie Weenie Yellow Polkadot Bikini – Brian Hyland
-- Georgia on My Mind – Ray Charles
-- Can't Help Falling in Love – Elvis Presley
-- Crazy – Patsy Cline
-- Watermelon Man – Herbie Hancock
-- Ring of Fire – Johnny Cash
-- She Loves You – The Beatles
-- Cantaloupe Island – Herbie Hancock
-- Ack Värmeland, du sköna – Jan Johansson
-- Downtown – Petula Clark
-- A Change Is Gonna Come – Sam Cooke
-- The Girl from Ipanema – Stan Getz & João Gilberto
-- You Really Got Me – The Kinks
-- I Got You (I Feel Good) – James Brown
-- A Love Supreme, Pt. I – Acknowledgement – John Coltrane
-- Feeling Good – Nina Simone
-- King of the Road – Roger Miller
-- My Generation – The Who
-- These Boots Are Made for Walkin' – Nancy Sinatra
-- Mas que nada – Sérgio Mendes & Brasil '66
-- I'm a Believer – The Monkees
-- Paint It Black – The Rolling Stones
-- Soul Man – Sam & Dave
-- Purple Haze – The Jimi Hendrix Experience
-- Det börjar verka kärlek, banne mej – Claes-Göran Hederström
-- Israelites – Desmond Dekker & The Aces
-- I Heard It Through the Grapevine – Marvin Gaye
-- Stand by Your Man – Tammy Wynette
-- 54-46 That's My Number – Toots & The Maytals
-- Hej clown – Jan Malmsjö
-- Many Rivers to Cross – Jimmy Cliff
-- Pressure Drop – Toots & The Maytals
-- Iron Man – Black Sabbath
-- Paranoid – Black Sabbath
-- Coal Miner's Daughter – Loretta Lynn
-- Oye como va – Santana
-- Rivers of Babylon – The Melodians
-- Let's Stay Together – Al Green
-- Ain't No Sunshine – Bill Withers
-- Take Me Home, Country Roads – John Denver
-- What's Going On – Marvin Gaye
-- Lean on Me – Bill Withers
-- Spain – Chick Corea
-- Smoke on the Water – Deep Purple
-- Crocodile Rock – Elton John
-- The Harder They Come – Jimmy Cliff
-- Love Train – The O'Jays
-- Get Up, Stand Up – Bob Marley & The Wailers
-- Jolene – Dolly Parton
-- Midnight Train to Georgia – Gladys Knight & the Pips
-- Chameleon – Herbie Hancock
-- Search and Destroy – The Stooges
-- No Woman, No Cry – Bob Marley & The Wailers
-- Kung Fu Fighting – Carl Douglas
-- Rock the Boat – The Hues Corporation
-- S.O.S. – ABBA
-- Moviestar – Harpo
-- Get Down Tonight – KC and the Sunshine Band
-- Ding-a-dong – Teach-In
-- Daddy Cool – Boney M.
-- Police and Thieves – Junior Murvin
-- Blitzkrieg Bop – Ramones
-- Car Wash – Rose Royce
-- Anarchy in the U.K. – Sex Pistols
-- Lovely Day – Bill Withers
-- One Love / People Get Ready – Bob Marley & The Wailers
-- Three Little Birds – Bob Marley & The Wailers
-- I Feel Love – Donna Summer
-- Got to Give It Up – Marvin Gaye
-- God Save the Queen – Sex Pistols
-- Birdland – Weather Report
-- Is This Love – Bob Marley & The Wailers
-- Satisfy My Soul – Bob Marley & The Wailers
-- Rasputin – Boney M.
-- Ever Fallen in Love (With Someone You Shouldn't've) – Buzzcocks
-- The Gambler – Kenny Rogers
-- I Wanna Be Sedated – Ramones
-- Teenage Kicks – The Undertones
-- Leende guldbruna ögon – Vikingarna
-- Gimme! Gimme! Gimme! (A Man After Midnight) – ABBA
-- Highway to Hell – AC/DC
-- Hot Stuff – Donna Summer
-- Boogie Wonderland – Earth, Wind & Fire
-- Funkytown – Lipps Inc.
-- We Are Family – Sister Sledge
-- Satellit – Ted Gärdestad
-- Rapper's Delight – The Sugarhill Gang
-- The Winner Takes It All – ABBA
-- Back in Black – AC/DC
-- Could You Be Loved – Bob Marley & The Wailers
-- Holiday in Cambodia – Dead Kennedys
-- Upside Down – Diana Ross
-- 9 to 5 – Dolly Parton
-- Bad Reputation – Joan Jett
-- Love Will Tear Us Apart – Joy Division
-- Breaking the Law – Judas Priest
-- Celebration – Kool & the Gang
-- Ace of Spades – Motörhead
-- Crazy Train – Ozzy Osbourne
-- On the Road Again – Willie Nelson
-- Rise Above – Black Flag
-- Staten och kapitalet – Ebba Grön
-- Super Freak – Rick James
-- Dag efter dag – Chips
-- The Message – Grandmaster Flash and the Furious Five
-- Sommartider – Gyllene Tider
-- Run to the Hills – Iron Maiden
-- The Number of the Beast – Iron Maiden
-- Give It Up – KC and the Sunshine Band
-- Sexual Healing – Marvin Gaye
-- Billie Jean – Michael Jackson
-- Pass the Dutchie – Musical Youth
-- Should I Stay or Should I Go – The Clash
-- Buffalo Soldier – Bob Marley & The Wailers
-- Främling – Carola
-- Electric Avenue – Eddy Grant
-- Islands in the Stream – Kenny Rogers & Dolly Parton
-- Blue Monday – New Order
-- Ain't Nobody – Rufus and Chaka Khan
-- Sommaren är kort – Tomas Ledin
-- Red Red Wine – UB40
-- Diggi-Loo Diggi-Ley – Herreys
-- Smooth Operator – Sade
-- La det swinge – Bobbysocks!
-- Bra vibrationer – Kikki Danielsson
-- Conga – Miami Sound Machine
-- Kärleken är evig – Lena Philipsson
-- Master of Puppets – Metallica
-- Walk This Way – Run-DMC
-- There Is a Light That Never Goes Out – The Smiths
-- Bamboléo – Gipsy Kings
-- Welcome to the Jungle – Guns N' Roses
-- Dansa i neon – Lena Philipsson
-- Fyra Bugg & en Coca Cola – Lotta Engberg
-- It Must Have Been Love – Roxette
-- Just Like Heaven – The Cure
-- I Wanna Dance with Somebody (Who Loves Me) – Whitney Houston
-- Venus Butterfly – Pernilla Wahlgren
-- Where Is My Mind? – Pixies
-- It Takes Two – Rob Base and DJ E-Z Rock
-- Listen to Your Heart – Roxette
-- Debaser – Pixies
-- Fight the Power – Public Enemy
-- Back to Life (However Do You Want Me) – Soul II Soul
-- Pump Up the Jam – Technotronic
-- Friends in Low Places – Garth Brooks
-- U Can't Touch This – MC Hammer
-- Show Me Love – Robin S.
-- Ice Ice Baby – Vanilla Ice
-- Fångad av en stormvind – Carola
-- Vem tänder stjärnorna – Eva Dahlgren
-- Nothing Else Matters – Metallica
-- Achy Breaky Heart – Billy Ray Cyrus
-- End of the Road – Boyz II Men
-- Murder She Wrote – Chaka Demus & Pliers
-- Nuthin' but a "G" Thang – Dr. Dre
-- Walk – Pantera
-- Creep – Radiohead
-- Under the Bridge – Red Hot Chili Peppers
-- Rhythm Is a Dancer – Snap!
-- Informer – Snow
-- Eloise – Arvingarna
-- Vi får väl se – Arvingarna
-- The Rhythm of the Night – Corona
-- Mr. Vain – Culture Beat
-- Macarena – Los del Río
-- Basket Case – Green Day
-- Here Comes the Hotstepper – Ini Kamoze
-- Juicy – The Notorious B.I.G.
-- Self Esteem – The Offspring
-- California Love – 2Pac
-- Shy Guy – Diana King
-- Common People – Pulp
-- Ruby Soho – Rancid
-- Mr. Boombastic – Shaggy
-- No Diggity – Blackstreet
-- Dammit – blink-182
-- Song 2 – Blur
-- Du hast – Rammstein
-- Better Off Alone – Alice Deejay
-- La Vida Es un Carnaval – Celia Cruz
-- Blue (Da Ba Dee) – Eiffel 65
-- Suavemente – Elvis Crespo
-- You're Still the One – Shania Twain
-- The Kids Aren't Alright – The Offspring
-- I Want It That Way – Backstreet Boys
-- All the Small Things – blink-182
-- Take Me to Your Heaven – Charlotte Nilsson
-- Genie in a Bottle – Christina Aguilera
-- Sandstorm – Darude
-- Say My Name – Destiny's Child
-- Bailamos – Enrique Iglesias
-- Smooth – Santana
-- Man! I Feel Like a Woman! – Shania Twain
-- One More Time – Daft Punk
-- Down with the Sickness – Disturbed
-- In the End – Linkin Park
-- Ms. Jackson – OutKast
-- It Wasn't Me – Shaggy
-- Hate to Say I Told You So – The Hives
-- Main Offender – The Hives
-- Fallin' – Alicia Keys
-- Feuer frei! – Rammstein
-- Whenever, Wherever – Shakira
-- Fat Lip – Sum 41
-- Chop Suey! – System of a Down
-- Last Nite – The Strokes
-- Lassie – Ainbusk
-- Satisfaction – Benny Benassi
-- Without Me – Eminem
-- Come Away with Me – Norah Jones
-- Don't Know Why – Norah Jones
-- Get Busy – Sean Paul
-- In da Club – 50 Cent
-- Toxic – Britney Spears
-- Bring Me to Life – Evanescence
-- Mr. Brightside – The Killers
-- Rebellion (Lies) – Arcade Fire
-- Gasolina – Daddy Yankee
-- Call on Me – Eric Prydz
-- Take Me Out – Franz Ferdinand
-- American Idiot – Green Day
-- Boulevard of Broken Dreams – Green Day
-- Since U Been Gone – Kelly Clarkson
-- Det gör ont – Lena Philipsson
-- Ghost Love Score – Nightwish
-- Duality – Slipknot
-- I Bet You Look Good on the Dancefloor – Arctic Monkeys
-- Welcome to Jamrock – Damian Marley
-- Sugar, We're Goin Down – Fall Out Boy
-- Gold Digger – Kanye West
-- Hung Up – Madonna
-- Primo Victoria – Sabaton
-- Temperature – Sean Paul
-- Back to Black – Amy Winehouse
-- Irreplaceable – Beyoncé
-- Before He Cheats – Carrie Underwood
-- Hard Rock Hallelujah – Lordi
-- Alcastar – Magnus Uggla
-- Welcome to the Black Parade – My Chemical Romance
-- Young Folks – Peter Bjorn and John
-- Valerie – Mark Ronson
-- Kids – MGMT
-- Misery Business – Paramore
-- With Every Heartbeat – Robyn
-- Hero – Charlotte Perrelli
-- Mercy – Duffy
-- Gods of War – Sabaton
-- Love Story – Taylor Swift
-- Empire State of Mind – Jay-Z
-- Need You Now – Lady A
-- Uprising – Muse
-- Danza Kuduro – Don Omar
-- Pumped Up Kicks – Foster the People
-- Hold Yuh – Gyptian
-- Waka Waka (This Time for Africa) – Shakira
-- Call Me Maybe – Carly Rae Jepsen
-- Titanium – David Guetta
-- Little Talks – Of Monsters and Men
-- Jag kommer – Veronica Maggio
-- Cruise – Florida Georgia Line
-- Thinking About You – Frank Ocean
-- I Love It – Icona Pop
-- Thrift Shop – Macklemore & Ryan Lewis
-- Ho Hey – The Lumineers
-- Sweater Weather – The Neighbourhood
-- Do I Wanna Know? – Arctic Monkeys
-- Cigarette Daydreams – Cage the Elephant
-- Wagon Wheel – Darius Rucker
-- Rude – MAGIC!
-- Vivir Mi Vida – Marc Anthony
-- Habits (Stay High) – Tove Lo
-- Riptide – Vance Joy
-- Summer – Calvin Harris
-- Bailando – Enrique Iglesias
-- Stay with Me – Sam Smith
-- Tennessee Whiskey – Chris Stapleton
-- The Sound of Silence – Disturbed
-- Hotline Bling – Drake
-- The Less I Know the Better – Tame Impala
-- Can't Feel My Face – The Weeknd
-- La Bicicleta – Carlos Vives & Shakira
-- Redbone – Childish Gambino
-- Square Hammer – Ghost
-- Die For You – The Weeknd
-- Believer – Imagine Dragons
-- Mi Gente – J Balvin
-- HUMBLE. – Kendrick Lamar
-- Beggin' – Måneskin
-- Motion Sickness – Phoebe Bridgers
-- One Kiss – Calvin Harris & Dua Lipa
-- Taki Taki – DJ Snake
-- God's Plan – Drake
-- Toast – Koffee
-- Sicko Mode – Travis Scott
-- Don't Start Now – Dua Lipa
-- Mary on a Cross – Ghost
-- Old Town Road – Lil Nas X
-- Blinding Lights – The Weeknd
-- Dákiti – Bad Bunny
-- WAP – Cardi B
-- Heat Waves – Glass Animals
-- Kyoto – Phoebe Bridgers
-- Pepas – Farruko
-- Industry Baby – Lil Nas X
-- Seven – Måneskin
-- Zitti e buoni – Måneskin
-- good 4 u – Olivia Rodrigo
-- Leave the Door Open – Silk Sonic
-- Tití Me Preguntó – Bad Bunny
-- Kill Bill – SZA
-- Bzrp Music Sessions, Vol. 53 – Bizarrap & Shakira
-- Padam Padam – Kylie Minogue
-- Bewitched – Laufey
-- From the Start – Laufey
-- Fast Car – Luke Combs
-- Last Night – Morgan Wallen
-- Water – Tyla
-- Texas Hold 'Em – Beyoncé
-- Not Like Us – Kendrick Lamar
-- I Had Some Help – Post Malone
-- A Bar Song (Tipsy) – Shaboozey
+None.
 
 ## Not found on Spotify
 
@@ -392,6 +49,21 @@ Taken out of the catalogue. Add one back with the right title and artist (and "i
 - The Opened Way – Kow Otani: no recording with this title by this artist.
 - Vigil – Sam Hulick: no recording with this title by this artist.
 - Build That Wall – Darren Korb: no recording with this title by this artist.
+- Walk the Line – Johnny Cash: 1956, country: no recording with this title by this artist.
+- Anarchy in the U.K. – Sex Pistols: 1976, punk: no recording with this title by this artist.
+- Boogie Wonderland – Earth, Wind & Fire: 1979, disco: no recording with this title by this artist.
+- Staten och kapitalet – Ebba Grön: 1981, punk: no recording with this title by this artist.
+- Diggi-Loo Diggi-Ley – Herreys: 1984, schlager: no recording with this title by this artist.
+- Venus Butterfly – Pernilla Wahlgren: 1988, schlager: no recording with this title by this artist.
+- Vi får väl se – Arvingarna: 1993, schlager: no recording with this title by this artist.
+- Take Me to Your Heaven – Charlotte Nilsson: 1999, schlager: no recording with this title by this artist.
+- Alcastar – Magnus Uggla: 2006, schlager: no recording with this title by this artist.
+- Gods of War – Sabaton: 2008, metal: no recording with this title by this artist.
+- Hold Yuh – Gyptian: 2010, reggae: no recording with this title by this artist.
+- Thinking About You – Frank Ocean: 2012, rnb: no recording with this title by this artist.
+- One Kiss – Calvin Harris & Dua Lipa: 2018, dance: no recording with this title by this artist.
+- Seven – Måneskin: 2021, rock: no recording with this title by this artist.
+- Bzrp Music Sessions, Vol. 53 – Bizarrap & Shakira: 2023, latin: no recording with this title by this artist.
 
 ## Year differs from Spotify
 
@@ -459,24 +131,54 @@ The catalogue year was kept. Spotify is often wrong (it dates songs by album), b
 - To Zanarkand – Nobuo Uematsu (games): the catalogue says 2001; the recording used is from 2016 (Fleeting Symphony).
 - Live and Learn – Crush 40 (games): the catalogue says 2001; the recording used is from 2009 (Super Sonic Songs - The Best Of Crush 40 (Bonus Tracks)).
 - Baba Yetu – Christopher Tin (games): the catalogue says 2005; the recording used is from 2009 (Calling All Dawns).
+- Sing, Sing, Sing – Benny Goodman (catalogue): the catalogue says 1937; the recording used is from 2022 (Absolutely The Best).
+- Strange Fruit – Billie Holiday (catalogue): the catalogue says 1939; the recording used is from 1956 (Lady Sings The Blues).
+- Hound Dog – Big Mama Thornton (catalogue): the catalogue says 1953; the recording used is from 1966 (In Europe).
+- Shake, Rattle and Roll – Big Joe Turner (catalogue): the catalogue says 1954; the recording used is from 1957 (Rock & Roll).
+- Love Me Tender – Elvis Presley (catalogue): the catalogue says 1956; the recording used is from 1958 (Elvis' Golden Records).
+- Diana – Paul Anka (catalogue): the catalogue says 1957; the recording used is from 1966 (Sings His Favorites).
+- Volare (Nel blu dipinto di blu) – Domenico Modugno (catalogue): the catalogue says 1958; the recording used is from 2001 (Encore).
+- Dream Lover – Bobby Darin (catalogue): the catalogue says 1959; the recording used is from 2007 (Sing & Swing with Bobby Darin).
+- Ack Värmeland, du sköna – Jan Johansson (catalogue): the catalogue says 1964; the recording used is from 1968 (Musik genom fyra sekler).
+- Hej clown – Jan Malmsjö (catalogue): the catalogue says 1969; the recording used is from 1971 (Hej clown).
+- S.O.S. – ABBA (catalogue): the catalogue says 1975, Spotify's earliest release is 1992 (Plays Abba Hits).
+- Got to Give It Up – Marvin Gaye (catalogue): the catalogue says 1977; the recording used is from 2008 (Favorites).
+- Crazy Train – Ozzy Osbourne (catalogue): the catalogue says 1980; the recording used is from 2002 (The Osbourne Family Album (Clean Version)).
+- On the Road Again – Willie Nelson (catalogue): the catalogue says 1980; the recording used is from 1988 (Willie Nelson The Collection).
+- The Message – Grandmaster Flash and the Furious Five (catalogue): the catalogue says 1982; the recording used is from 2008 (Hip Hop Soundtrack To The Concrete Jungle (Re-Recorded)).
+- Electric Avenue – Eddy Grant (catalogue): the catalogue says 1983; the recording used is from 2024 (Electric Avenue).
+- Blue Monday – New Order (catalogue): the catalogue says 1983; the recording used is from 1987 (Substance).
+- Back to Life (However Do You Want Me) – Soul II Soul (catalogue): the catalogue says 1989; the recording used is from 1995 (Club Classics Vol. One).
+- Friends in Low Places – Garth Brooks (catalogue): the catalogue says 1990; the recording used is from 2014 (All Time Legends of Country Music).
+- Show Me Love – Robin S. (catalogue): the catalogue says 1990, Spotify's earliest release is 1993 (Show Me Love).
+- Fångad av en stormvind – Carola (catalogue): the catalogue says 1991, Spotify's earliest release is 1983 (Carola Gospel Concert).
+- Nothing Else Matters – Metallica (catalogue): the catalogue says 1991, Spotify's earliest release is 2021 (Metallica (Remastered Deluxe Box Set)).
+- California Love – 2Pac (catalogue): the catalogue says 1995, Spotify's earliest release is 1998 (Greatest Hits).
+- Mr. Boombastic – Shaggy (catalogue): the catalogue says 1995, Spotify's earliest release is 2019 (Oldies Ragga Dancehall, Vol. 2).
+- Man! I Feel Like a Woman! – Shania Twain (catalogue): the catalogue says 1999, Spotify's earliest release is 1997 (Come On Over (International Version)).
+- Lassie – Ainbusk (catalogue): the catalogue says 2002, Spotify's earliest release is 1993 (Ainbusk Singers).
+- Primo Victoria – Sabaton (catalogue): the catalogue says 2005, Spotify's earliest release is 2010 (Primo Victoria (Re-Armed)).
+- Kids – MGMT (catalogue): the catalogue says 2007, Spotify's earliest release is 2005 (Oracular Spectacular).
+- With Every Heartbeat – Robyn (catalogue): the catalogue says 2007, Spotify's earliest release is 2005 (With Every Heartbeat).
+- Don't Start Now – Dua Lipa (catalogue): the catalogue says 2019, Spotify's earliest release is 2021 (Future Nostalgia (The Moonlight Edition)).
 
 ## Songs per genre ("By genre")
 
 | Genre | 50s | 60s | 70s | 80s | 90s | 00s | 10s | 20s | Total |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| pop | 0 | 3 | 8 | 13 | 15 | 12 | 17 | 14 | 82 |
-| rock | 8 | 12 | 16 | 13 | 8 | 5 | 0 | 0 | 62 |
-| hiphop | 0 | 0 | 0 | 0 | 4 | 8 | 0 | 0 | 12 |
-| rnb | 1 | 2 | 1 | 1 | 2 | 4 | 0 | 0 | 11 |
-| soul | 1 | 7 | 7 | 2 | 1 | 2 | 4 | 0 | 24 |
-| disco | 0 | 0 | 7 | 0 | 0 | 0 | 2 | 1 | 10 |
-| dance | 0 | 0 | 2 | 5 | 7 | 3 | 8 | 3 | 28 |
-| country | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| metal | 0 | 0 | 0 | 1 | 1 | 0 | 0 | 0 | 2 |
-| indie | 0 | 0 | 0 | 0 | 2 | 1 | 1 | 0 | 4 |
-| schlager | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 1 | 3 |
-| swedishpop | 0 | 0 | 3 | 2 | 5 | 0 | 6 | 1 | 17 |
-| jazz | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 2 |
-| reggae | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| latin | 1 | 0 | 0 | 0 | 1 | 1 | 1 | 0 | 4 |
-| punk | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 1 |
+| pop | 5 | 9 | 9 | 14 | 17 | 14 | 19 | 14 | 101 |
+| rock | 8 | 16 | 18 | 13 | 9 | 9 | 3 | 1 | 77 |
+| hiphop | 0 | 0 | 1 | 4 | 9 | 13 | 6 | 3 | 36 |
+| rnb | 3 | 2 | 3 | 3 | 5 | 6 | 4 | 3 | 29 |
+| soul | 1 | 11 | 12 | 6 | 1 | 5 | 5 | 1 | 42 |
+| disco | 0 | 0 | 20 | 4 | 0 | 1 | 3 | 1 | 29 |
+| dance | 0 | 0 | 3 | 7 | 14 | 6 | 11 | 4 | 45 |
+| country | 1 | 4 | 4 | 3 | 4 | 3 | 4 | 5 | 28 |
+| metal | 0 | 0 | 4 | 9 | 4 | 8 | 3 | 0 | 28 |
+| indie | 0 | 0 | 0 | 5 | 5 | 8 | 10 | 2 | 30 |
+| schlager | 0 | 2 | 4 | 7 | 2 | 3 | 2 | 1 | 21 |
+| swedishpop | 0 | 0 | 6 | 7 | 7 | 3 | 9 | 1 | 33 |
+| jazz | 9 | 9 | 3 | 1 | 0 | 4 | 0 | 2 | 30 |
+| reggae | 0 | 4 | 9 | 5 | 5 | 4 | 2 | 0 | 29 |
+| latin | 2 | 2 | 1 | 2 | 6 | 3 | 8 | 3 | 28 |
+| punk | 0 | 0 | 7 | 4 | 6 | 7 | 0 | 1 | 25 |
