@@ -10,7 +10,7 @@
  * Songs without a known id are found via search, which needs the login.
  */
 import type { Song } from '../game/engine';
-import { findTrackUri, playOnDevice } from './api';
+import { findTrackUri, getPlaybackState, pauseDevice, playOnDevice, RateLimitError, resumeDevice, type PlaybackState } from './api';
 import { getAccessToken } from './auth';
 import { msg } from '../i18n';
 
@@ -111,30 +111,95 @@ export async function createPremiumPlayback(): Promise<Playback> {
     player.addListener('account_error', () => reject(new Error(msg().errors.premiumNeeded)));
     void player.connect();
   });
-  player.addListener('player_state_changed', (state) => listener(state ? !state.paused : false));
+  /**
+   * The Spotify Connect device the song was moved to in the Spotify app (a
+   * speaker, the phone…), or null while it plays here. Once a song of ours is
+   * seen playing elsewhere, the game keeps sending pause, resume and the next
+   * songs there instead of pulling them back to the browser, until the
+   * player picks the browser again in the app.
+   */
+  let elsewhere: string | null = null;
+  /** The last song started, to tell our song on another device from something else playing there. */
+  let lastUri: string | null = null;
+
+  const ours = (s: PlaybackState) => !!s.item && (s.item.uri === lastUri || s.item.linked_from?.uri === lastUri);
+
+  /** Asks Spotify where the music plays and updates `elsewhere` (one request). */
+  const locate = async (): Promise<PlaybackState | null> => {
+    const s = await getPlaybackState().catch((e) => {
+      if (e instanceof RateLimitError) throw e;
+      return undefined;
+    });
+    // Couldn't ask: keep what we knew.
+    if (s === undefined) return null;
+    if (s?.device?.id === deviceId) elsewhere = null;
+    else if (s?.device?.id && lastUri && ours(s)) elsewhere = s.device.id;
+    return s;
+  };
+
+  player.addListener('player_state_changed', (state) => {
+    if (state) {
+      if (!elsewhere) listener(!state.paused);
+      return;
+    }
+    // The browser lost the song, often because it was moved to another device in the app.
+    void locate()
+      .then((s) => listener(!!elsewhere && !!s?.is_playing))
+      .catch(() => listener(false));
+  });
+
+  const pauseAll = async () => {
+    if (elsewhere) await pauseDevice(elsewhere).catch(() => {});
+    await player.pause().catch(() => {});
+  };
 
   return {
     kind: 'premium',
     async prepare(song) {
-      await player.pause().catch(() => {});
+      await locate().catch(() => null);
+      await pauseAll();
       uri = await uriFor(song);
       started = false;
     },
     async play() {
       if (!uri) return;
-      await player.activateElement().catch(() => {});
+      await locate();
+      if (!elsewhere) await player.activateElement().catch(() => {});
       if (!started) {
-        await playOnDevice(deviceId, uri);
+        lastUri = uri;
+        if (elsewhere) {
+          try {
+            await playOnDevice(elsewhere, uri);
+          } catch (e) {
+            if (e instanceof RateLimitError) throw e;
+            // The other device is gone: play here again.
+            elsewhere = null;
+            await player.activateElement().catch(() => {});
+            await playOnDevice(deviceId, uri);
+          }
+        } else await playOnDevice(deviceId, uri);
         started = true;
+      } else if (elsewhere) {
+        await resumeDevice(elsewhere);
       } else {
         await player.resume();
       }
+      if (elsewhere) listener(true);
     },
     async pause() {
-      await player.pause();
+      await locate();
+      if (elsewhere) {
+        await pauseDevice(elsewhere).catch(async (e) => {
+          // Spotify answers 403 to pausing what already stopped; only a song still playing means it failed.
+          const s = await getPlaybackState().catch(() => null);
+          if (s?.is_playing && s.device?.id === elsewhere) throw e;
+        });
+        listener(false);
+      } else await player.pause();
     },
     async stop() {
-      await player.pause().catch(() => {});
+      await pauseAll();
+      if (elsewhere) listener(false);
       uri = null;
       started = false;
     },
@@ -142,6 +207,7 @@ export async function createPremiumPlayback(): Promise<Playback> {
       listener = cb;
     },
     destroy() {
+      if (elsewhere) void pauseDevice(elsewhere).catch(() => {});
       player.disconnect();
     },
   };
