@@ -13,13 +13,17 @@ describe('tagGenres', () => {
     expect(tagGenres('swedish')).toEqual(['swedishpop']);
     expect(tagGenres('seen live')).toEqual([]);
     expect(tagGenres('80s')).toEqual([]);
+    expect(tagGenres('chicago blues')).toEqual(['rnb']);
   });
 });
 
 describe('genresFromTags', () => {
   it('keeps the strong genres, at most three', () => {
-    expect(genresFromTags([['rock', 10], ['hard rock', 5], ['pop', 2], ['blues', 9]])).toEqual(['rock']);
+    expect(genresFromTags([['rock', 10], ['hard rock', 5], ['pop', 2], ['folk', 9]])).toEqual(['rock']);
     expect(genresFromTags([['disco', 5], ['pop', 4], ['soul', 2], ['funk', 1]])).toEqual(['disco', 'pop', 'soul']);
+  });
+  it('counts blues as R&B (Hound Dog)', () => {
+    expect(genresFromTags([['blues', 3], ['chicago blues', 1], ['electric blues', 1], ['rock', 1]])).toEqual(['rnb']);
   });
   it('counts each source the same', () => {
     expect(genresFromTags([['pop', 100]], [['dance', 3]])).toEqual(['pop', 'dance']);

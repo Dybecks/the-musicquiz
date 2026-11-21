@@ -9,7 +9,7 @@ const TAG_GENRES: [genre: string, pattern: RegExp][] = [
   ['pop', /\bpop\b|^europop$|^teen pop$/],
   ['rock', /\brock\b|^grunge$|^britpop$|^new wave$|^rock and roll$|^rock ?n ?roll$|^rockabilly$/],
   ['hiphop', /\bhip ?-?hop\b|\brap\b|^trap$|^g-funk$|^grime$|^drill$/],
-  ['rnb', /\br ?& ?b\b|\brnb\b|rhythm (and|&) blues|^new jack swing$|^neo soul$/],
+  ['rnb', /\br ?& ?b\b|\brnb\b|rhythm (and|&) blues|\bblues\b|^new jack swing$|^neo soul$/],
   ['soul', /\bsoul\b|\bfunk\b|^motown$|^gospel$/],
   ['disco', /\bdisco\b/],
   ['dance', /\bdance\b|\bhouse\b|\btechno\b|\btrance\b|\bedm\b|^electro$|^eurodance$|^big room$|^electronic$|^dubstep$|^drum and bass$/],

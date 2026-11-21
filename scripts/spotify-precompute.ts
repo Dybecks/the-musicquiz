@@ -416,12 +416,22 @@ const sameList = (a: readonly string[] = [], b: readonly string[] = []) => a.len
 
 /** A JSON GET that waits and retries when the service is busy. */
 async function getJson<T>(url: string, pause: number): Promise<T | null> {
-  for (let attempt = 0; attempt < 4; attempt++) {
-    if (!process.env.NO_SLEEP) await sleep(pause * (attempt + 1));
-    const res = await fetch(url, { headers: { ...AGENT, Accept: 'application/json' } });
+  let wait = pause;
+  for (let attempt = 0; attempt < 10; attempt++) {
+    if (!process.env.NO_SLEEP) await sleep(wait);
+    let res: Response;
+    try {
+      res = await fetch(url, { headers: { ...AGENT, Accept: 'application/json' } });
+    } catch {
+      wait = Math.min(30_000, wait * 2);
+      continue;
+    }
     if (res.ok) return (await res.json()) as T;
     if (res.status === 404) return null;
     if (res.status !== 503 && res.status !== 429 && res.status < 500) throw new Error(`${new URL(url).host} answered ${res.status}`);
+    // Busy (MusicBrainz allows about one request a second): wait longer each time, up to 30 s.
+    const asked = Number(res.headers.get('retry-after')) * 1000;
+    wait = Math.min(30_000, Math.max(asked || 0, wait * 2));
   }
   throw new Error(`${new URL(url).host} is busy`);
 }
@@ -440,7 +450,7 @@ async function musicBrainzTags(row: CatalogRow): Promise<Tags> {
   const query = `recording:${lucene(row.title)} AND artist:${lucene(firstArtist)}`;
   const body = await getJson<{ recordings?: MbRecording[] }>(
     `https://musicbrainz.org/ws/2/recording?${new URLSearchParams({ query, fmt: 'json', limit: '25' })}`,
-    1100,
+    1500,
   );
   const want = normalizeKey(cleanTitle(row.title));
   const recordings = (body?.recordings ?? []).filter(
@@ -461,7 +471,7 @@ async function musicBrainzTags(row: CatalogRow): Promise<Tags> {
     }
   const group = [...groups].sort((a, b) => b[1] - a[1])[0]?.[0];
   if (!group) return [];
-  const rg = await getJson<{ genres?: { name: string; count: number }[] }>(`https://musicbrainz.org/ws/2/release-group/${group}?inc=genres&fmt=json`, 1100);
+  const rg = await getJson<{ genres?: { name: string; count: number }[] }>(`https://musicbrainz.org/ws/2/release-group/${group}?inc=genres&fmt=json`, 1500);
   return (rg?.genres ?? []).map((g) => [g.name, Math.max(1, g.count)]);
 }
 
@@ -476,6 +486,7 @@ async function lastFmTags(row: CatalogRow, key: string): Promise<Tags> {
 async function fillGenres(): Promise<void> {
   const lastFmKey = process.env.LASTFM_API_KEY;
   let asked = 0;
+  let failures = 0;
   for (const row of rows) {
     const key = keyOf(row);
     const entry = (genreData[key] ??= { handSet: [...row.genres] });
@@ -492,10 +503,16 @@ async function fillGenres(): Promise<void> {
         entry.lastfmAt = today();
         asked++;
       }
+      failures = 0;
     } catch (e) {
-      console.log(`Genre lookup stopped (${(e as Error).message}); the next run carries on.`);
-      save();
-      return;
+      // One song failing doesn't stop the run; many in a row do.
+      console.log(`Genre lookup for ${row.title} – ${row.artist} failed (${(e as Error).message}); trying it next run.`);
+      if (++failures >= 5) {
+        console.log('Genre lookup stopped after 5 failures in a row; the next run carries on.');
+        save();
+        return;
+      }
+      continue;
     }
     const genres = mergeGenres(entry.handSet, genresFromTags(entry.mb ?? [], entry.lastfm ?? []), ORDER);
     if (!sameList(genres, row.genres)) console.log(`♪ ${row.title} – ${row.artist}: ${row.genres.join(', ') || '–'} → ${genres.join(', ') || '–'}`);
