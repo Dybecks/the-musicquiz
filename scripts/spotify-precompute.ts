@@ -61,8 +61,8 @@ const LONGEST_WAIT_S = 120;
 const MARKET = process.env.SPOTIFY_MARKET || 'SE';
 /** Decades each genre is searched in. */
 const DECADES = [1950, 1960, 1970, 1980, 1990, 2000, 2010, 2020];
-/** How deep each genre + decade search goes: only the best-known songs. */
-const SEARCH_DEPTH = 50;
+/** Search pages per genre and decade (one page is 50 songs, or 10 for capped apps). */
+const GENRE_PAGES = Number(process.env.GENRE_PAGES || 1);
 /** Songs kept per genre and decade. */
 const PER_DECADE = 30;
 
@@ -76,6 +76,8 @@ interface Progress {
   tried: Record<string, string>;
   /** Genre searches made: "genre|decade" → offsets fetched and the total Spotify reported. */
   searched: Record<string, { offsets: number[]; total: number | null }>;
+  /** Ready-made songs already looked up on Wikidata (key → when). */
+  wikidata?: Record<string, string>;
   /** Ready-made songs that matched nothing, with why. */
   unmatched?: Record<string, string>;
   /** Ready-made songs whose Spotify year differs from the deck's year. */
@@ -95,6 +97,7 @@ const pools = readJson<GenrePools>(POOLS_FILE, {});
 const progress = readJson<Progress>(PROGRESS_FILE, { tried: {}, searched: {} });
 progress.unmatched ??= {};
 progress.yearNotes ??= {};
+progress.wikidata ??= {};
 
 const sortKeys = <T,>(o: Record<string, T>) => Object.fromEntries(Object.entries(o).sort(([a], [b]) => a.localeCompare(b)));
 
@@ -255,17 +258,80 @@ function uniqueTracksKeepAll(items: SpotifyTrack[]): (SpotifyTrack & { id: strin
   });
 }
 
+/**
+ * Free of Spotify API requests: Wikidata lists Spotify track ids for many
+ * songs (property P2207). Each one is checked against Spotify's public oEmbed
+ * endpoint (not part of the API quota): the id must exist and have the
+ * song's title. Only songs left over after this are searched on Spotify.
+ */
+async function fromWikidata(): Promise<void> {
+  const todo = DECKS.flatMap(([, songs]) => songs).filter((s) => {
+    const key = premadeKey(s);
+    return !s.spotifyId && !ids[key] && !progress.tried[key] && !progress.wikidata![key];
+  });
+  if (todo.length === 0) return;
+  const agent = { 'User-Agent': 'the-musicquiz-precompute/1.0 (https://github.com/Dybecks/the-musicquiz)' };
+  const literal = (t: string) => JSON.stringify(t) + '@en';
+  for (let i = 0; i < todo.length; i += 40) {
+    const chunk = todo.slice(i, i + 40);
+    const titles = [...new Set(chunk.map((s) => s.title))];
+    const query = `SELECT ?label ?sp ?performerLabel WHERE {
+      VALUES ?label { ${titles.map(literal).join(' ')} }
+      ?item rdfs:label ?label; wdt:P2207 ?sp.
+      OPTIONAL { ?item wdt:P175 ?performer. ?performer rdfs:label ?performerLabel. FILTER(LANG(?performerLabel) = "en") }
+    }`;
+    let rows: { label: { value: string }; sp: { value: string }; performerLabel?: { value: string } }[] = [];
+    try {
+      const res = await fetch(`https://query.wikidata.org/sparql?${new URLSearchParams({ query, format: 'json' })}`, {
+        headers: { ...agent, Accept: 'application/sparql-results+json' },
+      });
+      if (!res.ok) throw new Error(`Wikidata answered ${res.status}`);
+      rows = ((await res.json()) as { results: { bindings: typeof rows } }).results.bindings;
+    } catch (e) {
+      console.log(`Wikidata not available (${(e as Error).message}); searching Spotify instead.`);
+      return;
+    }
+    for (const song of chunk) {
+      const key = premadeKey(song);
+      const candidates = [
+        ...new Set(
+          rows
+            .filter((r) => r.label.value === song.title)
+            .filter((r) => !r.performerLabel || sameArtist({ artists: [{ id: '', name: r.performerLabel.value }] } as SpotifyTrack, song.artist))
+            .map((r) => r.sp.value)
+            .filter((id) => /^[0-9A-Za-z]{22}$/.test(id)),
+        ),
+      ];
+      for (const id of candidates) {
+        await sleep(300);
+        try {
+          const res = await fetch(`https://open.spotify.com/oembed?url=${encodeURIComponent(`https://open.spotify.com/track/${id}`)}`, { headers: agent });
+          if (!res.ok) continue;
+          const { title } = (await res.json()) as { title?: string };
+          if (title && normalizeKey(cleanTitle(title)) === normalizeKey(cleanTitle(song.title))) {
+            ids[key] = id;
+            delete progress.unmatched![key];
+            console.log(`✓ ${song.title} – ${song.artist}: ${id} (Wikidata)`);
+            break;
+          }
+        } catch {
+          /* try the next id, or search later */
+        }
+      }
+      progress.wikidata![key] = new Date().toISOString().slice(0, 10);
+    }
+    save();
+  }
+}
+
 async function fillPremadeIds(): Promise<void> {
   for (const [deck, songs] of DECKS) {
     for (const song of songs) {
       const key = premadeKey(song);
       if (song.spotifyId || ids[key] || progress.tried[key]) continue;
       const firstArtist = song.artist.split(/\s*(?:,|&|feat\.|ft\.)\s*/i)[0];
-      const queries = [
-        `track:"${quoteless(song.title)}" artist:"${quoteless(song.artist)}"`,
-        `track:"${quoteless(song.title)}" artist:"${quoteless(firstArtist)}"`,
-        `${quoteless(song.title)} ${quoteless(firstArtist)}`,
-      ].filter((q, i, all) => all.indexOf(q) === i);
+      // At most two searches: the exact one, then a looser one.
+      const queries = [`track:"${quoteless(song.title)}" artist:"${quoteless(firstArtist)}"`, `${quoteless(song.title)} ${quoteless(firstArtist)}`];
       let found: ReturnType<typeof bestMatch> = null;
       for (const q of queries) {
         found = bestMatch(song, (await search(q)).items);
@@ -314,7 +380,7 @@ function addToPool(genre: string, rows: PoolRow[]): void {
 async function fillGenrePools(): Promise<void> {
   // Breadth first: the top of every genre and decade before going deeper,
   // so a run that stops early still covers everything a little.
-  for (let depth = 0; depth < SEARCH_DEPTH; depth += 10) {
+  for (let page = 0; page < GENRE_PAGES; page++) {
     for (const genre of SEARCH_GENRES) {
       for (const decade of DECADES) {
         const key = `${genre.id}|${decade}`;
@@ -323,8 +389,7 @@ async function fillGenrePools(): Promise<void> {
         const to = Math.min(decade + 9, new Date().getFullYear());
         const kept = (pools[genre.id] ?? []).filter((r) => r[2] >= from && r[2] <= to).length;
         if (kept >= PER_DECADE) continue;
-        // Pages of searchLimit songs; the depth loop steps by 10, so a page of 50 covers several steps.
-        const offset = Math.floor(depth / searchLimit) * searchLimit;
+        const offset = page * searchLimit;
         if (state.offsets.includes(offset)) continue;
         if (state.total !== null && offset >= state.total) continue;
         const { items, total } = await search(`genre:"${genre.query}" year:${from}-${to}`, offset);
@@ -392,6 +457,7 @@ function review(): string {
 async function main(): Promise<void> {
   let stopped: string | null = null;
   try {
+    await fromWikidata();
     await fillPremadeIds();
     await fillGenrePools();
   } catch (e) {

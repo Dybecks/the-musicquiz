@@ -110,7 +110,8 @@ such songs are listed for review instead of being matched to a cover.
 
 - a Spotify track id for every ready-made song that has none pinned by hand
   (`src/data/spotify/track-ids.json`), so every song plays in the hidden player without
-  a login or a request;
+  a login or a request. Ids are taken from Wikidata first (checked with Spotify's public
+  oEmbed, which costs no API requests); only the rest are searched, at most twice each;
 - the genre lists for **By genre** (`src/data/spotify/genre-pools.json`): for each genre
   and decade, the best-known songs from Spotify's genre search. Songs on compilations,
   remasters, live albums, karaoke and the like are skipped, so each song is dated by its
@@ -124,7 +125,7 @@ It runs on GitHub: the **Look up Spotify data** workflow (Actions tab, or every 
 until everything is looked up). It needs two repository secrets, `SPOTIFY_CLIENT_ID` and
 `SPOTIFY_CLIENT_SECRET`, from the Spotify app's dashboard (Settings → Secrets and
 variables → Actions). Spotify's request quota is shared by every app on the developer
-account, so a run makes at most 300 requests, one every 1.5 seconds, and stops by itself
+account, so the genre lists take one search per genre and decade (`GENRE_PAGES` for more), and a run makes at most 300 requests, one every 1.5 seconds, and stops by itself
 if Spotify asks for a long pause; the next run carries on (`scripts/spotify-progress.json`).
 Results go to the `spotify-data` branch and a pull request from it.
 
