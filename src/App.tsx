@@ -95,7 +95,7 @@ export function App() {
       return next;
     });
   }, []);
-  const host = useHostRoom(game, setGame, lobby, renameTeam);
+  const host = useHostRoom(game, setGame, lobby, renameTeam, !remote);
 
   const refreshProfile = useCallback(async () => {
     if (!isLoggedIn()) {
@@ -144,7 +144,14 @@ export function App() {
     <div className="app">
       <header className="brand">
         <span className="brand-mark">♪</span> <span className="brand-name">{t.app.name}</span>
-        {!remote && host.room && <RoomCode code={host.room.code} small />}
+        {!remote &&
+          (host.room ? (
+            <RoomCode code={host.room.code} small />
+          ) : (
+            <button className="room-code small share-pill" onClick={host.share}>
+              {t.share.shareCode}
+            </button>
+          ))}
         <LanguagePicker />
       </header>
       {remote ? (

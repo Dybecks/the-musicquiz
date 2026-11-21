@@ -267,6 +267,8 @@ export const en = {
     shareText: (code: string) => `Join the game with code ${code}`,
     gameCode: 'Game code',
     gameCodeSpelled: (code: string) => `Game code ${code.split('').join(' ')}`,
+    /** Short label for the code in the top bar. */
+    codeShort: 'Code',
     hideCode: 'Tap to hide the code',
     showCode: 'Tap to show the code',
     codeHidden: 'Game code hidden',
