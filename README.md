@@ -90,19 +90,48 @@ shuffled together, and a song that appears in two decks is only used once.
 | Deck | Songs | Range |
 | --- | --- | --- |
 | Classic hits | 160 | Well-known songs from the 1950s to today |
-| Movie songs | 50 | The Wizard of Oz (1939) to Barbie (2023) |
-| Musicals | 50 | Oklahoma! (1943) to Beetlejuice (2019) |
-| TV themes | 50 | Peter Gunn (1958) to Severance (2022) |
-| Video game music | 50 | Super Mario Bros. (1985) to Baldur's Gate 3 (2023) |
+| Movie songs | 49 | The Wizard of Oz (1939) to Barbie (2023) |
+| Musicals | 45 | Oklahoma! (1943) to Beetlejuice (2019) |
+| TV themes | 33 | Peter Gunn (1958) to Arcane (2021) |
+| Video game music | 38 | Super Mario Bros. (1985) to Baldur's Gate 3 (2023) |
 
 The four soundtrack decks are in `src/data/soundtracks.ts`. They only hold songs written
 for the film, show, game or musical, so the year on the card is the year that work first
 came out: the film's release, the show's premiere, the game's first release, or the
 musical's first major production (or concept album, as for Evita). Cards say where the
-song is from. None of these songs has a pinned Spotify id yet, so they are found with the
-Spotify search at play time, which needs a Spotify login. Some video game music, Nintendo's
-in particular, isn't on Spotify; the search may then find a cover, or nothing, and
-**Skip song** draws another.
+song is from. Their Spotify ids are looked up ahead of time (see **Spotify data shipped
+with the game** below); a song without one is found with the Spotify search at play time,
+which needs a login. Some video game music, Nintendo's in particular, isn't on Spotify;
+songs Spotify doesn't have under their title and artist were taken out of the decks.
+
+## Spotify data shipped with the game
+
+`scripts/spotify-precompute.ts` looks things up on Spotify once, so games don't have to:
+
+- a Spotify track id for every ready-made song that has none pinned by hand
+  (`src/data/spotify/track-ids.json`), so every song plays in the hidden player without
+  a login or a request. Ids are taken from Wikidata first (checked with Spotify's public
+  oEmbed, which costs no API requests); only the rest are searched, at most twice each;
+- the genre lists for **By genre** (`src/data/spotify/genre-pools.json`): for each genre
+  and decade, up to 30 of the most famous songs (by number of Wikipedia articles) from
+  Wikidata, with their first publication year and Spotify id, each id checked with
+  oEmbed. Subgenres count ("hard rock" is rock); Schlager and Swedish pop keep Swedish
+  artists only. No Spotify API requests. A song that is also in a ready-made deck keeps
+  that deck's checked year. (`GENRE_SEARCH=1` also runs Spotify's genre search, which
+  costs requests and finds less known songs.)
+
+Every song in a ready-made deck must have a Spotify id (a test checks this). Songs the
+script can't match are listed in `src/data/spotify/REVIEW.md`, never guessed: find the
+id by hand (`track-ids.json`, key `title|artist`) or take the song out of its deck. The
+review also lists songs whose Spotify year differs from the deck's.
+
+It is a local script. Put your Spotify app's values in `.env.local` (never committed) as
+`SPOTIFY_CLIENT_ID=…` and `SPOTIFY_CLIENT_SECRET=…`, then run `npm run spotify-data` and
+commit `src/data/spotify` and `scripts/spotify-progress.json`. Spotify's request quota is
+shared by every app on the developer account, so a run makes at most 300 requests
+(`MAX_REQUESTS=…` changes that), one every 1.5 seconds, and stops by itself if Spotify asks
+for a long pause. Running it again carries on where it stopped, and once everything is
+looked up it makes no requests at all.
 
 ## Setting up a game
 
@@ -114,7 +143,8 @@ Setup asks one thing per screen, in three steps:
    in the browser, otherwise through the hidden Spotify player.
 2. **Music:** **Ready-made lists** or **Make your own**.
    - **Ready-made lists:** tick one or more of the decks above. No Spotify requests.
-   - **Make your own** (needs the login): **By genre** or **From my playlists**, or
+   - **Make your own:** **By genre** (works without login) or **From my playlists**
+     (needs the login), or
      **Use my last list** to play the list built last time again without any requests.
 3. **Players & play:** players or teams, cards needed to win, and **Start game**.
 
@@ -130,9 +160,12 @@ with the songs from last time and fetches new ones from where it left off.
 
 ### By genre
 
-Pick 1 to 4 genres and a year span. The list starts with the game's own classic hits for
-those genres and years that have a Spotify link (no requests at all; for pop, rock,
-dance, soul and Swedish), plus one Spotify batch. Each batch is one Spotify search such as
+Pick 1 to 4 genres and a year span. The list comes from the game's own genre lists
+(`src/data/spotify/genre-pools.json`): well-known songs per genre and decade, each with
+its original year and Spotify id, so building it makes **no Spotify requests** and works
+without a login. Only when those lists hold fewer than 40 songs for the pick (and you are
+logged in) does the game mix in its classic hits for the same wider genres and fetch
+batches from Spotify while you play. Each batch is one Spotify search such as
 `genre:"rock" year:1980-1989`: the decades take turns (the one searched least so far, wide
 spans with many genres search neighbouring decades together), with a random genre and a
 random depth in the first 250 results, so the songs are known ones. Whenever songs are

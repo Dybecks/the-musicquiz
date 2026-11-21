@@ -69,6 +69,8 @@ const SOURCE_KEY = 'mq.source';
 const GENRES_KEY = 'mq.ownGenres';
 const YEARS_KEY = 'mq.ownYears';
 const PLAYLISTS_KEY = 'mq.ownPlaylists';
+/** Who a list belongs to when it was built without a login. */
+const GUEST_ID = 'guest';
 
 const THIS_YEAR = new Date().getFullYear();
 const FIRST_YEAR = 1950;
@@ -187,7 +189,8 @@ export function Setup(props: Props) {
   const canAsk = loggedIn && !blockedUntil;
   const mode: PlaybackKind = canAsk && isPremium ? 'premium' : 'embed';
   const owner = hostContributor(personal);
-  const ownList = owner && profile && owner.userId === profile.id ? owner : undefined;
+  // Without a login, a list built by genre belongs to this browser.
+  const ownList = owner && owner.userId === (loggedIn ? profile!.id : GUEST_ID) ? owner : undefined;
   const ownSongs = ownList ? personalSongs(personal) : [];
   const names = players.map((p) => p.trim()).filter(Boolean);
 
@@ -229,8 +232,8 @@ export function Setup(props: Props) {
     }
     const deck = savePersonalDeck({
       role: 'host',
-      userId: profile!.id,
-      name: profile!.display_name || msg().app.you,
+      userId: loggedIn ? profile!.id : GUEST_ID,
+      name: (loggedIn && profile!.display_name) || msg().app.you,
       sources,
       builtAt: new Date().toISOString(),
       label,
@@ -251,13 +254,12 @@ export function Setup(props: Props) {
   };
 
   const buildGenres = () => {
-    if (!profile) return;
     const id = ++buildId.current;
     const [from, to] = years;
     const label = `${SEARCH_GENRES.filter((g) => genres.includes(g.id)).map((g) => g.label).join(', ')} · ${decadesLabel(from, to)}`;
     setBuildReturn('genres');
     go('building');
-    startList(newGenrePlan(genres, Math.min(from, to), Math.max(from, to)), setProgress).then(
+    startList(newGenrePlan(genres, Math.min(from, to), Math.max(from, to)), setProgress, undefined, canAsk).then(
       ({ songs: built, plan, note }) => finishBuild(id, built, label, 'genres', [], note, plan),
       (e) => failBuild(id, e, 'genres'),
     );
@@ -480,21 +482,13 @@ export function Setup(props: Props) {
             icon="🎛️"
             title={ts.ownTitle}
             detail={ts.ownDetail}
-            tag={ts.ownTag}
+            tag={loggedIn ? undefined : ts.ownTag}
             tagKind="warn"
             selected={source === 'own'}
-            disabled={!loggedIn}
             onSelect={() => setSource('own')}
           />
         </div>
-        {!loggedIn && (
-          <p className="hint">
-            <button className="link" onClick={() => go('account')}>
-              {ts.loginForOwn}
-            </button>
-          </p>
-        )}
-        <button className="primary big" onClick={() => go(source === 'own' && loggedIn ? 'own' : 'ready')}>
+        <button className="primary big" onClick={() => go(source === 'own' ? 'own' : 'ready')}>
           {ts.continue}
         </button>
       </main>
@@ -535,12 +529,22 @@ export function Setup(props: Props) {
         {stepBar}
         {back('source')}
         <h2 className="screen-title">{ts.howPick}</h2>
-        <p className="hint">
-          <Rich text={ts.loggedInAs(profile?.display_name ?? '')} />
-        </p>
+        {loggedIn && (
+          <p className="hint">
+            <Rich text={ts.loggedInAs(profile?.display_name ?? '')} />
+          </p>
+        )}
         <div className="choices">
           <Choice icon="🎸" title={ts.byGenre} detail={ts.byGenreDetail} onSelect={() => go('genres')} />
-          <Choice icon="📃" title={ts.fromPlaylists} detail={ts.fromPlaylistsDetail} onSelect={() => go('playlists')} />
+          <Choice
+            icon="📃"
+            title={ts.fromPlaylists}
+            detail={ts.fromPlaylistsDetail}
+            tag={loggedIn ? undefined : ts.playlistsTag}
+            tagKind="warn"
+            disabled={!loggedIn}
+            onSelect={() => go('playlists')}
+          />
           {ownList && ownSongs.length > 0 && (
             <Choice
               icon="↺"
@@ -624,7 +628,7 @@ export function Setup(props: Props) {
           <p className="info">
             <span aria-hidden="true">⚡</span>
             <span>
-              <Rich text={ts.genreFetchInfo} />
+              <Rich text={ts.genreFetchInfo} /> {loggedIn ? ts.genreFetchMore : ''}
             </span>
           </p>
         )}

@@ -1,4 +1,5 @@
 import type { Song } from '../game/engine';
+import { withTrackId } from './spotifyData';
 
 /**
  * Themed decks of songs from soundtracks. Each list holds songs written for
@@ -6,8 +7,9 @@ import type { Song } from '../game/engine';
  * first came out (the film's release, the show's premiere, the game's first
  * release, the musical's first major production or concept album).
  *
- * None of these have a pinned Spotify id yet, so they are found with the
- * Spotify search at play time, which needs a login.
+ * Spotify ids come from track-ids.json (scripts/spotify-precompute.ts). Songs
+ * without one are found with the Spotify search at play time, which needs a
+ * login.
  *
  * To add songs: append [title, artist, year, from] to a list.
  */
@@ -40,7 +42,6 @@ const MOVIES: Row[] = [
   ['Under the Sea', 'Samuel E. Wright', 1989, 'The Little Mermaid'],
   ['(Everything I Do) I Do It for You', 'Bryan Adams', 1991, 'Robin Hood: Prince of Thieves'],
   ['Beauty and the Beast', 'Céline Dion, Peabo Bryson', 1991, 'Beauty and the Beast'],
-  ['A Whole New World', 'Peabo Bryson, Regina Belle', 1992, 'Aladdin'],
   ['Can You Feel the Love Tonight', 'Elton John', 1994, 'The Lion King'],
   ["You've Got a Friend in Me", 'Randy Newman', 1995, 'Toy Story'],
   ['Men in Black', 'Will Smith', 1997, 'Men in Black'],
@@ -83,7 +84,6 @@ const MUSICALS: Row[] = [
   ['Hello, Dolly!', 'Carol Channing', 1964, 'Hello, Dolly!'],
   ["Don't Rain on My Parade", 'Barbra Streisand', 1964, 'Funny Girl'],
   ['If I Were a Rich Man', 'Zero Mostel', 1964, 'Fiddler on the Roof'],
-  ['The Impossible Dream', 'Richard Kiley', 1965, 'Man of La Mancha'],
   ['Big Spender', 'Helen Gallagher, Thelma Oliver', 1966, 'Sweet Charity'],
   ['Willkommen', 'Joel Grey', 1966, 'Cabaret'],
   ['Aquarius', 'Ronnie Dyson', 1968, 'Hair'],
@@ -104,13 +104,9 @@ const MUSICALS: Row[] = [
   ['Bring Him Home', 'Colm Wilkinson', 1985, 'Les Misérables'],
   ['The Music of the Night', 'Michael Crawford', 1986, 'The Phantom of the Opera'],
   ['Giants in the Sky', 'Ben Wright', 1987, 'Into the Woods'],
-  ['Sun and Moon', 'Lea Salonga, Simon Bowman', 1989, 'Miss Saigon'],
   ['Take Me or Leave Me', 'Idina Menzel, Fredi Walker', 1996, 'Rent'],
-  ['The Origin of Love', 'John Cameron Mitchell', 1998, 'Hedwig and the Angry Inch'],
-  ["You Can't Stop the Beat", 'Marissa Jaret Winokur', 2002, 'Hairspray'],
   ['Popular', 'Kristin Chenoweth', 2003, 'Wicked'],
   ['Defying Gravity', 'Idina Menzel, Kristin Chenoweth', 2003, 'Wicked'],
-  ['Mama Who Bore Me', 'Lea Michele', 2006, 'Spring Awakening'],
   ['Omigod You Guys', 'Laura Bell Bundy', 2007, 'Legally Blonde'],
   ['Hello!', 'Andrew Rannells', 2011, 'The Book of Mormon'],
   ['Alexander Hamilton', 'Leslie Odom Jr., Lin-Manuel Miranda', 2015, 'Hamilton'],
@@ -122,43 +118,28 @@ const MUSICALS: Row[] = [
 const TV: Row[] = [
   ['Peter Gunn', 'Henry Mancini', 1958, 'Peter Gunn'],
   ['Rawhide', 'Frankie Laine', 1959, 'Rawhide'],
-  ["The Fishin' Hole", 'Earle Hagen', 1960, 'The Andy Griffith Show'],
   ['The Ballad of Jed Clampett', 'Flatt & Scruggs', 1962, 'The Beverly Hillbillies'],
   ['Doctor Who Theme', 'Ron Grainer', 1963, 'Doctor Who'],
   ['The Addams Family Theme', 'Vic Mizzy', 1964, 'The Addams Family'],
-  ['Thunderbirds March', 'Barry Gray', 1965, 'Thunderbirds'],
   ['Batman Theme', 'Neal Hefti', 1966, 'Batman'],
   ['Mission: Impossible Theme', 'Lalo Schifrin', 1966, 'Mission: Impossible'],
   ['Theme from Star Trek', 'Alexander Courage', 1966, 'Star Trek'],
-  ["Won't You Be My Neighbor?", 'Fred Rogers', 1968, "Mister Rogers' Neighborhood"],
   ['Hawaii Five-O', 'Morton Stevens', 1968, 'Hawaii Five-O'],
   ['Sesame Street Theme', 'Sesame Street', 1969, 'Sesame Street'],
-  ["Movin' On Up", "Ja'Net DuBois", 1975, 'The Jeffersons'],
   ['The Muppet Show Theme', 'The Muppets', 1976, 'The Muppet Show'],
-  ['The Love Boat', 'Jack Jones', 1977, 'The Love Boat'],
-  ['Dallas', 'Jerrold Immel', 1978, 'Dallas'],
   ['Angela', 'Bob James', 1978, 'Taxi'],
-  ['Hill Street Blues Theme', 'Mike Post', 1981, 'Hill Street Blues'],
   ['Where Everybody Knows Your Name', 'Gary Portnoy', 1982, 'Cheers'],
   ['Knight Rider Theme', 'Stu Phillips', 1982, 'Knight Rider'],
   ['The A-Team', 'Mike Post, Pete Carpenter', 1983, 'The A-Team'],
   ['Miami Vice Theme', 'Jan Hammer', 1984, 'Miami Vice'],
-  ['DuckTales Theme', 'Jeff Pescetto', 1987, 'DuckTales'],
   ['The Simpsons Theme', 'Danny Elfman', 1989, 'The Simpsons'],
   ['Twin Peaks Theme', 'Angelo Badalamenti', 1990, 'Twin Peaks'],
   ['The Fresh Prince of Bel-Air', 'DJ Jazzy Jeff & The Fresh Prince', 1990, 'The Fresh Prince of Bel-Air'],
-  ['The X-Files', 'Mark Snow', 1993, 'The X-Files'],
   ["I'll Be There for You", 'The Rembrandts', 1994, 'Friends'],
-  ['Buffy the Vampire Slayer Theme', 'Nerf Herder', 1997, 'Buffy the Vampire Slayer'],
   ['South Park Theme', 'Primus', 1997, 'South Park'],
   ['Pokémon Theme', 'Jason Paige', 1998, 'Pokémon'],
-  ['Futurama Theme', 'Christopher Tyng', 1999, 'Futurama'],
-  ['SpongeBob SquarePants Theme Song', 'Painty the Pirate', 1999, 'SpongeBob SquarePants'],
   ['Boss of Me', 'They Might Be Giants', 2000, 'Malcolm in the Middle'],
-  ['The Office Theme', 'The Scrantones', 2005, 'The Office'],
   ['The Best of Both Worlds', 'Hannah Montana', 2006, 'Hannah Montana'],
-  ['Phineas and Ferb Theme Song', 'Bowling for Soup', 2007, 'Phineas and Ferb'],
-  ['Breaking Bad Main Title Theme', 'Dave Porter', 2008, 'Breaking Bad'],
   ['The Game Is On', 'David Arnold, Michael Price', 2010, 'Sherlock'],
   ['Main Title', 'Ramin Djawadi', 2011, 'Game of Thrones'],
   ['Stranger Things', 'Kyle Dixon, Michael Stein', 2016, 'Stranger Things'],
@@ -167,26 +148,17 @@ const TV: Row[] = [
   ['The Mandalorian', 'Ludwig Göransson', 2019, 'The Mandalorian'],
   ['All for Us', 'Labrinth, Zendaya', 2019, 'Euphoria'],
   ['Ted Lasso Theme', 'Marcus Mumford, Tom Howe', 2020, 'Ted Lasso'],
-  ['Way Back Then', 'Jung Jae Il', 2021, 'Squid Game'],
   ['Enemy', 'Imagine Dragons, JID', 2021, 'Arcane'],
-  ['Severance Main Title', 'Theodore Shapiro', 2022, 'Severance'],
 ];
 
 const GAMES: Row[] = [
   ['Super Mario Bros. Theme', 'Koji Kondo', 1985, 'Super Mario Bros.'],
-  ['The Legend of Zelda Theme', 'Koji Kondo', 1986, 'The Legend of Zelda'],
   ['Vampire Killer', 'Konami Kukeiha Club', 1986, 'Castlevania'],
-  ['Magical Sound Shower', 'Hiroshi Kawaguchi', 1986, 'OutRun'],
   ['Prelude', 'Nobuo Uematsu', 1987, 'Final Fantasy'],
-  ['Dr. Wily Stage 1', 'Takashi Tateishi', 1988, 'Mega Man 2'],
-  ['Tetris (Type A)', 'Hirokazu Tanaka', 1989, 'Tetris (Game Boy)'],
-  ['Green Hill Zone', 'Masato Nakamura', 1991, 'Sonic the Hedgehog'],
   ["Guile's Theme", 'Yoko Shimomura', 1991, 'Street Fighter II'],
   ["At Doom's Gate", 'Bobby Prince', 1993, 'Doom'],
   ['Corridors of Time', 'Yasunori Mitsuda', 1995, 'Chrono Trigger'],
-  ['Super Mario 64 Main Theme', 'Koji Kondo', 1996, 'Super Mario 64'],
   ['One-Winged Angel', 'Nobuo Uematsu', 1997, 'Final Fantasy VII'],
-  ['Moon Over the Castle', 'Masahiro Andoh', 1997, 'Gran Turismo'],
   ['Song of Storms', 'Koji Kondo', 1998, 'The Legend of Zelda: Ocarina of Time'],
   ['Spiral Mountain', 'Grant Kirkhope', 1998, 'Banjo-Kazooie'],
   ['Halo', "Martin O'Donnell, Michael Salvatori", 2001, 'Halo: Combat Evolved'],
@@ -195,17 +167,12 @@ const GAMES: Row[] = [
   ['Theme of Laura', 'Akira Yamaoka', 2001, 'Silent Hill 2'],
   ['Simple and Clean', 'Hikaru Utada', 2002, 'Kingdom Hearts'],
   ['Snake Eater', 'Cynthia Harrell', 2004, 'Metal Gear Solid 3'],
-  ['Grand Theft Auto: San Andreas Theme', 'Michael Hunter', 2004, 'Grand Theft Auto: San Andreas'],
-  ['Legends of Azeroth', 'Jason Hayes', 2004, 'World of Warcraft'],
   ['Baba Yetu', 'Christopher Tin', 2005, 'Civilization IV'],
-  ['The Opened Way', 'Kow Otani', 2005, 'Shadow of the Colossus'],
   ['Still Alive', 'Jonathan Coulton', 2007, 'Portal'],
-  ['Vigil', 'Sam Hulick', 2007, 'Mass Effect'],
   ["Nate's Theme", 'Greg Edmonson', 2007, 'Uncharted'],
   ["Ezio's Family", 'Jesper Kyd', 2009, "Assassin's Creed II"],
   ['Sweden', 'C418', 2011, 'Minecraft'],
   ['Dragonborn', 'Jeremy Soule', 2011, 'The Elder Scrolls V: Skyrim'],
-  ['Build That Wall', 'Darren Korb', 2011, 'Bastion'],
   ['Apotheosis', 'Austin Wintory', 2012, 'Journey'],
   ['The Last of Us', 'Gustavo Santaolalla', 2013, 'The Last of Us'],
   ['Megalovania', 'Toby Fox', 2015, 'Undertale'],
@@ -226,7 +193,7 @@ const GAMES: Row[] = [
 ];
 
 const toSongs = (prefix: string, rows: Row[]): Song[] =>
-  rows.map(([title, artist, year, from], i) => ({ id: `${prefix}${i + 1}`, title, artist, year, from }));
+  rows.map(([title, artist, year, from], i) => withTrackId({ id: `${prefix}${i + 1}`, title, artist, year, from }));
 
 export const MOVIE_SONGS = toSongs('mv', MOVIES);
 export const MUSICAL_SONGS = toSongs('mu', MUSICALS);
