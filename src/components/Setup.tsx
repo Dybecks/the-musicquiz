@@ -8,7 +8,7 @@ import {
   MAX_GENRES,
   PLAYLIST_SCOPES,
   SEARCH_GENRES,
-  newGenrePlan,
+  genreSongs,
   newPlaylistPlan,
   startList,
   type RefillPlan,
@@ -258,11 +258,8 @@ export function Setup(props: Props) {
     const [from, to] = years;
     const label = `${SEARCH_GENRES.filter((g) => genres.includes(g.id)).map((g) => g.label).join(', ')} · ${decadesLabel(from, to)}`;
     setBuildReturn('genres');
-    go('building');
-    startList(newGenrePlan(genres, Math.min(from, to), Math.max(from, to)), setProgress, undefined, canAsk).then(
-      ({ songs: built, plan, note }) => finishBuild(id, built, label, 'genres', [], note, plan),
-      (e) => failBuild(id, e, 'genres'),
-    );
+    // From the game's own catalogue: no Spotify requests.
+    finishBuild(id, genreSongs(genres, from, to), label, 'genres', [], null, null);
   };
 
   const chosenPlaylists = (playlists ?? []).filter((p) => picked.includes(p.id));
@@ -628,7 +625,7 @@ export function Setup(props: Props) {
           <p className="info">
             <span aria-hidden="true">⚡</span>
             <span>
-              <Rich text={ts.genreFetchInfo} /> {loggedIn ? ts.genreFetchMore : ''}
+              <Rich text={ts.genreFetchInfo} />
             </span>
           </p>
         )}

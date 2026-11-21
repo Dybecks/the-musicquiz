@@ -165,7 +165,7 @@ Setup asks one thing per screen, in three steps:
 
 ### Fetched a few songs at a time
 
-Your own lists aren't loaded up front. **Build my list** / **Use N playlists** fetch one
+Playlist lists aren't loaded up front. **Use N playlists** fetches one
 batch (one request, a dozen or more songs) and the game starts; whenever only a few songs
 are left in the deck, the next batch is fetched in the background. A short game therefore
 costs two or three requests. Each batch is a random pick, so the songs stay random within
@@ -175,18 +175,10 @@ with the songs from last time and fetches new ones from where it left off.
 
 ### By genre
 
-Pick 1 to 4 genres and a year span. The list comes from the song catalogue: every
-song tagged with one of the genres, from those years, each with its Spotify id, so
-building it makes **no Spotify requests** and works without a login. Only when the
-catalogue has fewer than 40 songs for the pick (and you are logged in) does the game fetch
-batches from Spotify while you play. Each batch is one Spotify search such as
-`genre:"rock" year:1980-1989`: the decades take turns (the one searched least so far, wide
-spans with many genres search neighbouring decades together), with a random genre and a
-random depth in the first 250 results, so the songs are known ones. Whenever songs are
-added, the deck is dealt again spread over the decades, so a batch from one decade
-doesn't come up all in a row. Songs on compilations, "Remastered"
-albums and the like are skipped, so every song is dated by its own album and no further
-lookups are needed. Searches are remembered for a week.
+Pick 1 to 4 genres and a year span. The list is every song in the song catalogue tagged
+with one of the genres, from those years, each with its Spotify id. Building and playing
+it makes **no Spotify requests** at all and works without a login. If a pick has fewer than
+5 songs, the game asks for more genres or a wider year span.
 
 ### From my playlists
 
@@ -205,8 +197,7 @@ Spotify also gives Development Mode apps a request quota, shared by all apps of 
 developer account and not shown in the dashboard. When it is used up, Spotify answers
 `429` with `"reason": "QUOTA_EXCEEDED"` and a `Retry-After` that can be hours. The game
 then stops asking until that time (remembered across reloads) and carries on without
-Spotify: **By genre** fills the list (or the rest of the game) with the game's own classic hits for the same genres
-and years, the music plays through the hidden player, and the setup screen says until
+Spotify: the music plays through the hidden player, and the setup screen says until
 when. Nothing needs to be tapped.
 
 The list is built in the browser and kept in its `localStorage` only; nothing is uploaded.

@@ -92,7 +92,6 @@ export const sv: Messages = {
     allYears: 'Alla år',
     genreFetchInfo:
       'Låtarna kommer från spelets egna listor för de här genrerna och åren, så **inga anrop till Spotify** behövs.',
-    genreFetchMore: 'Om valet har få låtar hämtas några till från Spotify medan ni spelar.',
     buildList: 'Skapa min lista',
 
     yourPlaylists: 'Dina spellistor',
@@ -238,7 +237,6 @@ export const sv: Messages = {
     wins: (names) => `🏆 ${names.join(' & ')} vinner!`,
     cards: (n) => `(${n} kort)`,
     playAgain: 'Spela igen',
-    refillFallback: (why) => `${why} Tills dess använder spelet sina egna låtar för de här genrerna och åren.`,
     refillFailed: (why) => `Det gick inte att hämta fler låtar: ${why}`,
     phonesWantNext: (yes, needed) => `Mobiler: ${yes} av ${needed} som behövs vill ha nästa låt`,
     anyoneMovesOn: 'Vilken spelare som helst kan gå vidare från sin mobil.',
@@ -381,8 +379,6 @@ export const sv: Messages = {
     loginCancelled: (error) => `Spotify-inloggningen avbröts (${error}).`,
     loginIncomplete: 'Spotify-inloggningen kunde inte slutföras. Försök igen.',
     loginFailed: (status) => `Spotify-inloggningen misslyckades (${status}).`,
-    findingSongs: 'Letar låtar på Spotify',
-    pickingSongs: 'Väljer låtar',
     readingPlaylists: 'Läser dina spellistor',
     untitledPlaylist: 'Namnlös spellista',
     mysterySong: 'Hemlig låt',
