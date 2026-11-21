@@ -94,7 +94,6 @@ export const en = {
     allYears: 'All years',
     genreFetchInfo:
       "Songs come from the game's own lists for these genres and years, so **no Spotify requests** are needed.",
-    genreFetchMore: 'If a pick has few songs, a few more are fetched from Spotify while you play.',
     buildList: 'Build my list',
 
     yourPlaylists: 'Your playlists',
@@ -245,7 +244,6 @@ export const en = {
     wins: (names: string[]) => `🏆 ${names.join(' & ')} ${names.length > 1 ? 'win' : 'wins'}!`,
     cards: (n: number) => `(${n} cards)`,
     playAgain: 'Play again',
-    refillFallback: (why: string) => `${why} Until then the game uses its own songs for these genres and years.`,
     refillFailed: (why: string) => `No more songs could be fetched: ${why}`,
     phonesWantNext: (yes: number, needed: number) => `Phones: ${yes} of ${needed} needed want the next song`,
     anyoneMovesOn: 'Any player can move on from their phone.',
@@ -389,8 +387,6 @@ export const en = {
     loginCancelled: (error: string) => `Spotify login was cancelled (${error}).`,
     loginIncomplete: 'Spotify login could not be completed. Please try again.',
     loginFailed: (status: number) => `Spotify login failed (${status}).`,
-    findingSongs: 'Finding songs on Spotify',
-    pickingSongs: 'Picking songs',
     readingPlaylists: 'Reading your playlists',
     untitledPlaylist: 'Untitled playlist',
     mysterySong: 'Mystery song',

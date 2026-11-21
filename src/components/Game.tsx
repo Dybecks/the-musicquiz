@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { addSongs, currentPlayer, nextTurn, placeCurrent, skipSong, type GameState } from '../game/engine';
-import { builtInForGenres, fetchBatch, type RefillPlan } from '../spotify/listening';
-import { RateLimitError, findTrackUri } from '../spotify/api';
+import { fetchBatch, type RefillPlan } from '../spotify/listening';
+import { findTrackUri } from '../spotify/api';
 import {
   createEmbedPlayback,
   createPremiumPlayback,
@@ -37,9 +37,8 @@ const REFILL_AT = 4;
 
 /**
  * Keeps the deck topped up for lists that are fetched a few songs at a
- * time: when it runs low, one more batch (one request) is fetched in the
- * background. If Spotify's request limit is used up, a genre list carries on
- * with the game's own songs for its genres and years.
+ * time (playlists): when it runs low, one more batch (one request) is
+ * fetched in the background.
  */
 function useRefill(state: GameState, onChange: (s: GameState) => void): string | null {
   const latest = useRef(state);
@@ -55,13 +54,8 @@ function useRefill(state: GameState, onChange: (s: GameState) => void): string |
     fetchBatch(plan)
       .then(({ songs, plan: next }) => onChange(addSongs(latest.current, songs, next ?? undefined)))
       .catch((e) => {
-        if (e instanceof RateLimitError && plan.kind === 'genres') {
-          setNote(msg().game.refillFallback(e.message));
-          onChange(addSongs(latest.current, builtInForGenres(plan.genres, plan.from, plan.to), undefined));
-        } else {
-          setNote(msg().game.refillFailed(message(e)));
-          onChange({ ...latest.current, refill: undefined });
-        }
+        setNote(msg().game.refillFailed(message(e)));
+        onChange({ ...latest.current, refill: undefined });
       })
       .finally(() => {
         busy.current = false;
