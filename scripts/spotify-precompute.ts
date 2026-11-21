@@ -76,6 +76,10 @@ interface Progress {
   tried: Record<string, string>;
   /** Genre searches made: "genre|decade" → offsets fetched and the total Spotify reported. */
   searched: Record<string, { offsets: number[]; total: number | null }>;
+  /** Ready-made songs searched again with the closest-year rule (key → when). */
+  rechecked?: Record<string, string>;
+  /** Spotify ids checked with oEmbed: the title Spotify gives, or "" when the id doesn't work. */
+  oembed?: Record<string, string>;
   /** Ready-made songs already looked up on Wikidata (key → when). */
   wikidata?: Record<string, string>;
   /** Ready-made songs that matched nothing, with why. */
@@ -98,6 +102,8 @@ const progress = readJson<Progress>(PROGRESS_FILE, { tried: {}, searched: {} });
 progress.unmatched ??= {};
 progress.yearNotes ??= {};
 progress.wikidata ??= {};
+progress.rechecked ??= {};
+progress.oembed ??= {};
 
 const sortKeys = <T,>(o: Record<string, T>) => Object.fromEntries(Object.entries(o).sort(([a], [b]) => a.localeCompare(b)));
 
@@ -241,10 +247,18 @@ export function bestMatch(song: Song, items: SpotifyTrack[]): { track: SpotifyTr
   if (ok.length === 0) return null;
   const years = ok.map((t) => releaseYear(t.album.release_date)).filter((y): y is number => y !== null);
   const earliest = years.length ? Math.min(...years) : null;
+  // The original album or single first; then the release closest to the
+  // song's known year. A release dated before the song is broken metadata
+  // (Spotify has "1932" compilations of 1970s musicals), so it counts as far.
   const rank = (t: SpotifyTrack) => (needsYearCheck(t) ? 1 : 0);
+  const distance = (t: SpotifyTrack) => {
+    const y = releaseYear(t.album.release_date);
+    if (y === null) return 500;
+    return y < song.year - 1 ? 200 + (song.year - y) : Math.abs(y - song.year);
+  };
   const sorted = ok
     .map((t, i) => ({ t, i }))
-    .sort((a, b) => rank(a.t) - rank(b.t) || (releaseYear(a.t.album.release_date) ?? 9999) - (releaseYear(b.t.album.release_date) ?? 9999) || a.i - b.i);
+    .sort((a, b) => rank(a.t) - rank(b.t) || distance(a.t) - distance(b.t) || a.i - b.i);
   return { track: sorted[0].t, earliest };
 }
 
@@ -303,7 +317,7 @@ async function fromWikidata(): Promise<void> {
         ),
       ];
       for (const id of candidates) {
-        await sleep(300);
+        if (!process.env.NO_SLEEP) await sleep(300);
         try {
           const res = await fetch(`https://open.spotify.com/oembed?url=${encodeURIComponent(`https://open.spotify.com/track/${id}`)}`, { headers: agent });
           if (!res.ok) continue;
@@ -374,6 +388,177 @@ function addToPool(genre: string, rows: PoolRow[]): void {
       // The same song found in an earlier decade: that is its original year.
       pool[at] = row;
     }
+  }
+}
+
+/**
+ * The first run picked the earliest release, which for some songs was a
+ * compilation with a broken date. Songs whose Spotify year looked odd are
+ * searched once more and get the release closest to their known year.
+ */
+async function recheckOddYears(): Promise<void> {
+  const all = new Map(DECKS.flatMap(([deck, songs]) => songs.map((s) => [premadeKey(s), { s, deck }] as const)));
+  for (const key of Object.keys(progress.yearNotes ?? {})) {
+    const entry = all.get(key);
+    if (!entry || progress.rechecked![key] || !ids[key]) continue;
+    const { s: song, deck } = entry;
+    const firstArtist = song.artist.split(/\s*(?:,|&|feat\.|ft\.)\s*/i)[0];
+    const found = bestMatch(song, (await search(`track:"${quoteless(song.title)}" artist:"${quoteless(firstArtist)}"`)).items);
+    progress.rechecked![key] = new Date().toISOString().slice(0, 10);
+    if (found) {
+      const year = releaseYear(found.track.album.release_date);
+      if (found.track.id !== ids[key]) console.log(`↻ ${song.title} – ${song.artist}: ${ids[key]} → ${found.track.id} (${found.track.album.name}, ${year})`);
+      ids[key] = found.track.id;
+      if (year !== null && Math.abs(year - song.year) > 1) {
+        progress.yearNotes![key] = `${deck}: the deck says ${song.year}; the recording used is from ${year} (${found.track.album.name}).`;
+      } else delete progress.yearNotes![key];
+    }
+    save();
+  }
+}
+
+// ---- 2. Genre lists from Wikidata (no Spotify API requests) ----
+
+const WIKIDATA_AGENT = { 'User-Agent': 'the-musicquiz-precompute/1.0 (https://github.com/Dybecks/the-musicquiz)' };
+
+/**
+ * Wikidata genres (English labels) for each "By genre" choice. Subgenres
+ * count too ("hard rock" is rock). `sweden` keeps songs from Swedish
+ * artists only.
+ */
+const WIKIDATA_GENRES: Record<string, { labels: string[]; sweden?: boolean }> = {
+  pop: { labels: ['pop music'] },
+  rock: { labels: ['rock music'] },
+  hiphop: { labels: ['hip hop music'] },
+  rnb: { labels: ['rhythm and blues', 'contemporary R&B'] },
+  soul: { labels: ['soul music'] },
+  disco: { labels: ['disco', 'funk'] },
+  dance: { labels: ['dance music', 'electronic dance music', 'dance-pop', 'house music'] },
+  country: { labels: ['country music'] },
+  metal: { labels: ['heavy metal'] },
+  indie: { labels: ['indie rock', 'indie pop'] },
+  schlager: { labels: ['schlager', 'schlager music', 'dansband music'], sweden: true },
+  swedishpop: { labels: ['pop music'], sweden: true },
+  jazz: { labels: ['jazz'] },
+  reggae: { labels: ['reggae'] },
+  latin: { labels: ['Latin music', 'Latin pop', 'reggaeton', 'salsa music'] },
+  punk: { labels: ['punk rock'] },
+};
+
+interface WikiSong {
+  title: string;
+  artist: string;
+  year: number;
+  ids: string[];
+  links: number;
+}
+
+async function sparql<T>(query: string): Promise<T[]> {
+  for (let attempt = 0; ; attempt++) {
+    const res = await fetch(`https://query.wikidata.org/sparql?${new URLSearchParams({ query, format: 'json' })}`, {
+      headers: { ...WIKIDATA_AGENT, Accept: 'application/sparql-results+json' },
+    });
+    if (res.ok) return ((await res.json()) as { results: { bindings: T[] } }).results.bindings;
+    if (attempt < 2 && (res.status === 429 || res.status >= 500)) {
+      await sleep(10_000);
+      continue;
+    }
+    throw new Error(`Wikidata answered ${res.status}: ${(await res.text()).slice(0, 200)}`);
+  }
+}
+
+/** Songs of one genre with a Spotify id, the most famous first (by number of Wikipedia articles). */
+async function wikidataGenre(genre: string, subgenres = true): Promise<WikiSong[]> {
+  const { labels, sweden } = WIKIDATA_GENRES[genre];
+  const query = `SELECT ?item ?title ?sp ?date ?performerLabel ?links WHERE {
+    VALUES ?gl { ${labels.map((l) => JSON.stringify(l) + '@en').join(' ')} }
+    ?g rdfs:label ?gl .
+    ${subgenres ? '?sub wdt:P279* ?g .' : 'BIND(?g AS ?sub)'}
+    ?item wdt:P136 ?sub ; wdt:P2207 ?sp ; wdt:P577 ?date ; wikibase:sitelinks ?links .
+    FILTER(?links >= 2)
+    ?item rdfs:label ?title . FILTER(LANG(?title) = "en")
+    ${sweden ? '{ ?item wdt:P495 wd:Q34 } UNION { ?item wdt:P175 ?p . { ?p wdt:P27 wd:Q34 } UNION { ?p wdt:P495 wd:Q34 } }' : ''}
+    OPTIONAL { ?item wdt:P175 ?performer . ?performer rdfs:label ?performerLabel . FILTER(LANG(?performerLabel) = "en") }
+  } ORDER BY DESC(?links) LIMIT 4000`;
+  type Row = { item: { value: string }; title: { value: string }; sp: { value: string }; date: { value: string }; performerLabel?: { value: string }; links: { value: string } };
+  const rows = await sparql<Row>(query);
+  const byItem = new Map<string, WikiSong & { artists: string[] }>();
+  for (const r of rows) {
+    const year = Number.parseInt(r.date.value.slice(0, 4), 10);
+    if (!Number.isFinite(year) || year < 1900 || year > new Date().getFullYear()) continue;
+    let song = byItem.get(r.item.value);
+    if (!song) {
+      song = { title: r.title.value, artist: '', artists: [], year, ids: [], links: Number(r.links.value) };
+      byItem.set(r.item.value, song);
+    }
+    song.year = Math.min(song.year, year);
+    if (/^[0-9A-Za-z]{22}$/.test(r.sp.value) && !song.ids.includes(r.sp.value)) song.ids.push(r.sp.value);
+    const name = r.performerLabel?.value;
+    if (name && !song.artists.includes(name)) song.artists.push(name);
+  }
+  return [...byItem.values()]
+    .filter((s) => s.artists.length > 0 && s.ids.length > 0)
+    .map(({ artists, ...s }) => ({ ...s, artist: artists.slice(0, 2).join(', ') }))
+    .sort((a, b) => b.links - a.links);
+}
+
+/** Whether a Spotify id works and has this title, by Spotify's public oEmbed (no API quota). */
+async function oembedOk(id: string, title: string): Promise<boolean> {
+  let got = progress.oembed![id];
+  if (got === undefined) {
+    if (!process.env.NO_SLEEP) await sleep(250);
+    try {
+      const res = await fetch(`https://open.spotify.com/oembed?url=${encodeURIComponent(`https://open.spotify.com/track/${id}`)}`, { headers: WIKIDATA_AGENT });
+      got = res.ok ? (((await res.json()) as { title?: string }).title ?? '') : res.status === 404 ? '' : '?';
+    } catch {
+      got = '?';
+    }
+    if (got !== '?') progress.oembed![id] = got;
+  }
+  if (!got || got === '?') return false;
+  const a = normalizeKey(cleanTitle(got));
+  const b = normalizeKey(cleanTitle(title));
+  return a === b || a.startsWith(b) || b.startsWith(a);
+}
+
+/**
+ * Builds each genre's list from Wikidata: per decade, the most famous songs
+ * whose Spotify id still works. Years are Wikidata's first publication date;
+ * a song that is also in a ready-made deck keeps the deck's year and id.
+ */
+async function fillGenrePoolsFromWikidata(): Promise<void> {
+  for (const genre of SEARCH_GENRES) {
+    if (progress.searched[`wikidata|${genre.id}`]) continue;
+    let songs: WikiSong[];
+    try {
+      songs = await wikidataGenre(genre.id).catch((e) => {
+        // A query over all subgenres can time out: then the genre itself only.
+        console.log(`${genre.id}: with subgenres failed (${(e as Error).message}); trying the genre alone.`);
+        return wikidataGenre(genre.id, false);
+      });
+    } catch (e) {
+      console.log(`${genre.id}: Wikidata failed (${(e as Error).message}); trying again next run.`);
+      continue;
+    }
+    const rows: PoolRow[] = [];
+    for (const decade of DECADES) {
+      const inDecade = songs.filter((s) => s.year >= decade && s.year <= decade + 9);
+      let kept = 0;
+      for (const s of inDecade) {
+        if (kept >= PER_DECADE) break;
+        if (NOT_ORIGINAL.test(s.title)) continue;
+        let id: string | undefined;
+        for (const candidate of s.ids) if (await oembedOk(candidate, s.title)) { id = candidate; break; }
+        if (!id) continue;
+        rows.push([s.title, s.artist, s.year, id]);
+        kept++;
+      }
+    }
+    pools[genre.id] = [];
+    addToPool(genre.id, rows);
+    progress.searched[`wikidata|${genre.id}`] = { offsets: [], total: songs.length };
+    console.log(`${genre.id}: ${pools[genre.id].length} songs from Wikidata (${songs.length} candidates)`);
+    save();
   }
 }
 
@@ -458,8 +643,11 @@ async function main(): Promise<void> {
   let stopped: string | null = null;
   try {
     await fromWikidata();
+    await fillGenrePoolsFromWikidata();
     await fillPremadeIds();
-    await fillGenrePools();
+    await recheckOddYears();
+    // Spotify's genre search costs requests and gives less known songs: only on request.
+    if (process.env.GENRE_SEARCH === '1') await fillGenrePools();
   } catch (e) {
     if (!(e instanceof StopRun)) {
       save();

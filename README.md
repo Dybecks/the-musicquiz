@@ -113,10 +113,12 @@ such songs are listed for review instead of being matched to a cover.
   a login or a request. Ids are taken from Wikidata first (checked with Spotify's public
   oEmbed, which costs no API requests); only the rest are searched, at most twice each;
 - the genre lists for **By genre** (`src/data/spotify/genre-pools.json`): for each genre
-  and decade, the best-known songs from Spotify's genre search. Songs on compilations,
-  remasters, live albums, karaoke and the like are skipped, so each song is dated by its
-  own album; a song found in several decades keeps the earliest, and a song that is also
-  in a ready-made deck keeps that deck's checked year.
+  and decade, up to 30 of the most famous songs (by number of Wikipedia articles) from
+  Wikidata, with their first publication year and Spotify id, each id checked with
+  oEmbed. Subgenres count ("hard rock" is rock); Schlager and Swedish pop keep Swedish
+  artists only. No Spotify API requests. A song that is also in a ready-made deck keeps
+  that deck's checked year. (`GENRE_SEARCH=1` also runs Spotify's genre search, which
+  costs requests and finds less known songs.)
 
 Songs it can't match are listed in `src/data/spotify/REVIEW.md`, never guessed, along with
 ready-made songs whose Spotify year differs from the deck's.
