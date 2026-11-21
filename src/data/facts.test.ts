@@ -1,13 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { FACT_ROWS, writtenFact } from './facts';
 import { FACTS_SV } from './facts.sv';
-import { DEFAULT_SONGS } from './songs';
-import { GAME_SONGS, MOVIE_SONGS, MUSICAL_SONGS, TV_SONGS } from './soundtracks';
-
-const ALL = [...DEFAULT_SONGS, ...MOVIE_SONGS, ...MUSICAL_SONGS, ...TV_SONGS, ...GAME_SONGS];
+import { CATALOG_ROWS as ALL } from './catalog';
 
 describe('written facts', () => {
-  it('every fact belongs to a song in a built-in deck', () => {
+  it('every fact belongs to a song in the catalogue', () => {
     const songs = new Set(ALL.map((s) => `${s.title} / ${s.artist}`));
     const orphans = FACT_ROWS.map(([title, artist]) => `${title} / ${artist}`).filter((k) => !songs.has(k));
     expect(orphans).toEqual([]);

@@ -1,8 +1,7 @@
 import type { Song } from '../game/engine';
 import type { PlaybackKind } from '../spotify/playback';
 import { mergeSongs, personalSongs, type PersonalDeck } from '../spotify/personalDeck';
-import { DEFAULT_SONGS } from './songs';
-import { GAME_SONGS, MOVIE_SONGS, MUSICAL_SONGS, TV_SONGS } from './soundtracks';
+import { deckFromCatalog, type BuiltInDeckId } from './catalog';
 import { filterSongs, NO_FILTER, type DeckFilter } from './genres';
 import { msg } from '../i18n';
 
@@ -26,12 +25,13 @@ export const DECKS: DeckInfo[] = (['classic', 'movies', 'musicals', 'tv', 'games
   },
 }));
 
-const BUILT_IN: Record<Exclude<DeckId, 'mine'>, Song[]> = {
-  classic: DEFAULT_SONGS,
-  movies: MOVIE_SONGS,
-  musicals: MUSICAL_SONGS,
-  tv: TV_SONGS,
-  games: GAME_SONGS,
+/** The ready-made decks: lists of songs from the catalogue (src/data/catalog). */
+export const BUILT_IN: Record<BuiltInDeckId, Song[]> = {
+  classic: deckFromCatalog('classic'),
+  movies: deckFromCatalog('movies'),
+  musicals: deckFromCatalog('musicals'),
+  tv: deckFromCatalog('tv'),
+  games: deckFromCatalog('games'),
 };
 
 const ALL_IDS = DECKS.map((d) => d.id);

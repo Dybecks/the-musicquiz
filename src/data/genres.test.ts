@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import type { Song } from '../game/engine';
 import { filterSongs, genresFromSpotify, personalPresets, STANDARD_PRESETS } from './genres';
-import { DEFAULT_SONGS } from './songs';
+import { BUILT_IN } from './decks';
+
+const DEFAULT_SONGS = BUILT_IN.classic;
 
 const song = (year: number, genres?: Song['genres']): Song => ({ id: `s${year}${genres?.join()}`, title: 't', artist: 'a', year, genres });
 

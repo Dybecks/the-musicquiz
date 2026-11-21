@@ -83,9 +83,9 @@ describe('game flow', () => {
 
 describe('default deck', () => {
   it('has enough songs with Spotify ids to play without logging in', async () => {
-    const { DEFAULT_SONGS, NO_LOGIN_SONGS } = await import('../data/songs');
-    expect(NO_LOGIN_SONGS.length).toBeGreaterThanOrEqual(50);
-    expect(NO_LOGIN_SONGS.every((s) => /^[0-9A-Za-z]{22}$/.test(s.spotifyId ?? ''))).toBe(true);
+    const DEFAULT_SONGS = (await import('../data/decks')).BUILT_IN.classic;
+    expect(DEFAULT_SONGS.length).toBeGreaterThanOrEqual(50);
+    expect(DEFAULT_SONGS.every((s) => /^[0-9A-Za-z]{22}$/.test(s.spotifyId ?? ''))).toBe(true);
     expect(new Set(DEFAULT_SONGS.map((s) => s.id)).size).toBe(DEFAULT_SONGS.length);
   });
 });
