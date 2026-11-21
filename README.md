@@ -112,13 +112,12 @@ songs Spotify doesn't have under their title and artist were taken out of the de
   (`src/data/spotify/track-ids.json`), so every song plays in the hidden player without
   a login or a request. Ids are taken from Wikidata first (checked with Spotify's public
   oEmbed, which costs no API requests); only the rest are searched, at most twice each;
-- the genre lists for **By genre** (`src/data/spotify/genre-pools.json`): for each genre
-  and decade, up to 30 of the most famous songs (by number of Wikipedia articles) from
-  Wikidata, with their first publication year and Spotify id, each id checked with
-  oEmbed. Subgenres count ("hard rock" is rock); Schlager and Swedish pop keep Swedish
-  artists only. No Spotify API requests. A song that is also in a ready-made deck keeps
-  that deck's checked year. (`GENRE_SEARCH=1` also runs Spotify's genre search, which
-  costs requests and finds less known songs.)
+- the genre lists for **By genre** (`src/data/spotify/genre-pools.json`), built from the
+  hand-picked songs in `scripts/genre-songs.ts`: about 30 well-known songs per genre,
+  spread over the decades, each with the year it first came out. Songs also in a
+  ready-made deck reuse the deck's id and year; the rest are looked up like the decks
+  (Wikidata first, then at most two searches each). Songs not found are left out of the
+  lists.
 
 Every song in a ready-made deck must have a Spotify id (a test checks this). Songs the
 script can't match are listed in `src/data/spotify/REVIEW.md`, never guessed: find the
