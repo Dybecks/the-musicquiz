@@ -16,6 +16,7 @@ import { HOST_ID, activeVoters, nextRuleOf, nextVotes, turnOf, votesBySlot } fro
 import { SharePanel } from './SharePanel';
 import { msg, useLang, useT } from '../i18n';
 import { SongNotFoundError } from '../spotify/playback';
+import { PlayerBar, type Clock } from './PlayerBar';
 
 interface Props {
   state: GameState;
@@ -83,7 +84,9 @@ export function Game({ state, mode, onModeChange, onChange, onQuit, host }: Prop
   const [songMissing, setSongMissing] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
+  /** The Spotify embed is opened above the bar (it shows the title). */
   const [showPlayer, setShowPlayer] = useState(false);
+  const [progress, setProgress] = useState<Clock>(() => ({ positionMs: 0, durationMs: 0, at: performance.now() }));
   /** Play was tapped and the player hasn't answered yet. */
   const [starting, setStarting] = useState(false);
   /** Bumped by "Try again" to load the song again. */
@@ -106,6 +109,7 @@ export function Game({ state, mode, onModeChange, onChange, onQuit, host }: Prop
         if (cancelled) return p.destroy();
         created = p;
         p.onStateChange(setPlaying);
+        p.onProgress((pr) => setProgress({ ...pr, at: performance.now() }));
         setPlayback(p);
       })
       .catch((e) => !cancelled && setPlaybackError(message(e)));
@@ -127,6 +131,7 @@ export function Game({ state, mode, onModeChange, onChange, onQuit, host }: Prop
     setSongMissing(false);
     setPlaying(false);
     setShowPlayer(false);
+    setProgress({ positionMs: 0, durationMs: 0, at: performance.now() });
     playback
       .prepare(state.current)
       .then(() => {
@@ -204,6 +209,17 @@ export function Game({ state, mode, onModeChange, onChange, onQuit, host }: Prop
       setSongError(message(e));
     } finally {
       setStarting(false);
+    }
+  };
+
+  const seek = async (ms: number) => {
+    if (!playback) return;
+    // Show the new spot right away; the player's next report corrects it.
+    setProgress((p) => ({ ...p, positionMs: ms, at: performance.now() }));
+    try {
+      await playback.seek(ms);
+    } catch (e) {
+      setSongError(message(e));
     }
   };
 
@@ -292,30 +308,6 @@ export function Game({ state, mode, onModeChange, onChange, onQuit, host }: Prop
 
               {state.phase === 'guessing' ? (
                 <div className="mystery">
-                  <div className={`vinyl ${playing ? 'spinning' : ''}`} aria-hidden>
-                    ?
-                  </div>
-                  <div className="mystery-actions">
-                    {mode !== 'none' && (
-                      <button className="primary" onClick={() => void togglePlay()} disabled={!playback || songStatus !== 'ready' || starting}>
-                        {playbackError
-                          ? tg.playerUnavailable
-                          : !playback
-                            ? tg.startingPlayer
-                            : songStatus === 'loading'
-                              ? tg.findingSong
-                              : starting
-                                ? tg.oneMoment
-                                : playing
-                                ? tg.pause
-                                : tg.play}
-                      </button>
-                    )}
-                    {mode === 'none' && <p className="hint">{tg.noAudio}</p>}
-                    <button className="ghost" onClick={skip}>
-                      {tg.skip}
-                    </button>
-                  </div>
                   {playbackError && (
                     <div className="warn">
                       <p>{playbackError}</p>
@@ -429,16 +421,51 @@ export function Game({ state, mode, onModeChange, onChange, onQuit, host }: Prop
 
       {state.phase !== 'finished' && <SharePanel host={host} />}
 
-      {/* The Spotify embed lives here. It stays covered so the title isn't spoiled. */}
-      <section className={`embed-wrap ${mode === 'embed' && state.phase !== 'finished' ? '' : 'hidden'}`}>
-        <div className={`embed-cover ${showPlayer || state.phase === 'revealed' ? 'off' : ''}`}>
-          <span>{tg.playerHidden}</span>
-          <button className="link" onClick={() => setShowPlayer(true)}>
-            {tg.showPlayer}
-          </button>
-        </div>
+      {/* The Spotify embed lives here, invisible above the player bar unless opened: it shows the title. */}
+      <section
+        className={`embed-wrap ${mode === 'embed' && state.phase !== 'finished' ? 'pop' : 'hidden'} ${showPlayer ? 'open' : ''}`}
+        aria-hidden={!showPlayer}
+      >
+        {state.phase === 'guessing' && <p className="hint embed-note">{tg.spotifyShowsTitle}</p>}
         <div ref={embedHost} className="embed-host" />
       </section>
+
+      {state.phase !== 'finished' && (mode !== 'none' || state.phase === 'guessing') && (
+        <PlayerBar
+          silent={mode === 'none'}
+          note={tg.noAudio}
+          playing={playing}
+          canPlay={!!playback && songStatus === 'ready' && !starting}
+          status={
+            playbackError
+              ? tg.playerUnavailable
+              : !playback
+                ? tg.startingPlayer
+                : songStatus === 'loading'
+                  ? tg.findingSong
+                  : starting
+                    ? tg.oneMoment
+                    : null
+          }
+          progress={progress}
+          onToggle={() => void togglePlay()}
+          onSeek={songStatus === 'ready' ? (ms) => void seek(ms) : undefined}
+          onSkip={state.phase === 'guessing' ? skip : undefined}
+          extra={
+            mode === 'embed' && (
+              <button
+                className={`ghost player-icon ${showPlayer ? 'selected' : ''}`}
+                onClick={() => setShowPlayer((v) => !v)}
+                aria-pressed={showPlayer}
+                aria-label={showPlayer ? tg.hideSpotify : tg.showSpotify}
+                title={showPlayer ? tg.hideSpotify : tg.showSpotify}
+              >
+                {showPlayer ? '⌄' : '⌃'}
+              </button>
+            )
+          }
+        />
+      )}
 
       {refillNote && <p className="hint center">{refillNote}</p>}
       <footer className="game-footer">

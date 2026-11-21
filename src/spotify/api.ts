@@ -188,7 +188,9 @@ export interface SpotifyDevice {
 export interface PlaybackState {
   device: SpotifyDevice | null;
   is_playing: boolean;
-  item: { uri: string; linked_from?: { uri: string } | null } | null;
+  /** How far into the song, in ms. */
+  progress_ms?: number | null;
+  item: { uri: string; duration_ms?: number; linked_from?: { uri: string } | null } | null;
 }
 
 /** What plays where right now, or null when Spotify plays nowhere (one request). */
@@ -206,6 +208,13 @@ export async function transferPlayback(deviceId: string, play: boolean): Promise
 
 export async function pauseDevice(deviceId: string): Promise<void> {
   await spotifyFetch(`/me/player/pause${onDevice(deviceId)}`, { method: 'PUT' });
+}
+
+/** Jumps `positionMs` into the song playing on the device. */
+export async function seekDevice(deviceId: string, positionMs: number): Promise<void> {
+  const query = new URLSearchParams({ position_ms: String(Math.max(0, Math.round(positionMs))) });
+  if (deviceId) query.set('device_id', deviceId);
+  await spotifyFetch(`/me/player/seek?${query}`, { method: 'PUT' });
 }
 
 export async function resumeDevice(deviceId: string): Promise<void> {

@@ -3,6 +3,7 @@ import type { HostRoom } from '../multiplayer/useHostRoom';
 import { HOST_ID, nextRuleOf, type Member } from '../multiplayer/protocol';
 import { useT } from '../i18n';
 import { Rich } from '../i18n/Rich';
+import { RoomCode } from './RoomCode';
 
 /** The link a phone opens to join this game. */
 export const joinLink = (code: string) => `${new URL(import.meta.env.BASE_URL, window.location.origin)}?join=${code}`;
@@ -61,9 +62,7 @@ export function SharePanel({ host, lobby }: { host: HostRoom; lobby?: boolean })
       <div className="share-head">
         <div>
           <p className="hint">{s.gameCode}</p>
-          <p className="room-code" aria-label={s.gameCodeSpelled(room.code)}>
-            {room.code}
-          </p>
+          <RoomCode code={room.code} />
         </div>
         <button className="ghost" onClick={shareLink}>
           {copied ? s.linkCopied : s.shareLink}
