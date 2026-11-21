@@ -260,6 +260,7 @@ export const sv: Messages = {
     shareText: (code) => `Gå med i spelet med koden ${code}`,
     gameCode: 'Spelkod',
     gameCodeSpelled: (code) => `Spelkod ${code.split('').join(' ')}`,
+    codeShort: 'Kod',
     hideCode: 'Tryck för att dölja koden',
     showCode: 'Tryck för att visa koden',
     codeHidden: 'Spelkoden är dold',

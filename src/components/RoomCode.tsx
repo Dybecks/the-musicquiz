@@ -49,7 +49,7 @@ export function RoomCode({ code, small }: { code: string; small?: boolean }) {
       aria-label={isHidden ? `${s.codeHidden}. ${s.showCode}` : `${s.gameCodeSpelled(code)}. ${s.hideCode}`}
       title={isHidden ? s.showCode : s.hideCode}
     >
-      {small && <span className="room-code-label">{s.gameCode}</span>}
+      {small && <span className="room-code-label">{s.codeShort}</span>}
       <span className="room-code-value">{isHidden ? '•'.repeat(code.length) : code}</span>
     </button>
   );
