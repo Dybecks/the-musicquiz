@@ -91,8 +91,6 @@ export const en = {
     to: 'To',
     decade: (d: number) => `${String(d).slice(2)}s`,
     allYears: 'All years',
-    genreFetchInfo:
-      "Songs come from the game's own lists for these genres and years, so **no Spotify requests** are needed.",
     buildList: 'Build my list',
 
     yourPlaylists: 'Your playlists',

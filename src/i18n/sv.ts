@@ -89,8 +89,6 @@ export const sv: Messages = {
     to: 'Till',
     decade: (d) => `${String(d).slice(2)}-tal`,
     allYears: 'Alla år',
-    genreFetchInfo:
-      'Låtarna kommer från spelets egna listor för de här genrerna och åren, så **inga anrop till Spotify** behövs.',
     buildList: 'Skapa min lista',
 
     yourPlaylists: 'Dina spellistor',

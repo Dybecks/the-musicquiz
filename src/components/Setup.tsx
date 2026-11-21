@@ -620,14 +620,6 @@ export function Setup(props: Props) {
             </button>
           </div>
         </section>
-        {genres.length > 0 && (
-          <p className="info">
-            <span aria-hidden="true">⚡</span>
-            <span>
-              <Rich text={ts.genreFetchInfo} />
-            </span>
-          </p>
-        )}
         {errorLine}
         <button className="primary big" disabled={genres.length === 0} onClick={buildGenres}>
           {ts.buildList}
