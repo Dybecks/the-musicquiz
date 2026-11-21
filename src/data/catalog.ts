@@ -8,9 +8,9 @@
  * The ready-made decks (src/data/catalog/decks.json) are lists of Spotify ids
  * from the catalogue. "By genre" picks straight from the whole catalogue.
  *
- * To add a song: add a row with "id": null and run `npm run spotify-data`
- * (scripts/spotify-precompute.ts), which looks up the id. Rows without an id
- * stay out of the game until then.
+ * To add songs: put them in scripts/candidates.json and run
+ * `npm run spotify-data` (scripts/spotify-precompute.ts). Only songs it finds
+ * a Spotify id for are moved into the catalogue.
  */
 import type { Song } from '../game/engine';
 import type { Genre } from './genres';
@@ -19,8 +19,8 @@ import DECK_IDS from './catalog/decks.json';
 import { SEARCH_GENRE_DEFS } from './searchGenres';
 
 export interface CatalogRow {
-  /** Spotify track id; null until scripts/spotify-precompute.ts has looked it up. */
-  id: string | null;
+  /** Spotify track id. Every song in the catalogue has one. */
+  id: string;
   title: string;
   artist: string;
   year: number;

@@ -33,6 +33,7 @@ import {
   needsYearCheck,
   normalizeKey,
   releaseYear,
+  songKey,
   type SpotifyTrack,
 } from '../src/spotify/personalDeck';
 
@@ -48,6 +49,8 @@ try {
   /* no .env.local */
 }
 const SONGS_FILE = file('../src/data/catalog/songs.json');
+/** Songs to add: looked up here, and moved into songs.json only once they have a Spotify id. */
+const CANDIDATES_FILE = file('./candidates.json');
 const DECKS_FILE = file('../src/data/catalog/decks.json');
 const REVIEW_FILE = file('../src/data/catalog/REVIEW.md');
 const PROGRESS_FILE = file('./spotify-progress.json');
@@ -90,7 +93,17 @@ const readJson = <T,>(path: string, fallback: T): T => {
   }
 };
 
-const rows = readJson<CatalogRow[]>(SONGS_FILE, []);
+/** A catalogue row, or a candidate (id null) that hasn't been found yet. */
+type Row = Omit<CatalogRow, 'id'> & { id: string | null };
+const catalogue = readJson<CatalogRow[]>(SONGS_FILE, []);
+const known = new Set(catalogue.map((r) => songKey(r.title, r.artist)));
+const rows: Row[] = [
+  ...catalogue,
+  // Candidates already in the catalogue are dropped.
+  ...readJson<Row[]>(CANDIDATES_FILE, [])
+    .filter((r) => !known.has(songKey(r.title, r.artist)))
+    .map((r) => ({ ...r, id: null })),
+];
 const decks = readJson<Record<BuiltInDeckId, string[]>>(DECKS_FILE, {} as Record<BuiltInDeckId, string[]>);
 const progress = readJson<Progress>(PROGRESS_FILE, { tried: {} });
 progress.unmatched ??= {};
@@ -113,18 +126,18 @@ interface GenreEntry {
 }
 const genreData = readJson<Record<string, GenreEntry>>(GENRES_FILE, {});
 
-const keyOf = (r: Pick<CatalogRow, 'title' | 'artist'>) => `${r.title}|${r.artist}`;
+const keyOf = (r: Pick<Row, 'title' | 'artist'>) => `${r.title}|${r.artist}`;
 const sortKeys = <T,>(o: Record<string, T>) => Object.fromEntries(Object.entries(o).sort(([a], [b]) => a.localeCompare(b)));
 const today = () => new Date().toISOString().slice(0, 10);
 
 /** Which ready-made deck a song is in, for messages. */
-function deckOf(row: CatalogRow): string {
+function deckOf(row: Row): string {
   const deck = row.id ? Object.entries(decks).find(([, ids]) => ids.includes(row.id!)) : undefined;
   return deck ? deck[0] : 'catalogue';
 }
 
 /** Gives a song a new id, also in the decks that list it. */
-function setId(row: CatalogRow, id: string): void {
+function setId(row: Row, id: string): void {
   for (const list of Object.values(decks)) {
     const i = row.id ? list.indexOf(row.id) : -1;
     if (i >= 0) list[i] = id;
@@ -136,7 +149,10 @@ function setId(row: CatalogRow, id: string): void {
 function save(): void {
   rows.sort((a, b) => a.year - b.year || a.artist.localeCompare(b.artist) || a.title.localeCompare(b.title));
   // One song per line keeps the diffs readable.
-  writeFileSync(SONGS_FILE, '[\n' + rows.map((r) => ' ' + JSON.stringify(r)).join(',\n') + '\n]\n');
+  // Only songs with a Spotify id go in the catalogue; the rest wait in candidates.json.
+  const lines = (list: Row[]) => '[\n' + list.map((r) => ' ' + JSON.stringify(r)).join(',\n') + '\n]\n';
+  writeFileSync(SONGS_FILE, lines(rows.filter((r) => r.id)));
+  writeFileSync(CANDIDATES_FILE, lines(rows.filter((r) => !r.id).map(({ id: _id, ...r }) => r as Row)));
   writeFileSync(
     DECKS_FILE,
     '{\n' +
@@ -259,7 +275,7 @@ function sameTitle(track: SpotifyTrack, title: string): boolean {
  * or live version, preferring the original album or single over reissues,
  * then the earliest release.
  */
-export function bestMatch(song: Pick<CatalogRow, 'title' | 'artist' | 'year'>, items: SpotifyTrack[]): { track: SpotifyTrack & { id: string }; earliest: number | null } | null {
+export function bestMatch(song: Pick<Row, 'title' | 'artist' | 'year'>, items: SpotifyTrack[]): { track: SpotifyTrack & { id: string }; earliest: number | null } | null {
   const ok = uniqueTracksKeepAll(items).filter(
     (t) => sameTitle(t, song.title) && sameArtist(t, song.artist) && (NOT_ORIGINAL.test(song.title) || !NOT_ORIGINAL.test(`${t.name} ${t.album.name ?? ''}`)),
   );
@@ -445,7 +461,7 @@ interface MbRecording {
 }
 
 /** Tags on MusicBrainz for every recording of the song; the release group's genres when the recordings have none. */
-async function musicBrainzTags(row: CatalogRow): Promise<Tags> {
+async function musicBrainzTags(row: Row): Promise<Tags> {
   const firstArtist = row.artist.split(/\s*(?:,|&|feat\.|ft\.)\s*/i)[0];
   const query = `recording:${lucene(row.title)} AND artist:${lucene(firstArtist)}`;
   const body = await getJson<{ recordings?: MbRecording[] }>(
@@ -476,7 +492,7 @@ async function musicBrainzTags(row: CatalogRow): Promise<Tags> {
 }
 
 /** Last.fm's top tags for the song (weights 0–100). */
-async function lastFmTags(row: CatalogRow, key: string): Promise<Tags> {
+async function lastFmTags(row: Row, key: string): Promise<Tags> {
   const params = new URLSearchParams({ method: 'track.gettoptags', artist: row.artist.split(/\s*(?:,|&|feat\.|ft\.)\s*/i)[0], track: row.title, autocorrect: '1', api_key: key, format: 'json' });
   const body = await getJson<{ toptags?: { tag?: { name: string; count: number }[] } }>(`https://ws.audioscrobbler.com/2.0/?${params}`, 250);
   return (body?.toptags?.tag ?? []).slice(0, 15).map((t) => [t.name, Number(t.count) || 0]);
@@ -488,6 +504,7 @@ async function fillGenres(): Promise<void> {
   let asked = 0;
   let failures = 0;
   for (const row of rows) {
+    if (!row.id) continue; // a candidate not found yet
     const key = keyOf(row);
     const entry = (genreData[key] ??= { handSet: [...row.genres] });
     if (entry.applied && !sameList(entry.applied, row.genres)) entry.manual = true;
@@ -588,7 +605,6 @@ function review(): string {
 async function main(): Promise<void> {
   let stopped: string | null = null;
   try {
-    if (process.env.GENRES !== '0') await fillGenres();
     await fromWikidata();
     await fillIds();
     await recheckOddYears();
@@ -599,6 +615,8 @@ async function main(): Promise<void> {
     }
     stopped = e.message;
   }
+  // Genres cost no Spotify requests, so they are looked up even when Spotify stopped the run.
+  if (process.env.GENRES !== '0') await fillGenres();
   save();
   console.log(`\n${requests} requests. ${stopped ? `Stopped early: ${stopped} The next run carries on.` : 'All done.'}`);
 }
