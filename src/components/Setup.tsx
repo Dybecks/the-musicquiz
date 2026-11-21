@@ -471,7 +471,6 @@ export function Setup(props: Props) {
             icon="📦"
             title={ts.readyTitle}
             detail={ts.readyDetail}
-            tag={ts.readyTag}
             selected={source === 'ready'}
             onSelect={() => setSource('ready')}
           />
