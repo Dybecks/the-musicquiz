@@ -62,7 +62,6 @@ export const en = {
     sourceQuestion: 'Where should the songs come from?',
     readyTitle: 'Ready-made lists',
     readyDetail: 'Hand-picked songs with checked years. Ready to play right away.',
-    readyTag: 'Works without login',
     ownTitle: 'Make your own',
     ownDetail: 'Pick genres and years, or use your own Spotify playlists.',
     ownTag: 'Playlists need Spotify login',

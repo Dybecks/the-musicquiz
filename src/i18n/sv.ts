@@ -60,7 +60,6 @@ export const sv: Messages = {
     sourceQuestion: 'Var ska låtarna komma ifrån?',
     readyTitle: 'Färdiga listor',
     readyDetail: 'Handplockade låtar med kontrollerade årtal. Redo att spela direkt.',
-    readyTag: 'Funkar utan inloggning',
     ownTitle: 'Gör en egen',
     ownDetail: 'Välj genrer och år, eller använd dina egna spellistor på Spotify.',
     ownTag: 'Spellistor kräver Spotify-inloggning',
