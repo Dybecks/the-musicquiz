@@ -113,16 +113,20 @@ export async function createPremiumPlayback(): Promise<Playback> {
   });
   /**
    * The Spotify Connect device the song was moved to in the Spotify app (a
-   * speaker, the phone…), or null while it plays here. Once a song of ours is
-   * seen playing elsewhere, the game keeps sending pause, resume and the next
-   * songs there instead of pulling them back to the browser, until the
+   * speaker, the phone…), or null while it plays here. Once the game has
+   * started a song here and Spotify then plays on another device, the player
+   * moved it there in the app: the game keeps sending pause, resume and the
+   * next songs there instead of pulling them back to the browser, until the
    * player picks the browser again in the app.
    */
   let elsewhere: string | null = null;
-  /** The last song started, to tell our song on another device from something else playing there. */
-  let lastUri: string | null = null;
-
-  const ours = (s: PlaybackState) => !!s.item && (s.item.uri === lastUri || s.item.linked_from?.uri === lastUri);
+  /**
+   * A song has been started here. Before that, another active device is just
+   * what played before the game (a phone left on), not a speaker picked for it.
+   * The song itself isn't compared: Spotify often plays another copy of the
+   * track (relinking) and reports a different link.
+   */
+  let startedHere = false;
 
   /** Asks Spotify where the music plays and updates `elsewhere` (one request). */
   const locate = async (): Promise<PlaybackState | null> => {
@@ -133,16 +137,17 @@ export async function createPremiumPlayback(): Promise<Playback> {
     // Couldn't ask: keep what we knew.
     if (s === undefined) return null;
     if (s?.device?.id === deviceId) elsewhere = null;
-    else if (s?.device?.id && lastUri && ours(s)) elsewhere = s.device.id;
+    else if (s?.device?.id && startedHere) elsewhere = s.device.id;
     return s;
   };
 
   player.addListener('player_state_changed', (state) => {
-    if (state) {
-      if (!elsewhere) listener(!state.paused);
+    if (state && !state.paused) {
+      elsewhere = null;
+      listener(true);
       return;
     }
-    // The browser lost the song, often because it was moved to another device in the app.
+    // Paused or gone here: maybe paused, maybe moved to another device in the app.
     void locate()
       .then((s) => listener(!!elsewhere && !!s?.is_playing))
       .catch(() => listener(false));
@@ -166,7 +171,7 @@ export async function createPremiumPlayback(): Promise<Playback> {
       await locate();
       if (!elsewhere) await player.activateElement().catch(() => {});
       if (!started) {
-        lastUri = uri;
+        startedHere = true;
         if (elsewhere) {
           try {
             await playOnDevice(elsewhere, uri);
