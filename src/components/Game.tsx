@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { addSongs, currentPlayer, nextTurn, placeCurrent, skipSong, type GameState } from '../game/engine';
 import { fetchBatch, type RefillPlan } from '../spotify/listening';
-import { findTrackUri } from '../spotify/api';
 import {
   createEmbedPlayback,
   createPremiumPlayback,
@@ -146,26 +145,6 @@ export function Game({ state, mode, onModeChange, onChange, onQuit, host }: Prop
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [playback, songId, attempt]);
-
-  // A link that opens the song in the Spotify app, to play it on any speaker
-  // the app can reach. Songs found by search reuse the lookup the player made.
-  const [spotifyUrl, setSpotifyUrl] = useState<string | null>(null);
-  useEffect(() => {
-    setSpotifyUrl(null);
-    const song = state.current;
-    if (!song || state.phase !== 'guessing') return;
-    let cancelled = false;
-    const toUrl = (uri: string | null) => uri && `https://open.spotify.com/track/${uri.split(':').pop()}`;
-    if (song.spotifyId) setSpotifyUrl(toUrl(`spotify:track:${song.spotifyId}`));
-    else if (songStatus === 'ready' && mode !== 'none')
-      void findTrackUri(song)
-        .then((uri) => !cancelled && setSpotifyUrl(toUrl(uri)))
-        .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [songId, songStatus]);
 
   // Report "Mystery song" to lock screens and AirPlay/Bluetooth receivers while
   // the song is hidden; their play/pause buttons still control the real song.
@@ -337,21 +316,6 @@ export function Game({ state, mode, onModeChange, onChange, onQuit, host }: Prop
                       {tg.skip}
                     </button>
                   </div>
-                  {spotifyUrl && (
-                    <p className="hint open-spotify">
-                      <a
-                        href={spotifyUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={() => {
-                          if (playing) void playback?.pause().catch(() => {});
-                        }}
-                      >
-                        {tg.openInSpotify}
-                      </a>{' '}
-                      {tg.openInSpotifyHint}
-                    </p>
-                  )}
                   {playbackError && (
                     <div className="warn">
                       <p>{playbackError}</p>

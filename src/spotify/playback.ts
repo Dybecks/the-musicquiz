@@ -10,7 +10,7 @@
  * Songs without a known id are found via search, which needs the login.
  */
 import type { Song } from '../game/engine';
-import { findTrackUri, getPlaybackState, pauseDevice, playOnDevice, RateLimitError, resumeDevice, SpotifyError } from './api';
+import { findTrackUri, getPlaybackState, pauseDevice, playOnDevice, RateLimitError, resumeDevice, SpotifyError, transferPlayback } from './api';
 import { getAccessToken } from './auth';
 import { msg } from '../i18n';
 
@@ -26,6 +26,8 @@ export interface Playback {
   onStateChange(cb: (playing: boolean) => void): void;
   destroy(): void;
 }
+
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 function loadScript(src: string): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -107,6 +109,9 @@ export async function createPremiumPlayback(): Promise<Playback> {
     player.addListener('account_error', () => reject(new Error(msg().errors.premiumNeeded)));
     void player.connect();
   });
+  // The SDK drops its device when the connection is lost (a sleeping computer,
+  // a tab left in the background): connect again so Spotify lists it again.
+  player.addListener('not_ready', () => void player.connect());
   /**
    * The first song is started here, in the browser. After that every command
    * goes to wherever Spotify plays now (no device id), so a speaker or phone
@@ -142,15 +147,38 @@ export async function createPremiumPlayback(): Promise<Playback> {
       .catch(() => {});
   });
 
+  /**
+   * Plays the song in this browser. Spotify answers "Device not found" while
+   * it hasn't registered the player yet (just after it started, or after the
+   * connection dropped): then connect again, make this player the active one
+   * and try once more.
+   */
+  const playHere = async (song: string) => {
+    try {
+      await playOnDevice(deviceId, song);
+    } catch (e) {
+      if (!noDevice(e)) throw e;
+      await player.connect().catch(() => false);
+      await transferPlayback(deviceId, false).catch((err) => {
+        if (err instanceof RateLimitError) throw err;
+      });
+      await wait(1000);
+      await playOnDevice(deviceId, song);
+    }
+  };
+
   /** Starts the song: where Spotify plays now, or here if nothing is active. */
   const start = async (song: string) => {
     await player.activateElement().catch(() => {});
-    try {
-      await playOnDevice(target(), song);
-    } catch (e) {
-      if (refused(e) && startedHere) throw cantControl();
-      if (!noDevice(e) || !startedHere) throw e;
-      await playOnDevice(deviceId, song);
+    if (!startedHere) await playHere(song);
+    else {
+      try {
+        await playOnDevice('', song);
+      } catch (e) {
+        if (refused(e)) throw cantControl();
+        if (!noDevice(e)) throw e;
+        await playHere(song);
+      }
     }
     startedHere = true;
   };
@@ -188,7 +216,7 @@ export async function createPremiumPlayback(): Promise<Playback> {
           if (!noDevice(e)) throw e;
           // Nothing is active any more: carry on here, where the browser left off if it can.
           if (await player.getCurrentState().catch(() => null)) await player.resume();
-          else await playOnDevice(deviceId, uri);
+          else await playHere(uri);
         }
       }
       listener(true);
