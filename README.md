@@ -130,9 +130,19 @@ then at most two Spotify searches each. Songs Spotify doesn't have are taken out
 catalogue, never guessed. `src/data/catalog/REVIEW.md` lists them, songs not looked up
 yet, years that differ from Spotify's, and how many songs each genre has per decade.
 
+The same script sets each song's genres from the tags people gave that recording on
+MusicBrainz (no key needed) and, if `LASTFM_API_KEY=…` is in `.env.local`, Last.fm. The
+tags are mapped to the 16 genres in `src/data/genreTags.ts`; this costs no Spotify
+requests, and `MAX_REQUESTS=0 npm run spotify-data` does only this part. Songs the
+sources know nothing about keep their hand-set genres, Swedish pop and schlager are
+always kept (tags rarely say where an artist is from), and a song whose genres you change
+by hand in `songs.json` is left alone from then on. What the sources said is kept in
+`scripts/genre-progress.json`, so each song is only asked about once.
+
 It is a local script. Put your Spotify app's values in `.env.local` (never committed) as
 `SPOTIFY_CLIENT_ID=…` and `SPOTIFY_CLIENT_SECRET=…`, then run `npm run spotify-data` and
-commit `src/data/catalog` and `scripts/spotify-progress.json`. Spotify's request quota is
+commit `src/data/catalog` and `scripts/spotify-progress.json` and
+`scripts/genre-progress.json`. Spotify's request quota is
 shared by every app on the developer account, so a run makes at most 300 requests
 (`MAX_REQUESTS=…` changes that), one every 1.5 seconds, and stops by itself if Spotify asks
 for a long pause. Running it again carries on where it stopped, and once everything is

@@ -13,6 +13,13 @@
  * it learns is saved as it goes, and the next run carries on where this one
  * stopped.
  *
+ * It also gives every song its genres from MusicBrainz (no key needed) and,
+ * when LASTFM_API_KEY is set, Last.fm: the tags people gave that recording,
+ * mapped to the catalogue's genres (src/data/genreTags.ts). This costs no
+ * Spotify requests. Songs the sources know nothing about keep their hand-set
+ * genres, and a song whose genres were changed by hand in songs.json is left
+ * alone from then on.
+ *
  * Put SPOTIFY_CLIENT_ID=… and SPOTIFY_CLIENT_SECRET=… in .env.local (never
  * committed), then `npm run spotify-data`. Environment variables work too.
  */
@@ -20,6 +27,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import type { BuiltInDeckId, CatalogRow } from '../src/data/catalog';
 import { SEARCH_GENRE_DEFS as SEARCH_GENRES } from '../src/data/searchGenres';
+import { genresFromTags, mergeGenres, type Tags } from '../src/data/genreTags';
 import {
   cleanTitle,
   needsYearCheck,
@@ -43,6 +51,7 @@ const SONGS_FILE = file('../src/data/catalog/songs.json');
 const DECKS_FILE = file('../src/data/catalog/decks.json');
 const REVIEW_FILE = file('../src/data/catalog/REVIEW.md');
 const PROGRESS_FILE = file('./spotify-progress.json');
+const GENRES_FILE = file('./genre-progress.json');
 
 /** Requests per run. The next run carries on. */
 const MAX_REQUESTS = Number(process.env.MAX_REQUESTS || 300);
@@ -89,6 +98,21 @@ progress.yearNotes ??= {};
 progress.wikidata ??= {};
 progress.rechecked ??= {};
 
+/** What MusicBrainz and Last.fm said about a song, and the genres it had before. */
+interface GenreEntry {
+  /** The song's genres before any tags were used. */
+  handSet: string[];
+  /** The genres last written to songs.json; a different value there means someone changed them by hand. */
+  applied?: string[];
+  /** Changed by hand: left alone. */
+  manual?: boolean;
+  mb?: Tags;
+  mbAt?: string;
+  lastfm?: Tags;
+  lastfmAt?: string;
+}
+const genreData = readJson<Record<string, GenreEntry>>(GENRES_FILE, {});
+
 const keyOf = (r: Pick<CatalogRow, 'title' | 'artist'>) => `${r.title}|${r.artist}`;
 const sortKeys = <T,>(o: Record<string, T>) => Object.fromEntries(Object.entries(o).sort(([a], [b]) => a.localeCompare(b)));
 const today = () => new Date().toISOString().slice(0, 10);
@@ -120,6 +144,10 @@ function save(): void {
         .map(([d, ids]) => ` ${JSON.stringify(d)}: [\n${ids.map((id) => '  ' + JSON.stringify(id)).join(',\n')}\n ]`)
         .join(',\n') +
       '\n}\n',
+  );
+  writeFileSync(
+    GENRES_FILE,
+    '{\n' + Object.entries(sortKeys(genreData)).map(([k, e]) => ` ${JSON.stringify(k)}: ${JSON.stringify(e)}`).join(',\n') + '\n}\n',
   );
   writeFileSync(PROGRESS_FILE, JSON.stringify({ ...progress, tried: sortKeys(progress.tried) }, null, 1) + '\n');
   writeFileSync(REVIEW_FILE, review());
@@ -379,6 +407,105 @@ async function recheckOddYears(): Promise<void> {
   }
 }
 
+// ---- Genres (MusicBrainz, Last.fm) ----
+
+const ORDER = SEARCH_GENRES.map((g) => g.id);
+const AGENT = { 'User-Agent': 'the-musicquiz-precompute/1.0 ( https://github.com/Dybecks/the-musicquiz )' };
+const lucene = (t: string) => `"${t.replace(/[\\"]/g, '\\$&')}"`;
+const sameList = (a: readonly string[] = [], b: readonly string[] = []) => a.length === b.length && a.every((x, i) => x === b[i]);
+
+/** A JSON GET that waits and retries when the service is busy. */
+async function getJson<T>(url: string, pause: number): Promise<T | null> {
+  for (let attempt = 0; attempt < 4; attempt++) {
+    if (!process.env.NO_SLEEP) await sleep(pause * (attempt + 1));
+    const res = await fetch(url, { headers: { ...AGENT, Accept: 'application/json' } });
+    if (res.ok) return (await res.json()) as T;
+    if (res.status === 404) return null;
+    if (res.status !== 503 && res.status !== 429 && res.status < 500) throw new Error(`${new URL(url).host} answered ${res.status}`);
+  }
+  throw new Error(`${new URL(url).host} is busy`);
+}
+
+interface MbRecording {
+  title: string;
+  score?: number;
+  'artist-credit'?: { name: string; artist?: { name: string } }[];
+  tags?: { name: string; count: number }[];
+  releases?: { 'release-group'?: { id: string; 'primary-type'?: string; 'secondary-types'?: string[] } }[];
+}
+
+/** Tags on MusicBrainz for every recording of the song; the release group's genres when the recordings have none. */
+async function musicBrainzTags(row: CatalogRow): Promise<Tags> {
+  const firstArtist = row.artist.split(/\s*(?:,|&|feat\.|ft\.)\s*/i)[0];
+  const query = `recording:${lucene(row.title)} AND artist:${lucene(firstArtist)}`;
+  const body = await getJson<{ recordings?: MbRecording[] }>(
+    `https://musicbrainz.org/ws/2/recording?${new URLSearchParams({ query, fmt: 'json', limit: '25' })}`,
+    1100,
+  );
+  const want = normalizeKey(cleanTitle(row.title));
+  const recordings = (body?.recordings ?? []).filter(
+    (r) =>
+      (r.score ?? 0) >= 80 &&
+      normalizeKey(cleanTitle(r.title)) === want &&
+      sameArtist({ artists: (r['artist-credit'] ?? []).map((a) => ({ id: '', name: a.artist?.name ?? a.name })) } as SpotifyTrack, row.artist),
+  );
+  const tags = new Map<string, number>();
+  for (const r of recordings) for (const t of r.tags ?? []) tags.set(t.name, (tags.get(t.name) ?? 0) + Math.max(1, t.count));
+  if (tags.size > 0 || recordings.length === 0) return [...tags];
+  // No tags on the recordings: the single's or album's genres.
+  const groups = new Map<string, number>();
+  for (const r of recordings)
+    for (const rel of r.releases ?? []) {
+      const g = rel['release-group'];
+      if (g && (g['primary-type'] === 'Single' || g['primary-type'] === 'Album') && !g['secondary-types']?.length) groups.set(g.id, (groups.get(g.id) ?? 0) + 1);
+    }
+  const group = [...groups].sort((a, b) => b[1] - a[1])[0]?.[0];
+  if (!group) return [];
+  const rg = await getJson<{ genres?: { name: string; count: number }[] }>(`https://musicbrainz.org/ws/2/release-group/${group}?inc=genres&fmt=json`, 1100);
+  return (rg?.genres ?? []).map((g) => [g.name, Math.max(1, g.count)]);
+}
+
+/** Last.fm's top tags for the song (weights 0–100). */
+async function lastFmTags(row: CatalogRow, key: string): Promise<Tags> {
+  const params = new URLSearchParams({ method: 'track.gettoptags', artist: row.artist.split(/\s*(?:,|&|feat\.|ft\.)\s*/i)[0], track: row.title, autocorrect: '1', api_key: key, format: 'json' });
+  const body = await getJson<{ toptags?: { tag?: { name: string; count: number }[] } }>(`https://ws.audioscrobbler.com/2.0/?${params}`, 250);
+  return (body?.toptags?.tag ?? []).slice(0, 15).map((t) => [t.name, Number(t.count) || 0]);
+}
+
+/** Sets each song's genres from the tags; looks up songs not asked yet. */
+async function fillGenres(): Promise<void> {
+  const lastFmKey = process.env.LASTFM_API_KEY;
+  let asked = 0;
+  for (const row of rows) {
+    const key = keyOf(row);
+    const entry = (genreData[key] ??= { handSet: [...row.genres] });
+    if (entry.applied && !sameList(entry.applied, row.genres)) entry.manual = true;
+    if (entry.manual) continue;
+    try {
+      if (!entry.mbAt) {
+        entry.mb = await musicBrainzTags(row);
+        entry.mbAt = today();
+        asked++;
+      }
+      if (lastFmKey && !entry.lastfmAt) {
+        entry.lastfm = await lastFmTags(row, lastFmKey);
+        entry.lastfmAt = today();
+        asked++;
+      }
+    } catch (e) {
+      console.log(`Genre lookup stopped (${(e as Error).message}); the next run carries on.`);
+      save();
+      return;
+    }
+    const genres = mergeGenres(entry.handSet, genresFromTags(entry.mb ?? [], entry.lastfm ?? []), ORDER);
+    if (!sameList(genres, row.genres)) console.log(`♪ ${row.title} – ${row.artist}: ${row.genres.join(', ') || '–'} → ${genres.join(', ') || '–'}`);
+    row.genres = genres;
+    entry.applied = genres;
+    if (asked && asked % 20 === 0) save();
+  }
+  save();
+}
+
 // ---- Report ----
 
 function review(): string {
@@ -419,6 +546,13 @@ function review(): string {
     '',
     '## Songs per genre ("By genre")',
     '',
+    (() => {
+      const entries = rows.map((r) => genreData[keyOf(r)]);
+      const tagged = entries.filter((e) => e && !e.manual && genresFromTags(e.mb ?? [], e.lastfm ?? []).length).length;
+      const manual = entries.filter((e) => e?.manual).length;
+      return `Genres from MusicBrainz/Last.fm tags: ${tagged} songs; hand-set: ${rows.length - tagged - manual}; changed by hand: ${manual}.`;
+    })(),
+    '',
     `| Genre | ${DECADES.map((d) => `${String(d).slice(2)}s`).join(' | ')} | Total |`,
     `|---|${DECADES.map(() => '---:').join('|')}|---:|`,
     ...SEARCH_GENRES.map((g) => {
@@ -436,6 +570,7 @@ function review(): string {
 async function main(): Promise<void> {
   let stopped: string | null = null;
   try {
+    if (process.env.GENRES !== '0') await fillGenres();
     await fromWikidata();
     await fillIds();
     await recheckOddYears();
