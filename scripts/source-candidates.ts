@@ -16,7 +16,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { SEARCH_GENRE_DEFS } from '../src/data/searchGenres';
-import { songKey } from '../src/spotify/personalDeck';
+import { normalizeKey, songKey } from '../src/spotify/personalDeck';
 
 const file = (p: string) => fileURLToPath(new URL(p, import.meta.url));
 const SONGS_FILE = file('../src/data/catalog/songs.json');
@@ -117,29 +117,72 @@ async function entities(ids: string[], props: string): Promise<Record<string, Wi
 
 interface WikidataEntity {
   labels?: Record<string, { value: string }>;
-  claims?: Record<string, { rank: string; mainsnak: { datavalue?: { value: { id?: string } } } }[]>;
+  claims?: Record<string, { rank: string; mainsnak: { datavalue?: { value: { id?: string } | string } } }[]>;
 }
 
 /**
  * The song's original performer: the first performer statement (a preferred one if there is one),
- * not whichever cover artist SPARQL samples. Named by the Swedish label, else the English one
- * ("Tusse", not his full name).
+ * not whichever cover artist SPARQL samples. Named by the English label, which is usually the stage
+ * name (the Swedish one is often the full name: "Netta Barzilai" for Netta), else the Swedish one;
+ * STAGE_NAMES covers the rest. Pseudonyms (P742) are no help: they hold nicknames and old names.
  */
 async function firstPerformers(songIds: string[]): Promise<Map<string, string>> {
   const songs = await entities([...new Set(songIds)], 'claims');
   const first = new Map<string, string>();
   for (const [id, e] of Object.entries(songs)) {
-    const claims = (e.claims?.P175 ?? []).filter((c) => c.rank !== 'deprecated' && c.mainsnak.datavalue?.value.id);
+    const claims = (e.claims?.P175 ?? []).filter((c) => c.rank !== 'deprecated' && typeof c.mainsnak.datavalue?.value === 'object');
     const pick = claims.find((c) => c.rank === 'preferred') ?? claims[0];
-    if (pick) first.set(id, pick.mainsnak.datavalue!.value.id!);
+    if (pick) first.set(id, (pick.mainsnak.datavalue!.value as { id: string }).id);
   }
   const people = await entities([...new Set(first.values())], 'labels');
   const names = new Map<string, string>();
   for (const [song, perf] of first) {
-    const name = people[perf]?.labels?.sv?.value ?? people[perf]?.labels?.en?.value;
+    const name = people[perf]?.labels?.en?.value ?? people[perf]?.labels?.sv?.value;
     if (name) names.set(song, name);
   }
   return names;
+}
+
+/** Stage names for artists Wikidata names in full. */
+const STAGE_NAMES: Record<string, string> = {
+  'Carola Häggkvist': 'Carola',
+  'Toussaint Chiza': 'Tusse',
+  'Mariette Hansson': 'Mariette',
+  'Amy Deasismont': 'Amy Diamond',
+  'Netta Barzilai': 'Netta',
+  'Chanel Terrero': 'Chanel',
+  'Louane Emera': 'Louane',
+  'Felicia Eriksson': 'Felicia',
+  'Emilia Rydberg': 'Emilia',
+  'Daði Freyr Pétursson': 'Daði Freyr',
+};
+
+/**
+ * Melodifestivalen entries Wikidata doesn't link to their edition: the Swedish Wikipedia page for
+ * each year lists the entries in tables, one row per song. Returns a check for a title and artist
+ * standing in the same row (or list line) of any year's page.
+ */
+async function melodifestivalenPages(): Promise<(title: string, artist: string) => boolean> {
+  const plain = (t: string) =>
+    ` ${normalizeKey(t.replace(/\bi morgon\b/gi, 'imorgon')).replace(/\bmej\b/g, 'mig').replace(/\bdej\b/g, 'dig')} `;
+  const strip = (t: string) =>
+    t
+      .replace(/\{\{[^{}]*\}\}/g, '')
+      .replace(/<ref[^>]*\/>|<ref[^>]*>[\s\S]*?<\/ref>/g, '')
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/\[\[(?:[^|\]]*\|)?([^\]]*)\]\]/g, '$1');
+  const rows: string[] = [];
+  for (let year = 1959; year <= new Date().getFullYear(); year++) {
+    const url = `https://sv.wikipedia.org/w/api.php?${new URLSearchParams({ action: 'parse', page: `Melodifestivalen ${year}`, prop: 'wikitext', format: 'json', formatversion: '2', redirects: '1' })}`;
+    const text = ((await (await fetch(url, { headers: agent })).json()) as { parse?: { wikitext?: string } }).parse?.wikitext ?? '';
+    rows.push(...text.split(/\n\|-/).map((r) => plain(strip(r))), ...text.split('\n').filter((l) => /^[*#:]/.test(l)).map((l) => plain(strip(l))));
+    await sleep(300);
+  }
+  return (title, artist) => {
+    const t = plain(title);
+    const a = plain(artist.split(/\s*(?:,|&|\boch\b)\s*/)[0]);
+    return rows.some((r) => r.includes(t) && r.includes(a));
+  };
 }
 
 async function songsFor(where: string, via: string, contest = false): Promise<Found[]> {
@@ -155,7 +198,7 @@ async function songsFor(where: string, via: string, contest = false): Promise<Fo
     .map((r) => ({
       // Wikidata labels may carry a disambiguation: "One Day (Mariette song)".
       title: (r.songLabel?.value ?? '').replace(/\s*\([^)]*\bsong\)$/i, ''),
-      artist: original.get(r.song.value.split('/').pop()!) ?? r.artist?.value ?? '',
+      artist: ((a) => STAGE_NAMES[a] ?? a)(original.get(r.song.value.split('/').pop()!) ?? r.artist?.value ?? ''),
       year: Number(r.year?.value),
       fame: Number(r.fame?.value ?? 0),
       spotify: r.spotify?.value ?? null,
@@ -210,14 +253,17 @@ async function main(): Promise<void> {
 
   // One row per song, the best-known first; a song found both ways keeps both reasons. Contest
   // songs with the same title and year are one song: early Melodifestivalen had each song sung
-  // by two artists, and a Melodifestivalen winner goes on to Eurovision.
+  // by two artists, and a Melodifestivalen winner goes on to Eurovision. The same title by the same
+  // artist is one song too, whatever the year (Wikidata may have an item per contest).
   const sameSong = (s: Found) => (s.via === 'genre' ? songKey(s.title, s.artist) : `${songKey(s.title, '').split('|')[0]}|${s.year}`);
   const byKey = new Map<string, Found>();
+  const alias = new Map<string, string>();
   for (const s of [...found].sort((a, b) => b.fame - a.fame)) {
-    const key = s.via === 'genre' ? songKey(s.title, s.artist) : (byKey.has(songKey(s.title, s.artist)) ? songKey(s.title, s.artist) : sameSong(s));
+    const key = alias.get(songKey(s.title, s.artist)) ?? sameSong(s);
     const had = byKey.get(key);
     if (!had) byKey.set(key, s);
     else if (!had.via.includes(s.via)) had.via += `, ${s.via}`;
+    alias.set(songKey(s.title, s.artist), key);
   }
   const ranked = [...byKey.values()].sort((a, b) => b.fame - a.fame);
   const status = (s: Found) => (catalogue.has(songKey(s.title, s.artist)) ? 'in the catalogue' : waiting.has(songKey(s.title, s.artist)) ? 'already a candidate' : 'new');
@@ -243,7 +289,15 @@ async function main(): Promise<void> {
   const contestTitles = new Set(found.filter((s) => s.via !== 'genre').map((s) => songKey(s.title, '').split('|')[0]));
   const notContest = (r: { title: string; genres: string[] }) => GENRE === 'schlager' && r.genres.includes('schlager') && !contestTitles.has(songKey(r.title, '').split('|')[0]);
   const songs = JSON.parse(readFileSync(SONGS_FILE, 'utf8')) as { title: string; artist: string; genres: string[] }[];
-  const retag = [...songs, ...candidates].filter(notContest);
+  const untagged = [...songs, ...candidates].filter(notContest);
+  // Wikidata misses many entries; the yearly Wikipedia pages catch some of them.
+  const onPage = untagged.length ? await melodifestivalenPages() : () => false;
+  const saved = untagged.filter((r) => onPage(r.title, r.artist));
+  if (saved.length) {
+    console.log(`\n${saved.length} songs tagged schlager were found on the Melodifestivalen pages of Swedish Wikipedia and keep it:`);
+    for (const r of saved) console.log(`  ${r.title} – ${r.artist}`);
+  }
+  const retag = untagged.filter((r) => !saved.includes(r));
   if (retag.length) {
     console.log(`\n${retag.length} songs tagged schlager were not in Melodifestivalen or Eurovision${process.env.APPLY === '1' ? ' and lose the tag' : ' (APPLY=1 takes the tag away)'}:`);
     for (const r of retag) console.log(`  ${r.title} – ${r.artist}`);
