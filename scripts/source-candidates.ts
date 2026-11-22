@@ -42,7 +42,7 @@ const WIKIDATA_GENRES: Record<string, string[]> = {
   punk: ['punk rock', 'pop punk'],
 };
 /** Genres whose songs must come from Sweden (performer or country of origin). */
-const SWEDISH_ONLY = new Set(['swedishpop']);
+const SWEDISH_ONLY = new Set(['swedishpop', 'schlager']);
 const SWEDEN = 'Q34';
 
 const GENRE = process.env.GENRE ?? '';
@@ -84,30 +84,77 @@ interface Found {
   via: string;
 }
 
-function songQuery(where: string, withSubGenres: boolean): string {
-  return `SELECT ?song ?songLabel (SAMPLE(?perfLabel) AS ?artist) (MIN(YEAR(?date)) AS ?year) (SAMPLE(?sp) AS ?spotify) (MAX(?links) AS ?fame) WHERE {
+/**
+ * One query for songs matching `where`. Contest entries (`contest`) are songs by definition and come
+ * from the contest's country, so they skip the type and Sweden checks, and take the edition's year
+ * (`?edition`, P585) when the song has no publication date.
+ */
+function songQuery(where: string, withSubGenres: boolean, contest = false): string {
+  const swedish = SWEDISH_ONLY.has(GENRE) && !contest;
+  return `SELECT ?song ?songLabel (SAMPLE(?perfLabel) AS ?artist) (MIN(YEAR(COALESCE(?date, ?edDate))) AS ?year) (SAMPLE(?sp) AS ?spotify) (MAX(?links) AS ?fame) WHERE {
   ${where.replace(/GENRE_PATH/g, withSubGenres ? 'wdt:P136/wdt:P279*' : 'wdt:P136')}
-  VALUES ?type { wd:Q7366 wd:Q134556 wd:Q105543609 }
-  ?song wdt:P31 ?type; wdt:P175 ?perf; wdt:P577 ?date; wikibase:sitelinks ?links.
+  ${contest ? 'OPTIONAL { ?edition wdt:P585 ?edDate. }' : 'VALUES ?type { wd:Q7366 wd:Q134556 wd:Q105543609 } ?song wdt:P31 ?type.'}
+  ?song wdt:P175 ?perf; wikibase:sitelinks ?links.
+  OPTIONAL { ?song wdt:P577 ?date. }
   OPTIONAL { ?song wdt:P2207 ?sp. }
-  ${SWEDISH_ONLY.has(GENRE) ? `{ ?song wdt:P495 wd:${SWEDEN}. } UNION { ?perf wdt:P27 wd:${SWEDEN}. } UNION { ?perf wdt:P495 wd:${SWEDEN}. }` : ''}
+  ${swedish ? `{ ?song wdt:P495 wd:${SWEDEN}. } UNION { ?perf wdt:P27 wd:${SWEDEN}. } UNION { ?perf wdt:P495 wd:${SWEDEN}. }` : ''}
   ?perf rdfs:label ?perfLabel. FILTER(LANG(?perfLabel) IN ("en", "sv"))
   SERVICE wikibase:label { bd:serviceParam wikibase:language "en,sv". }
 } GROUP BY ?song ?songLabel ORDER BY DESC(?fame) LIMIT ${Math.max(TOP * 3, 300)}`;
 }
 
-async function songsFor(where: string, via: string): Promise<Found[]> {
+/** Items' entity data from the Wikidata API, 50 at a time. */
+async function entities(ids: string[], props: string): Promise<Record<string, WikidataEntity>> {
+  const out: Record<string, WikidataEntity> = {};
+  for (let i = 0; i < ids.length; i += 50) {
+    const url = `https://www.wikidata.org/w/api.php?${new URLSearchParams({ action: 'wbgetentities', ids: ids.slice(i, i + 50).join('|'), props, languages: 'sv|en', format: 'json' })}`;
+    Object.assign(out, ((await (await fetch(url, { headers: agent })).json()) as { entities?: Record<string, WikidataEntity> }).entities);
+    await sleep(200);
+  }
+  return out;
+}
+
+interface WikidataEntity {
+  labels?: Record<string, { value: string }>;
+  claims?: Record<string, { rank: string; mainsnak: { datavalue?: { value: { id?: string } } } }[]>;
+}
+
+/**
+ * The song's original performer: the first performer statement (a preferred one if there is one),
+ * not whichever cover artist SPARQL samples. Named by the Swedish label, else the English one
+ * ("Tusse", not his full name).
+ */
+async function firstPerformers(songIds: string[]): Promise<Map<string, string>> {
+  const songs = await entities([...new Set(songIds)], 'claims');
+  const first = new Map<string, string>();
+  for (const [id, e] of Object.entries(songs)) {
+    const claims = (e.claims?.P175 ?? []).filter((c) => c.rank !== 'deprecated' && c.mainsnak.datavalue?.value.id);
+    const pick = claims.find((c) => c.rank === 'preferred') ?? claims[0];
+    if (pick) first.set(id, pick.mainsnak.datavalue!.value.id!);
+  }
+  const people = await entities([...new Set(first.values())], 'labels');
+  const names = new Map<string, string>();
+  for (const [song, perf] of first) {
+    const name = people[perf]?.labels?.sv?.value ?? people[perf]?.labels?.en?.value;
+    if (name) names.set(song, name);
+  }
+  return names;
+}
+
+async function songsFor(where: string, via: string, contest = false): Promise<Found[]> {
   let rows: Record<string, { value: string }>[];
   try {
-    rows = await sparql(songQuery(where, true));
+    rows = await sparql(songQuery(where, true, contest));
   } catch (e) {
     console.log(`  ${via}: ${(e as Error).message} with sub-genres, trying the genres alone.`);
-    rows = await sparql(songQuery(where, false));
+    rows = await sparql(songQuery(where, false, contest));
   }
+  const original = await firstPerformers(rows.map((r) => r.song.value.split('/').pop()!));
   return rows
     .map((r) => ({
-      title: r.songLabel?.value ?? '',
-      artist: r.artist?.value ?? '',
+      // Wikidata labels may carry a disambiguation: "One Day (Mariette song)".
+      title: (r.songLabel?.value ?? '').replace(/\s*\([^)]*\bsong\)$/i, ''),
+      artist: original.get(r.song.value.split('/').pop()!) ?? r.artist?.value ?? '',
       year: Number(r.year?.value),
       fame: Number(r.fame?.value ?? 0),
       spotify: r.spotify?.value ?? null,
@@ -129,14 +176,30 @@ async function main(): Promise<void> {
     found.push(...(await songsFor(`VALUES ?g { ${items.map((i) => `wd:${i}`).join(' ')} } ?song GENRE_PATH ?g.`, 'genre')));
   }
   if (GENRE === 'schlager') {
-    // Every Melodifestivalen entry: songs that took part in (or are part of) an edition of the contest.
-    const melfest = `?mf rdfs:label "Melodifestivalen"@sv. ?edition wdt:P31 ?mf. { ?song wdt:P1344 ?edition. } UNION { ?song wdt:P361 ?edition. }`;
-    found.push(...(await songsFor(melfest, 'Melodifestivalen')));
+    // Every Melodifestivalen entry. Editions are in the series Melodifestivalen (P179 Q58884); a song
+    // "participated in" its edition (P1344), and some winners are only linked from the edition (P1346).
+    const melfest = `?edition wdt:P179 wd:Q58884. { ?song wdt:P1344 ?edition. } UNION { ?edition wdt:P1346 ?song. }`;
+    found.push(...(await songsFor(melfest, 'Melodifestivalen', true)));
   }
 
-  const catalogue = new Set((JSON.parse(readFileSync(SONGS_FILE, 'utf8')) as { title: string; artist: string }[]).map((r) => songKey(r.title, r.artist)));
+  // Wikidata often names artists in full ("Carola Häggkvist" for "Carola"), so a song matches
+  // when the titles are the same and one artist name starts with the other.
+  const index = (rows: { title: string; artist: string }[]) => {
+    const byTitle = new Map<string, string[]>();
+    for (const r of rows) {
+      const [title, artist] = songKey(r.title, r.artist).split('|');
+      byTitle.set(title, [...(byTitle.get(title) ?? []), artist]);
+    }
+    return {
+      has: (key: string) => {
+        const [title, artist] = key.split('|');
+        return (byTitle.get(title) ?? []).some((a) => a === artist || a.startsWith(`${artist} `) || artist.startsWith(`${a} `));
+      },
+    };
+  };
+  const catalogue = index(JSON.parse(readFileSync(SONGS_FILE, 'utf8')) as { title: string; artist: string }[]);
   const candidates = JSON.parse(readFileSync(CANDIDATES_FILE, 'utf8')) as { title: string; artist: string; year: number; genres: string[] }[];
-  const waiting = new Set(candidates.map((r) => songKey(r.title, r.artist)));
+  const waiting = index(candidates);
 
   // One row per song, the best-known first; a song found both ways keeps both reasons.
   const byKey = new Map<string, Found>();
