@@ -2,7 +2,7 @@
 
 Written by `scripts/spotify-precompute.ts` from `songs.json` and `decks.json`.
 
-Songs with a Spotify id: **831 of 1729**. classic 160, movies 49, musicals 45, tv 33, games 37.
+Songs with a Spotify id: **834 of 1729**. classic 160, movies 49, musicals 45, tv 33, games 37.
 
 ## Not looked up yet
 
@@ -371,7 +371,6 @@ These stay out of the game until `npm run spotify-data` finds them.
 - Battery – Metallica
 - Tutu – Miles Davis
 - It's Tricky – Run-DMC
-- Walk This Way – Run-DMC
 - Raining Blood – Slayer
 - Jack Your Body – Steve 'Silk' Hurley
 - Bigmouth Strikes Again – The Smiths
@@ -382,7 +381,6 @@ These stay out of the game until `npm run spotify-data` finds them.
 - Carrie – Europe
 - Djobi Djoba – Gipsy Kings
 - Rhythm Is Gonna Get You – Gloria Estefan & Miami Sound Machine
-- Paradise City – Guns N' Roses
 - Bad Boys – Inner Circle
 - Leva livet – Lotta Engberg
 - Varning på stan – Magnus Uggla
@@ -589,7 +587,6 @@ These stay out of the game until `npm run spotify-data` finds them.
 - Tusen och en natt – Charlotte Nilsson
 - Genie in a Bottle (Genio Atrapado) – Christina Aguilera
 - Bills, Bills, Bills – Destiny's Child
-- Say My Name – Destiny's Child
 - Paper Bag – Fiona Apple
 - Amazed – Lonestar
 - Gubbarna i parken – Markoolio
@@ -1102,15 +1099,15 @@ Genres from MusicBrainz/Last.fm tags: 505 songs; hand-set: 1224; changed by hand
 
 | Genre | 50s | 60s | 70s | 80s | 90s | 00s | 10s | 20s | Total |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| pop | 5 | 12 | 22 | 24 | 23 | 25 | 32 | 23 | 166 |
+| pop | 5 | 12 | 22 | 24 | 24 | 25 | 32 | 23 | 167 |
 | rock | 12 | 22 | 29 | 32 | 22 | 23 | 15 | 3 | 158 |
-| hiphop | 0 | 0 | 1 | 3 | 13 | 15 | 8 | 5 | 45 |
-| rnb | 4 | 9 | 4 | 10 | 5 | 11 | 5 | 3 | 51 |
+| hiphop | 0 | 0 | 1 | 4 | 13 | 15 | 8 | 5 | 46 |
+| rnb | 4 | 9 | 4 | 10 | 6 | 11 | 5 | 3 | 52 |
 | soul | 1 | 18 | 25 | 11 | 5 | 6 | 5 | 1 | 72 |
 | disco | 0 | 0 | 33 | 7 | 0 | 4 | 4 | 2 | 50 |
 | dance | 0 | 0 | 4 | 11 | 19 | 13 | 23 | 5 | 75 |
 | country | 5 | 6 | 6 | 3 | 6 | 3 | 4 | 5 | 39 |
-| metal | 0 | 0 | 6 | 18 | 7 | 10 | 4 | 0 | 45 |
+| metal | 0 | 0 | 6 | 19 | 7 | 10 | 4 | 0 | 46 |
 | indie | 0 | 1 | 1 | 8 | 8 | 8 | 11 | 2 | 39 |
 | schlager | 0 | 3 | 4 | 7 | 3 | 4 | 2 | 2 | 25 |
 | swedishpop | 0 | 0 | 9 | 8 | 8 | 3 | 13 | 1 | 42 |
