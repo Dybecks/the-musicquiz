@@ -18,6 +18,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { SEARCH_GENRE_DEFS } from '../src/data/searchGenres';
 import { songKey } from '../src/spotify/personalDeck';
+import { spotifyArtist } from './artist-names';
 import { contestSongs, type ContestYear } from './contest-placings';
 
 const file = (p: string) => fileURLToPath(new URL(p, import.meta.url));
@@ -128,7 +129,7 @@ interface WikidataEntity {
  * The song's original performer: the first performer statement (a preferred one if there is one),
  * not whichever cover artist SPARQL samples. Named by the English label, which is usually the stage
  * name (the Swedish one is often the full name: "Netta Barzilai" for Netta), else the Swedish one;
- * STAGE_NAMES covers the rest. Pseudonyms (P742) are no help: they hold nicknames and old names.
+ * scripts/artist-names.ts covers the rest. Pseudonyms (P742) are no help: they hold nicknames and old names.
  */
 async function firstPerformers(songIds: string[]): Promise<Map<string, string>> {
   const songs = await entities([...new Set(songIds)], 'claims');
@@ -147,19 +148,6 @@ async function firstPerformers(songIds: string[]): Promise<Map<string, string>> 
   return names;
 }
 
-/** Stage names for artists Wikidata names in full. */
-const STAGE_NAMES: Record<string, string> = {
-  'Carola Häggkvist': 'Carola',
-  'Toussaint Chiza': 'Tusse',
-  'Mariette Hansson': 'Mariette',
-  'Amy Deasismont': 'Amy Diamond',
-  'Netta Barzilai': 'Netta',
-  'Chanel Terrero': 'Chanel',
-  'Louane Emera': 'Louane',
-  'Felicia Eriksson': 'Felicia',
-  'Emilia Rydberg': 'Emilia',
-  'Daði Freyr Pétursson': 'Daði Freyr',
-};
 
 async function songsFor(where: string, via: string, contest = false): Promise<Found[]> {
   let rows: Record<string, { value: string }>[];
@@ -174,7 +162,7 @@ async function songsFor(where: string, via: string, contest = false): Promise<Fo
     .map((r) => ({
       // Wikidata labels may carry a disambiguation: "One Day (Mariette song)".
       title: (r.songLabel?.value ?? '').replace(/\s*\([^)]*\bsong\)$/i, ''),
-      artist: ((a) => STAGE_NAMES[a] ?? a)(original.get(r.song.value.split('/').pop()!) ?? r.artist?.value ?? ''),
+      artist: spotifyArtist(original.get(r.song.value.split('/').pop()!) ?? r.artist?.value ?? ''),
       year: Number(r.year?.value),
       fame: Number(r.fame?.value ?? 0),
       spotify: r.spotify?.value ?? null,
@@ -219,7 +207,7 @@ async function main(): Promise<void> {
     contestYears = contest.years;
     for (const c of contest.songs) contestAka.push(...c.aka);
     for (const c of contest.songs)
-      found.push({ title: c.title, artist: STAGE_NAMES[c.artist] ?? c.artist, year: c.year, fame: 0, spotify: null, via: c.via.join(', ') });
+      found.push({ title: c.title, artist: spotifyArtist(c.artist), year: c.year, fame: 0, spotify: null, via: c.via.join(', ') });
     console.log(`Contest songs: ${contest.songs.length} (years ${contest.years[0].year}–${contest.years.at(-1)!.year}).`);
   }
 

@@ -36,6 +36,7 @@ import {
   songKey,
   type SpotifyTrack,
 } from '../src/spotify/personalDeck';
+import { spotifyArtist } from './artist-names';
 
 const file = (p: string) => fileURLToPath(new URL(p, import.meta.url));
 
@@ -116,8 +117,8 @@ const rows: Row[] = [
   ...catalogue,
   // Candidates already in the catalogue are dropped.
   ...readJson<Row[]>(CANDIDATES_FILE, [])
-    .filter((r) => !known.has(songKey(r.title, r.artist)))
-    .map((r) => ({ ...r, id: null })),
+    .map((r) => ({ ...r, artist: spotifyArtist(r.artist), id: null }))
+    .filter((r) => !known.has(songKey(r.title, r.artist))),
 ];
 const decks = readJson<Record<BuiltInDeckId, string[]>>(DECKS_FILE, {} as Record<BuiltInDeckId, string[]>);
 const progress = readJson<Progress>(PROGRESS_FILE, { tried: {} });
@@ -145,12 +146,15 @@ const keyOf = (r: Pick<Row, 'title' | 'artist'>) => `${r.title}|${r.artist}`;
 
 // RETRY=1 searches songs that weren't found again (only GENRE's, when it is set), for example after
 // the title matching got looser. Their title, artist, year and genres are kept in the "not found" note.
-if (process.env.RETRY === '1') {
+// RETRY=names only retries the ones a later fix could help: an artist in scripts/artist-names.ts, or a ß.
+if (process.env.RETRY === '1' || process.env.RETRY === 'names') {
   let again = 0;
   for (const [key, note] of Object.entries(progress.unmatched!)) {
     const m = note.match(/^(\d{4}), (.*?): /);
-    const [title, artist] = key.split('|');
-    if (!m || !artist) continue;
+    const [title, credited] = key.split('|');
+    if (!m || !credited) continue;
+    if (process.env.RETRY === 'names' && spotifyArtist(credited) === credited && !title.includes('ß')) continue;
+    const artist = spotifyArtist(credited);
     const genres = m[2] === 'no genre' ? [] : m[2].split(', ');
     if (GENRE && !genres.includes(GENRE)) continue;
     // Not when the song is already there under another spelling ("Se på mej" / "Se på mig").
@@ -316,7 +320,7 @@ function sameArtist(track: SpotifyTrack, artist: string): boolean {
  * already gone ("Mr. Hit" / "Mr Hit").
  */
 export function looseTitle(title: string): string {
-  return normalizeKey(cleanTitle(title))
+  return normalizeKey(cleanTitle(title).replace(/ß/g, 'ss'))
     .replace(/\b(m|d|s)ej\b/g, '$1ig')
     .replace(/ /g, '');
 }
