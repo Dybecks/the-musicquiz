@@ -9,11 +9,12 @@
  *   GENRE=schlager npm run source-songs          writes scripts/sources/schlager.md to look through
  *   GENRE=schlager APPLY=1 npm run source-songs  also adds the new songs to scripts/candidates.json
  *
- * TOP=… sets how many of the best-known songs are added (default 150). After
+ * TOP=… sets how many of the best-known songs are added (default 150; schlager
+ * takes every contest entry, as Markus asked on 2026-11-22). After
  * APPLY, `GENRE=schlager npm run spotify-data` finds their Spotify ids:
  * Wikidata's own ids first (free), then Spotify search for the rest.
  */
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { SEARCH_GENRE_DEFS } from '../src/data/searchGenres';
 import { normalizeKey, songKey } from '../src/spotify/personalDeck';
@@ -21,6 +22,8 @@ import { normalizeKey, songKey } from '../src/spotify/personalDeck';
 const file = (p: string) => fileURLToPath(new URL(p, import.meta.url));
 const SONGS_FILE = file('../src/data/catalog/songs.json');
 const CANDIDATES_FILE = file('./candidates.json');
+/** Songs set aside for now: not searched, not in the game, kept so they can be put back. */
+const SKIPPED_FILE = file('./skipped.json');
 const agent = { 'User-Agent': 'the-musicquiz-precompute/1.0 (https://github.com/Dybecks/the-musicquiz)' };
 
 /** Wikidata genres (English labels) that count as each of the game's genres; their sub-genres count too. */
@@ -47,7 +50,7 @@ const SWEDISH_ONLY = new Set(['swedishpop', 'schlager']);
 const SWEDEN = 'Q34';
 
 const GENRE = process.env.GENRE ?? '';
-const TOP = Number(process.env.TOP || 150);
+const TOP = Number(process.env.TOP || (GENRE === 'schlager' ? Infinity : 150));
 if (!SEARCH_GENRE_DEFS.some((g) => g.id === GENRE)) {
   console.error(`Set GENRE to one of: ${SEARCH_GENRE_DEFS.map((g) => g.id).join(', ')}`);
   process.exit(1);
@@ -101,7 +104,7 @@ function songQuery(where: string, withSubGenres: boolean, contest = false): stri
   ${swedish ? `{ ?song wdt:P495 wd:${SWEDEN}. } UNION { ?perf wdt:P27 wd:${SWEDEN}. } UNION { ?perf wdt:P495 wd:${SWEDEN}. }` : ''}
   ?perf rdfs:label ?perfLabel. FILTER(LANG(?perfLabel) IN ("en", "sv"))
   SERVICE wikibase:label { bd:serviceParam wikibase:language "en,sv". }
-} GROUP BY ?song ?songLabel ORDER BY DESC(?fame) LIMIT ${contest ? 5000 : Math.max(TOP * 3, 300)}`;
+} GROUP BY ?song ?songLabel ORDER BY DESC(?fame) LIMIT ${contest || !Number.isFinite(TOP) ? 5000 : Math.max(TOP * 3, 300)}`;
 }
 
 /** Items' entity data from the Wikidata API, 50 at a time. */
@@ -285,7 +288,9 @@ async function main(): Promise<void> {
   console.log(`\n${ranked.length} songs: ${ranked.filter((s) => status(s) === 'in the catalogue').length} in the catalogue, ${ranked.filter((s) => status(s) === 'already a candidate').length} already candidates, ${ranked.filter((s) => status(s) === 'new').length} new.`);
   console.log(`Wrote scripts/sources/${GENRE}.md.`);
 
-  // Schlager is contest songs only: other songs tagged schlager lose the tag (Swedish pop if nothing is left).
+  // Schlager is contest songs only: other songs tagged schlager lose the tag. One with no other genre
+  // is set aside in scripts/skipped.json (a candidate) or left without a genre (a catalogue song), never
+  // moved to another genre by guess.
   const contestTitles = new Set(found.filter((s) => s.via !== 'genre').map((s) => songKey(s.title, '').split('|')[0]));
   const notContest = (r: { title: string; genres: string[] }) => GENRE === 'schlager' && r.genres.includes('schlager') && !contestTitles.has(songKey(r.title, '').split('|')[0]);
   const songs = JSON.parse(readFileSync(SONGS_FILE, 'utf8')) as { title: string; artist: string; genres: string[] }[];
@@ -299,19 +304,22 @@ async function main(): Promise<void> {
   }
   const retag = untagged.filter((r) => !saved.includes(r));
   if (retag.length) {
-    console.log(`\n${retag.length} songs tagged schlager were not in Melodifestivalen or Eurovision${process.env.APPLY === '1' ? ' and lose the tag' : ' (APPLY=1 takes the tag away)'}:`);
+    console.log(`\n${retag.length} songs tagged schlager were not in Melodifestivalen or Eurovision${process.env.APPLY === '1' ? ' and lose the tag' : ' (APPLY=1 takes the tag away; one with no other genre is set aside)'}:`);
     for (const r of retag) console.log(`  ${r.title} – ${r.artist}`);
   }
 
   if (process.env.APPLY === '1') {
-    const untag = (r: { genres: string[] }) => {
-      r.genres = r.genres.filter((g) => g !== 'schlager');
-      if (!r.genres.length) r.genres = ['swedishpop'];
-    };
-    for (const r of retag) untag(r);
-    candidates.push(...fresh.map((s) => ({ title: s.title, artist: s.artist, year: s.year, genres: [GENRE] })));
+    for (const r of retag) r.genres = r.genres.filter((g) => g !== 'schlager');
+    const skipped = candidates.filter((r) => retag.includes(r) && !r.genres.length);
+    const keep = candidates.filter((r) => !skipped.includes(r));
+    keep.push(...fresh.map((s) => ({ title: s.title, artist: s.artist, year: s.year, genres: [GENRE] })));
     const lines = (list: object[]) => '[\n' + list.map((r) => ' ' + JSON.stringify(r)).join(',\n') + '\n]\n';
-    writeFileSync(CANDIDATES_FILE, lines(candidates));
+    writeFileSync(CANDIDATES_FILE, lines(keep));
+    if (skipped.length) {
+      const before = existsSync(SKIPPED_FILE) ? (JSON.parse(readFileSync(SKIPPED_FILE, 'utf8')) as object[]) : [];
+      writeFileSync(SKIPPED_FILE, lines([...before, ...skipped.map((r) => ({ ...r, genres: ['schlager'], why: 'not found in Melodifestivalen or Eurovision' }))]));
+      console.log(`Set ${skipped.length} candidates aside in scripts/skipped.json.`);
+    }
     if (retag.some((r) => songs.includes(r as never))) writeFileSync(SONGS_FILE, lines(songs));
     console.log(`Added ${fresh.length} songs to scripts/candidates.json.`);
   }
