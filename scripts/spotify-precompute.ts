@@ -58,6 +58,17 @@ const GENRES_FILE = file('./genre-progress.json');
 
 /** Requests per run. The next run carries on. */
 const MAX_REQUESTS = Number(process.env.MAX_REQUESTS || 300);
+/**
+ * GENRE=schlager looks up only that genre's songs (ids and genre tags), so one
+ * genre can be filled and checked at a time. REVIEW.md then lists all its songs.
+ */
+const GENRE = process.env.GENRE || null;
+if (GENRE && !SEARCH_GENRES.some((g) => g.id === GENRE)) {
+  console.error(`Unknown GENRE "${GENRE}". Use one of: ${SEARCH_GENRES.map((g) => g.id).join(', ')}`);
+  process.exit(1);
+}
+/** Whether a song is part of this run (every song, unless GENRE is set). */
+const inFocus = (row: { genres: string[] }) => !GENRE || row.genres.includes(GENRE);
 /** Time between requests. */
 const PAUSE_MS = Number(process.env.PAUSE_MS || 1500);
 /** A pause Spotify asks for that is longer than this ends the run instead. */
@@ -408,7 +419,7 @@ async function auditIds(): Promise<void> {
  * song's title. Only songs left over after this are searched on Spotify.
  */
 async function fromWikidata(): Promise<void> {
-  const todo = rows.filter((r) => !r.id && !progress.tried[keyOf(r)] && !progress.wikidata![keyOf(r)]);
+  const todo = rows.filter((r) => inFocus(r) && !r.id && !progress.tried[keyOf(r)] && !progress.wikidata![keyOf(r)]);
   if (todo.length === 0) return;
   const agent = { 'User-Agent': 'the-musicquiz-precompute/1.0 (https://github.com/Dybecks/the-musicquiz)' };
   const literal = (t: string) => JSON.stringify(t) + '@en';
@@ -492,7 +503,7 @@ async function fixSuspects(): Promise<void> {
 async function fillIds(): Promise<void> {
   for (const song of [...rows]) {
     const key = keyOf(song);
-    if (song.id || progress.tried[key]) continue;
+    if (song.id || progress.tried[key] || !inFocus(song)) continue;
     const firstArtist = song.artist.split(/\s*(?:,|&|feat\.|ft\.)\s*/i)[0];
     // At most two searches: the exact one, then a looser one.
     const queries = [`track:"${quoteless(song.title)}" artist:"${quoteless(firstArtist)}"`, `${quoteless(song.title)} ${quoteless(firstArtist)}`];
@@ -624,7 +635,7 @@ async function fillGenres(): Promise<void> {
   let asked = 0;
   let failures = 0;
   for (const row of rows) {
-    if (!row.id) continue; // a candidate not found yet
+    if (!row.id || !inFocus(row)) continue; // a candidate not found yet, or another genre
     const key = keyOf(row);
     const entry = (genreData[key] ??= { handSet: [...row.genres] });
     if (entry.applied && !sameList(entry.applied, row.genres)) entry.manual = true;
@@ -662,6 +673,24 @@ async function fillGenres(): Promise<void> {
 }
 
 // ---- Report ----
+
+/** Every song of one genre, oldest first, so the whole list can be checked by ear and eye. */
+function genreList(genre: string, byKey: Map<string, Row>): string[] {
+  const songs = rows.filter((r) => r.genres.includes(genre)).sort((a, b) => a.year - b.year || a.title.localeCompare(b.title));
+  const gone = Object.entries(progress.unmatched ?? {}).filter(([k]) => !byKey.has(k) || !byKey.get(k)?.id);
+  const line = (r: Row) =>
+    `- ${r.year} · ${r.title} – ${r.artist}${r.id ? ` · [Spotify](https://open.spotify.com/track/${r.id})` : ' · not found yet'}` +
+    (r.genres.length > 1 ? ` · also ${r.genres.filter((g) => g !== genre).join(', ')}` : '');
+  return [
+    `## All ${genre} songs (${songs.filter((r) => r.id).length} with an id, ${songs.filter((r) => !r.id).length} waiting)`,
+    '',
+    'Written because this run had GENRE set. Check that each one belongs here and is the right recording.',
+    '',
+    ...songs.map(line),
+    '',
+    ...(gone.length ? ['Not found on Spotify at all (any genre): ' + gone.length + ', listed above.', ''] : []),
+  ];
+}
 
 function review(): string {
   const byKey = new Map(rows.map((r) => [keyOf(r), r]));
@@ -722,6 +751,7 @@ function review(): string {
       return `| ${g.id} | ${counts.join(' | ')} | ${songs.length} |`;
     }),
     '',
+    ...(GENRE ? genreList(GENRE, byKey) : []),
   ];
   return lines.join('\n');
 }
