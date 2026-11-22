@@ -2,8 +2,26 @@ import { describe, expect, it } from 'vitest';
 import { BUILT_IN, chooseSongs, deckSongs, normalizeDecks, parseSavedDecks } from './decks';
 import { mergeSongs, songKey, type PersonalDeck } from '../spotify/personalDeck';
 
-const { classic: DEFAULT_SONGS, movies: MOVIE_SONGS, tv: TV_SONGS, ...rest } = BUILT_IN;
-const soundtracks = { movies: MOVIE_SONGS, tv: TV_SONGS, ...rest };
+const { classic: DEFAULT_SONGS, movies: MOVIE_SONGS, tv: TV_SONGS, musicals, games } = BUILT_IN;
+const soundtracks = { movies: MOVIE_SONGS, tv: TV_SONGS, musicals, games };
+const themes = { swedish: BUILT_IN.swedish, party: BUILT_IN.party, summer: BUILT_IN.summer, love: BUILT_IN.love };
+
+describe('theme decks', () => {
+  for (const [name, songs] of Object.entries(themes)) {
+    describe(name, () => {
+      it('has at least 30 songs', () => expect(songs.length).toBeGreaterThanOrEqual(30));
+      it('is ordered by year and has no repeats', () => {
+        const years = songs.map((s) => s.year);
+        expect(years).toEqual([...years].sort((a, b) => a - b));
+        expect(new Set(songs.map((s) => s.id)).size).toBe(songs.length);
+      });
+      it('is not mostly the classic deck', () => {
+        const classic = new Set(DEFAULT_SONGS.map((s) => s.id));
+        expect(songs.filter((s) => classic.has(s.id)).length).toBeLessThan(songs.length / 2);
+      });
+    });
+  }
+});
 
 describe('soundtrack decks', () => {
   for (const [name, songs] of Object.entries(soundtracks)) {

@@ -132,6 +132,10 @@ export const sv: Messages = {
 
   decks: {
     classic: { title: 'Klassiska hits', detail: 'Kända låtar från 1950-talet till i dag.' },
+    swedish: { title: 'Svenska favoriter', detail: 'Från ABBA och Gyllene Tider till Avicii och Loreen.' },
+    party: { title: 'Festhits', detail: 'Disco, dans och dansgolvsfyllare från 70-talet till i dag.' },
+    summer: { title: 'Sommarhits', detail: 'Solskenslåtar, från bossa nova till reggaeton.' },
+    love: { title: 'Kärlekslåtar', detail: 'Ballader och kärlekssånger från Elvis till Bruno Mars.' },
     movies: { title: 'Filmlåtar', detail: 'Från Trollkarlen från Oz till Barbie.' },
     musicals: { title: 'Musikaler', detail: 'Från Oklahoma! till Hamilton.' },
     tv: { title: 'TV-teman', detail: 'Från Peter Gunn till Arcane.' },

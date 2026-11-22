@@ -134,6 +134,10 @@ export const en = {
 
   decks: {
     classic: { title: 'Classic hits', detail: 'Well-known songs from the 1950s to today.' },
+    swedish: { title: 'Swedish favourites', detail: 'From ABBA and Gyllene Tider to Avicii and Loreen.' },
+    party: { title: 'Party anthems', detail: 'Disco, dance and floor-fillers from the 1970s to today.' },
+    summer: { title: 'Summer hits', detail: 'Sunshine songs, from bossa nova to reggaeton.' },
+    love: { title: 'Love songs', detail: 'Ballads and love songs from Elvis to Bruno Mars.' },
     movies: { title: 'Movie songs', detail: 'From The Wizard of Oz to Barbie.' },
     musicals: { title: 'Musicals', detail: 'From Oklahoma! to Hamilton.' },
     tv: { title: 'TV themes', detail: 'From Peter Gunn to Arcane.' },

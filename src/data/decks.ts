@@ -6,7 +6,7 @@ import { filterSongs, NO_FILTER, type DeckFilter } from './genres';
 import { msg } from '../i18n';
 
 /** The decks a game can be played with. Any combination can be chosen. */
-export type DeckId = 'classic' | 'movies' | 'musicals' | 'tv' | 'games' | 'mine';
+export type DeckId = 'classic' | 'swedish' | 'party' | 'summer' | 'love' | 'movies' | 'musicals' | 'tv' | 'games' | 'mine';
 
 export interface DeckInfo {
   id: DeckId;
@@ -15,7 +15,7 @@ export interface DeckInfo {
 }
 
 /** The decks, in order. Titles and details are in the current language (src/i18n). */
-export const DECKS: DeckInfo[] = (['classic', 'movies', 'musicals', 'tv', 'games', 'mine'] as const).map((id) => ({
+export const DECKS: DeckInfo[] = (['classic', 'swedish', 'party', 'summer', 'love', 'movies', 'musicals', 'tv', 'games', 'mine'] as const).map((id) => ({
   id,
   get title() {
     return msg().decks[id].title;
@@ -28,6 +28,10 @@ export const DECKS: DeckInfo[] = (['classic', 'movies', 'musicals', 'tv', 'games
 /** The ready-made decks: lists of songs from the catalogue (src/data/catalog). */
 export const BUILT_IN: Record<BuiltInDeckId, Song[]> = {
   classic: deckFromCatalog('classic'),
+  swedish: deckFromCatalog('swedish'),
+  party: deckFromCatalog('party'),
+  summer: deckFromCatalog('summer'),
+  love: deckFromCatalog('love'),
   movies: deckFromCatalog('movies'),
   musicals: deckFromCatalog('musicals'),
   tv: deckFromCatalog('tv'),
