@@ -153,7 +153,9 @@ if (process.env.RETRY === '1') {
     if (!m || !artist) continue;
     const genres = m[2] === 'no genre' ? [] : m[2].split(', ');
     if (GENRE && !genres.includes(GENRE)) continue;
-    if (!rows.some((r) => songKey(r.title, r.artist) === songKey(title, artist))) rows.push({ title, artist, year: Number(m[1]), genres, id: null });
+    // Not when the song is already there under another spelling ("Se på mej" / "Se på mig").
+    const artistKey = songKey('', artist);
+    if (!rows.some((r) => songKey('', r.artist) === artistKey && looseTitle(r.title) === looseTitle(title))) rows.push({ title, artist, year: Number(m[1]), genres, id: null });
     delete progress.unmatched![key];
     delete progress.tried[key];
     again++;
