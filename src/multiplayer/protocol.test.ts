@@ -77,7 +77,7 @@ describe('votes', () => {
     expect(teamDecision(room, g)).toEqual({ kind: 'waiting', locked: 2, total: 3 });
     room = applyMessage(room, g, 'cid', { type: 'vote', slot: 0 });
     room = applyMessage(room, g, 'cid', { type: 'lock', locked: true });
-    expect(teamDecision(room, g)).toEqual({ kind: 'place', slot: 1 });
+    expect(teamDecision(room, g)).toEqual({ kind: 'place', slot: 1, answer: null });
   });
 
   it('reports a split vote instead of guessing', () => {
@@ -100,7 +100,7 @@ describe('votes', () => {
     room = applyMessage(room, g, 'ann', { type: 'vote', slot: 1 });
     room = applyMessage(room, g, 'ann', { type: 'lock', locked: true });
     room = setConnected(room, 'bob', false);
-    expect(teamDecision(room, g)).toEqual({ kind: 'place', slot: 1 });
+    expect(teamDecision(room, g)).toEqual({ kind: 'place', slot: 1, answer: null });
     expect(votesBySlot(room.members).get(1)).toEqual([`${room.members[0].emoji} ann`]);
   });
 
@@ -240,5 +240,53 @@ describe('moving on after the reveal', () => {
     room = setConnected(voteNext(room, 'a', turnOf(g)), 'b', false);
     expect(majorityWantsNext(room, g)).toBe(true);
     expect(clearVotes(room).members.every((m) => m.next === undefined)).toBe(true);
+  });
+});
+
+describe('bonus question votes', () => {
+  const bands: Song[] = Array.from({ length: 20 }, (_, i) => ({ id: `s${i}`, title: `Song ${i}`, artist: `Band ${i}`, year: 1960 + i * 3 }));
+  const bonusGame = () => createGame({ playerNames: ['Red', 'Blue'], targetCards: 5, songs: bands, mode: 'bonus' });
+
+  it('shows phones the question but not the answer', () => {
+    const g = bonusGame();
+    const view = gameView(g)!;
+    expect(view.question?.choices).toEqual(g.question!.choices);
+    expect(view.question).not.toHaveProperty('answer');
+  });
+
+  it('needs a spot and an answer to lock in, then places both', () => {
+    const g = bonusGame();
+    let room = roomWith(g, ['ann', 'p1'], ['bob', 'p1']);
+    room = applyMessage(room, g, 'ann', { type: 'vote', slot: 1 });
+    room = applyMessage(room, g, 'ann', { type: 'lock', locked: true });
+    expect(room.members[0].locked).toBe(false);
+    room = applyMessage(room, g, 'ann', { type: 'answer', choice: 2 });
+    room = applyMessage(room, g, 'ann', { type: 'lock', locked: true });
+    room = applyMessage(room, g, 'bob', { type: 'vote', slot: 1 });
+    room = applyMessage(room, g, 'bob', { type: 'answer', choice: 2 });
+    room = applyMessage(room, g, 'bob', { type: 'lock', locked: true });
+    expect(teamDecision(room, g)).toEqual({ kind: 'place', slot: 1, answer: 2 });
+  });
+
+  it('rejects answers that are not among the choices, and splits on a tie', () => {
+    const g = bonusGame();
+    let room = roomWith(g, ['ann', 'p1'], ['bob', 'p1']);
+    room = applyMessage(room, g, 'ann', { type: 'answer', choice: 9 });
+    expect(room.members[0].answer ?? null).toBeNull();
+    for (const [id, choice] of [['ann', 0], ['bob', 1]] as const) {
+      room = applyMessage(room, g, id, { type: 'vote', slot: 0 });
+      room = applyMessage(room, g, id, { type: 'answer', choice });
+      room = applyMessage(room, g, id, { type: 'lock', locked: true });
+    }
+    expect(teamDecision(room, g)).toEqual({ kind: 'split' });
+    // Changing the answer unlocks.
+    room = applyMessage(room, g, 'bob', { type: 'answer', choice: 0 });
+    expect(room.members[1].locked).toBe(false);
+  });
+
+  it('ignores answers in classic', () => {
+    const g = game();
+    const room = applyMessage(roomWith(g, ['ann', 'p1']), g, 'ann', { type: 'answer', choice: 0 });
+    expect(room.members[0].answer ?? null).toBeNull();
   });
 });

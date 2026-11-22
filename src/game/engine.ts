@@ -25,6 +25,36 @@ export interface Player {
   name: string;
   /** Always sorted by year, oldest first. */
   timeline: Song[];
+  /** Bonus points from bonus questions (game mode 'bonus'). Count toward the target like cards. */
+  stars?: number;
+}
+
+/**
+ * How the game is played:
+ *  - 'classic': place the song on your timeline, first to the target number of cards wins;
+ *  - 'bonus': the same, plus a multiple-choice question about each song while it plays.
+ *    A right answer gives a star, and cards plus stars count toward the target.
+ */
+export type GameMode = 'classic' | 'bonus';
+export const GAME_MODES: GameMode[] = ['classic', 'bonus'];
+
+/** What a bonus question asks: who performs the song, its title, or the film/show/game/musical it is from. */
+export type QuestionKind = 'artist' | 'title' | 'from';
+
+export interface BonusQuestion {
+  kind: QuestionKind;
+  /** Four (or at least two) different answers to choose from. */
+  choices: string[];
+  /** Index of the right one in `choices`. Never sent to phones before the reveal. */
+  answer: number;
+}
+
+/** How the team answered the bonus question, kept with the reveal. */
+export interface BonusResult {
+  question: BonusQuestion;
+  /** The chosen answer, or null when the team didn't choose one. */
+  pick: number | null;
+  correct: boolean;
 }
 
 export type Phase = 'guessing' | 'revealed' | 'finished';
@@ -34,6 +64,8 @@ export interface LastGuess {
   song: Song;
   slot: number;
   correct: boolean;
+  /** The bonus question for this song and how it was answered (mode 'bonus'). */
+  bonus?: BonusResult;
 }
 
 export interface GameState {
@@ -53,7 +85,17 @@ export interface GameState {
   refill?: unknown;
   /** Songs already dealt (as `songKey`s), so songs fetched later don't repeat them. */
   used?: string[];
+  /** Missing in games saved before there were modes: 'classic'. */
+  mode?: GameMode;
+  /** The bonus question about `current`, in mode 'bonus' (null when no good one could be made). */
+  question?: BonusQuestion | null;
 }
+
+export const modeOf = (state: Pick<GameState, 'mode'>): GameMode =>
+  state.mode && GAME_MODES.includes(state.mode) ? state.mode : 'classic';
+
+/** A player's score: cards on the timeline plus bonus stars. */
+export const scoreOf = (p: Pick<Player, 'timeline' | 'stars'>) => p.timeline.length + (p.stars ?? 0);
 
 /** Identifies a song across releases: same title and artist. */
 export const songKeyOf = (s: Pick<Song, 'title' | 'artist'>) => `${s.title}|${s.artist}`.toLowerCase();
@@ -92,8 +134,72 @@ export function spreadByDecade(songs: readonly Song[], rng: Rng = Math.random): 
   return out;
 }
 
+/** How many wrong answers a bonus question has, at most and at least. */
+const DECOYS = 3;
+const MIN_DECOYS = 2;
+
+const valueOf = (song: Song, kind: QuestionKind): string | undefined =>
+  kind === 'artist' ? song.artist : kind === 'title' ? song.title : song.from;
+
+const same = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
+
+/**
+ * Wrong answers for `song`: values from other songs, preferring songs from
+ * years close to it, so the choices sound plausible together.
+ */
+function decoysFor(song: Song, kind: QuestionKind, pool: readonly Song[], rng: Rng): string[] {
+  const right = valueOf(song, kind);
+  if (!right) return [];
+  const candidates = shuffle(pool, rng)
+    .filter((s) => s.id !== song.id && (kind !== 'artist' || !same(s.artist, song.artist)))
+    .map((s) => ({ value: valueOf(s, kind), gap: Math.abs(s.year - song.year) + rng() * 8 }))
+    .filter((c): c is { value: string; gap: number } => !!c.value && !same(c.value, right))
+    .sort((a, b) => a.gap - b.gap);
+  const out: string[] = [];
+  for (const c of candidates) {
+    if (out.some((v) => same(v, c.value))) continue;
+    out.push(c.value);
+    if (out.length === DECOYS) break;
+  }
+  return out;
+}
+
+/**
+ * A multiple-choice question about `song`, with wrong answers taken from the
+ * other songs in `pool`: where a soundtrack song is from when it has that,
+ * otherwise who performs it or what it is called. Null when the pool hasn't
+ * enough different answers.
+ */
+export function makeQuestion(song: Song, pool: readonly Song[], rng: Rng = Math.random): BonusQuestion | null {
+  const kinds: QuestionKind[] = rng() < 0.5 ? ['artist', 'title'] : ['title', 'artist'];
+  if (song.from) kinds.unshift('from');
+  for (const kind of kinds) {
+    const right = valueOf(song, kind);
+    const decoys = decoysFor(song, kind, pool, rng);
+    if (!right || decoys.length < MIN_DECOYS) continue;
+    const choices = shuffle([right, ...decoys], rng);
+    return { kind, choices, answer: choices.indexOf(right) };
+  }
+  return null;
+}
+
+/** Every song the game knows of right now, for the wrong answers of a bonus question. */
+const knownSongs = (state: Pick<GameState, 'deck' | 'players' | 'current'>): Song[] => [
+  ...state.deck,
+  ...state.players.flatMap((p) => p.timeline),
+  ...(state.current ? [state.current] : []),
+];
+
+/** The state with a fresh bonus question for its current song, in mode 'bonus'. */
+function withQuestion<S extends GameState>(state: S, rng: Rng = Math.random): S {
+  if (modeOf(state) !== 'bonus') return state;
+  return { ...state, question: state.current ? makeQuestion(state.current, knownSongs(state), rng) : null };
+}
+
 export interface NewGameOptions {
   playerNames: string[];
+  /** Missing: 'classic'. */
+  mode?: GameMode;
   targetCards: number;
   songs: readonly Song[];
   /** 'decades' spreads the songs evenly over the decades; 'random' (default) is a plain shuffle. */
@@ -101,7 +207,7 @@ export interface NewGameOptions {
   rng?: Rng;
 }
 
-export function createGame({ playerNames, targetCards, songs, order = 'random', rng = Math.random }: NewGameOptions): GameState {
+export function createGame({ playerNames, targetCards, songs, mode = 'classic', order = 'random', rng = Math.random }: NewGameOptions): GameState {
   const names = playerNames.map((n) => n.trim()).filter(Boolean);
   if (names.length === 0) throw new Error(msg().setup.addPlayer);
   if (targetCards < 2) throw new Error(msg().errors.targetTooLow);
@@ -120,7 +226,8 @@ export function createGame({ playerNames, targetCards, songs, order = 'random', 
   }
 
   const current = deck.shift() ?? null;
-  return {
+  return withQuestion({
+    mode,
     players,
     currentPlayerIndex: 0,
     deck,
@@ -131,7 +238,7 @@ export function createGame({ playerNames, targetCards, songs, order = 'random', 
     winnerIds: [],
     round: 1,
     used: [...players.map((p) => songKeyOf(p.timeline[0])), ...(current ? [songKeyOf(current)] : [])],
-  };
+  }, rng);
 }
 
 /**
@@ -161,20 +268,30 @@ export function currentPlayer(state: GameState): Player {
   return state.players[state.currentPlayerIndex];
 }
 
-export function placeCurrent(state: GameState, slot: number): GameState {
+/**
+ * Locks in the guess: `slot` on the timeline, and in mode 'bonus' `pick`,
+ * the index of the chosen answer to the bonus question (null for none).
+ */
+export function placeCurrent(state: GameState, slot: number, pick: number | null = null): GameState {
   if (state.phase !== 'guessing' || !state.current) return state;
   const player = currentPlayer(state);
   const song = state.current;
   const correct = isCorrectPlacement(player.timeline, slot, song.year);
-  const players = state.players.map((p) =>
-    p.id === player.id && correct ? { ...p, timeline: insertSorted(p.timeline, song) } : p,
-  );
-  const winnerIds = players.filter((p) => p.timeline.length >= state.targetCards).map((p) => p.id);
+  const question = modeOf(state) === 'bonus' ? state.question : null;
+  const bonus: BonusResult | undefined = question
+    ? { question, pick: pick !== null && pick >= 0 && pick < question.choices.length ? pick : null, correct: pick === question.answer }
+    : undefined;
+  const players = state.players.map((p) => {
+    if (p.id !== player.id) return p;
+    const next = correct ? { ...p, timeline: insertSorted(p.timeline, song) } : p;
+    return bonus?.correct ? { ...next, stars: (p.stars ?? 0) + 1 } : next;
+  });
+  const winnerIds = players.filter((p) => scoreOf(p) >= state.targetCards).map((p) => p.id);
   return {
     ...state,
     players,
     phase: 'revealed',
-    lastGuess: { playerId: player.id, song, slot, correct },
+    lastGuess: { playerId: player.id, song, slot, correct, ...(bonus ? { bonus } : {}) },
     winnerIds,
   };
 }
@@ -182,7 +299,7 @@ export function placeCurrent(state: GameState, slot: number): GameState {
 /** Move on after a reveal: either the game is won, or the next player draws. */
 export function nextTurn(state: GameState): GameState {
   if (state.phase !== 'revealed') return state;
-  if (state.winnerIds.length > 0) return { ...state, phase: 'finished', current: null };
+  if (state.winnerIds.length > 0) return { ...state, phase: 'finished', current: null, question: null };
   return drawForNextPlayer(state);
 }
 
@@ -191,7 +308,7 @@ function drawForNextPlayer(state: GameState): GameState {
   const current = deck.shift() ?? null;
   if (!current) return finishByMostCards(state);
   const nextIndex = (state.currentPlayerIndex + 1) % state.players.length;
-  return {
+  return withQuestion({
     ...state,
     deck,
     current,
@@ -200,7 +317,7 @@ function drawForNextPlayer(state: GameState): GameState {
     round: nextIndex === 0 ? state.round + 1 : state.round,
     phase: 'guessing',
     lastGuess: null,
-  };
+  });
 }
 
 /** Swap the current song for a new one without using up the turn (e.g. track not found on Spotify). */
@@ -209,7 +326,7 @@ export function skipSong(state: GameState): GameState {
   const deck = state.deck.slice();
   const current = deck.shift() ?? null;
   if (!current) return finishByMostCards(state);
-  return { ...state, deck, current, used: [...(state.used ?? []), songKeyOf(current)] };
+  return withQuestion({ ...state, deck, current, used: [...(state.used ?? []), songKeyOf(current)] });
 }
 
 /**
@@ -228,16 +345,19 @@ export function addSongs(state: GameState, songs: readonly Song[], refill: unkno
   }
   // The whole remaining deck is dealt again spread over the decades, so a
   // batch from one decade doesn't come up all in a row.
-  return { ...state, deck: spreadByDecade([...state.deck, ...fresh], rng), refill };
+  const next = { ...state, deck: spreadByDecade([...state.deck, ...fresh], rng), refill };
+  // Too few songs for a bonus question before: maybe there are enough now.
+  return next.phase === 'guessing' && next.question === null ? withQuestion(next, rng) : next;
 }
 
 function finishByMostCards(state: GameState): GameState {
-  const most = Math.max(...state.players.map((p) => p.timeline.length));
+  const most = Math.max(...state.players.map(scoreOf));
   return {
     ...state,
     deck: [],
     current: null,
+    question: null,
     phase: 'finished',
-    winnerIds: state.players.filter((p) => p.timeline.length === most).map((p) => p.id),
+    winnerIds: state.players.filter((p) => scoreOf(p) === most).map((p) => p.id),
   };
 }

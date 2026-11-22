@@ -248,6 +248,29 @@ export const en = {
     anyoneMovesOn: 'Any player can move on from their phone.',
   },
 
+  modes: {
+    title: 'Game mode',
+    classic: 'Classic',
+    classicDetail: 'Place the song on your timeline. First to the target number of cards wins.',
+    bonus: 'Bonus questions',
+    bonusDetail:
+      'Also answer a question about each song while it plays: who performs it, what it’s called or where it’s from. A right answer gives a ⭐ that counts like a card.',
+    pointsToWin: 'Points needed to win (cards + ⭐)',
+    questionLabel: 'Bonus question',
+    questionArtist: 'Who performs the song?',
+    questionTitle: 'What is the song called?',
+    questionFrom: 'Where is the song from?',
+    choiceVotes: (names: string[]) => `Votes: ${names.join(', ')}`,
+    pickBoth: 'Pick a spot and an answer',
+    tapToVoteBoth: 'Tap a spot and an answer to vote',
+    split: 'The votes are split. Agree on one spot and one answer, and lock in again.',
+    bonusRight: '⭐ Right answer! A bonus point.',
+    bonusWrong: (answer: string) => `No bonus point: the answer was **${answer}**.`,
+    bonusNone: (answer: string) => `No answer, no bonus point. It was **${answer}**.`,
+    stars: (n: number) => `${n} bonus ${n === 1 ? 'point' : 'points'}`,
+    points: (cards: number, stars: number) => `(${cards} ${cards === 1 ? 'card' : 'cards'} + ${stars} ⭐)`,
+  },
+
   timeline: {
     placeHere: 'Place here',
     before: (year: number) => `Before ${year}`,

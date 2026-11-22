@@ -137,7 +137,7 @@ export function App() {
     const order = values.spreadDecades ? 'decades' : 'random';
     // Songs the phones sent from their Spotify join the deck.
     const songs = mergeSongs(values.songs, host.takePending());
-    setGame({ ...createGame({ playerNames: values.players, targetCards: values.targetCards, songs, order }), refill: values.refill });
+    setGame({ ...createGame({ playerNames: values.players, targetCards: values.targetCards, songs, order, mode: values.gameMode }), refill: values.refill });
   };
 
   return (

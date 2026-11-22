@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { addSongs, createGame, insertSorted, isCorrectPlacement, nextTurn, placeCurrent, skipSong, spreadByDecade, type Song } from './engine';
+import { addSongs, createGame, insertSorted, isCorrectPlacement, makeQuestion, nextTurn, placeCurrent, scoreOf, skipSong, spreadByDecade, type Song } from './engine';
 
 const song = (year: number, id = `s${year}`): Song => ({ id, title: `Song ${year}`, artist: 'Artist', year });
 const songs = [1960, 1970, 1980, 1990, 2000, 2010, 2020].map((y) => song(y));
@@ -130,5 +130,83 @@ describe('addSongs', () => {
     const first = g.current!;
     g = skipSong(g);
     expect(addSongs(g, [first], undefined).deck).toHaveLength(g.deck.length);
+  });
+});
+
+describe('bonus questions', () => {
+  const band = (year: number, i: number): Song => ({ id: `b${i}`, title: `Title ${i}`, artist: `Band ${i}`, year });
+  const many = Array.from({ length: 12 }, (_, i) => band(1960 + i * 5, i));
+
+  it('asks with the right answer and three different wrong ones', () => {
+    const q = makeQuestion(many[0], many)!;
+    expect(q.choices).toHaveLength(4);
+    expect(new Set(q.choices).size).toBe(4);
+    const right = q.kind === 'artist' ? many[0].artist : many[0].title;
+    expect(q.choices[q.answer]).toBe(right);
+  });
+
+  it('never offers the same artist as a wrong answer', () => {
+    const pool = [...many, { ...many[1], id: 'x', artist: 'Band 0' }];
+    for (let i = 0; i < 20; i++) {
+      const q = makeQuestion(many[0], pool)!;
+      expect(q.choices.filter((c) => c === 'Band 0').length).toBeLessThanOrEqual(1);
+    }
+  });
+
+  it('asks where a soundtrack song is from', () => {
+    const films = many.map((s, i) => ({ ...s, from: `Film ${i}` }));
+    const q = makeQuestion(films[3], films)!;
+    expect(q.kind).toBe('from');
+    expect(q.choices[q.answer]).toBe('Film 3');
+  });
+
+  it('gives up when there are too few different answers', () => {
+    expect(makeQuestion(many[0], many.slice(0, 2))).toBeNull();
+  });
+
+  it('gives a star for the right answer, and stars count toward the target', () => {
+    let g = createGame({ playerNames: ['A', 'B'], targetCards: 3, songs: many, mode: 'bonus' });
+    expect(g.question).toBeTruthy();
+    const q = g.question!;
+    g = placeCurrent(g, 0, q.answer);
+    expect(g.players[0].stars).toBe(1);
+    expect(g.lastGuess?.bonus).toMatchObject({ pick: q.answer, correct: true });
+    expect(scoreOf(g.players[0])).toBe(g.players[0].timeline.length + 1);
+  });
+
+  it('gives no star for a wrong or missing answer', () => {
+    let g = createGame({ playerNames: ['A'], targetCards: 5, songs: many, mode: 'bonus' });
+    g = placeCurrent(g, 0, (g.question!.answer + 1) % g.question!.choices.length);
+    expect(g.players[0].stars ?? 0).toBe(0);
+    g = nextTurn(g);
+    expect(g.question).toBeTruthy();
+    g = placeCurrent(g, 0, null);
+    expect(g.players[0].stars ?? 0).toBe(0);
+    expect(g.lastGuess?.bonus?.pick).toBeNull();
+  });
+
+  it('wins on cards plus stars', () => {
+    let g = createGame({ playerNames: ['A', 'B'], targetCards: 2, songs: many, mode: 'bonus' });
+    // A wrong spot but the right answer: 1 card + 1 star.
+    const year = g.current!.year;
+    const start = g.players[0].timeline[0].year;
+    const wrongSlot = year >= start ? 0 : 1;
+    g = placeCurrent(g, year === start ? 99 : wrongSlot, g.question!.answer);
+    expect(g.winnerIds).toEqual(['p1']);
+  });
+
+  it('asks nothing in classic', () => {
+    const g = createGame({ playerNames: ['A'], targetCards: 3, songs: many });
+    expect(g.question).toBeUndefined();
+    expect(placeCurrent(g, 0, 0).lastGuess?.bonus).toBeUndefined();
+  });
+
+  it('asks a new question for a skipped song', () => {
+    const g = createGame({ playerNames: ['A'], targetCards: 3, songs: many, mode: 'bonus' });
+    const s = skipSong(g);
+    expect(s.current?.id).not.toBe(g.current?.id);
+    const q = s.question!;
+    const right = q.kind === 'artist' ? s.current!.artist : s.current!.title;
+    expect(q.choices[q.answer]).toBe(right);
   });
 });

@@ -219,10 +219,11 @@ export function useHostRoom(
 
   // The whole team locked in: that's the guess.
   const placeSlot = decision.kind === 'place' ? decision.slot : null;
+  const placeAnswer = decision.kind === 'place' ? decision.answer : null;
   useEffect(() => {
     if (placeSlot === null) return;
-    setGame((g) => (g && g.phase === 'guessing' ? placeCurrent(g, placeSlot) : g));
-  }, [placeSlot, turnKey, setGame]);
+    setGame((g) => (g && g.phase === 'guessing' ? placeCurrent(g, placeSlot, placeAnswer) : g));
+  }, [placeSlot, placeAnswer, turnKey, setGame]);
 
   // Every change goes to every phone right away.
   useEffect(() => {

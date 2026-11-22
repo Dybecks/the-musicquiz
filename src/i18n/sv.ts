@@ -241,6 +241,29 @@ export const sv: Messages = {
     anyoneMovesOn: 'Vilken spelare som helst kan gå vidare från sin mobil.',
   },
 
+  modes: {
+    title: 'Spelläge',
+    classic: 'Classic',
+    classicDetail: 'Placera låten på din tidslinje. Först till målet av kort vinner.',
+    bonus: 'Bonusfrågor',
+    bonusDetail:
+      'Svara dessutom på en fråga om varje låt medan den spelas: vem som framför den, vad den heter eller var den kommer ifrån. Rätt svar ger en ⭐ som räknas som ett kort.',
+    pointsToWin: 'Poäng som krävs för att vinna (kort + ⭐)',
+    questionLabel: 'Bonusfråga',
+    questionArtist: 'Vem framför låten?',
+    questionTitle: 'Vad heter låten?',
+    questionFrom: 'Var kommer låten ifrån?',
+    choiceVotes: (names) => `Röster: ${names.join(', ')}`,
+    pickBoth: 'Välj en plats och ett svar',
+    tapToVoteBoth: 'Tryck på en plats och ett svar för att rösta',
+    split: 'Rösterna är delade. Kom överens om en plats och ett svar och lås igen.',
+    bonusRight: '⭐ Rätt svar! En bonuspoäng.',
+    bonusWrong: (answer) => `Ingen bonuspoäng: rätt svar var **${answer}**.`,
+    bonusNone: (answer) => `Inget svar, ingen bonuspoäng. Det var **${answer}**.`,
+    stars: (n) => `${n} bonuspoäng`,
+    points: (cards, stars) => `(${cards} kort + ${stars} ⭐)`,
+  },
+
   timeline: {
     placeHere: 'Placera här',
     before: (year) => `Före ${year}`,

@@ -22,6 +22,21 @@ It runs in the browser on a phone, tablet or laptop that everyone gathers around
 Use **Skip song** if a track can't be found or played; it draws a new song
 without using up the turn. The game is saved in the browser, so a reload doesn't lose it.
 
+## Game modes
+
+On the **Players & play** screen the host picks a game mode:
+
+- **Classic**: the game as described above.
+- **Bonus questions**: while the song plays, the team also answers a multiple-choice
+  question about it: who performs it, what it's called, or for soundtrack songs which film,
+  show, game or musical it's from. A right answer gives a ⭐ bonus point, and cards plus
+  stars count toward the target. The questions are made from the song catalogue: the
+  wrong answers are other songs' artists, titles or works, preferably from nearby years, so
+  every deck works without writing questions by hand. With phones, every team member votes
+  for an answer as well as a spot, and the answer with the most votes counts.
+
+The rules are in `src/game/engine.ts` (`GameMode`, `makeQuestion`, `scoreOf`).
+
 ## Playing together on phones
 
 The host's device plays the music, and everyone else can follow along on their own phone or computer:

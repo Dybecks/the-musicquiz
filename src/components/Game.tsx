@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { addSongs, currentPlayer, nextTurn, placeCurrent, skipSong, type GameState } from '../game/engine';
+import { addSongs, currentPlayer, modeOf, nextTurn, placeCurrent, scoreOf, skipSong, type GameState, type LastGuess } from '../game/engine';
 import { fetchBatch, type RefillPlan } from '../spotify/listening';
 import {
   createEmbedPlayback,
@@ -12,7 +12,8 @@ import { hideNowPlaying, primeNowPlaying, showNowPlaying, unprimeNowPlaying } fr
 import { loadFact, type SongFact } from '../facts';
 import { Timeline } from './Timeline';
 import type { HostRoom } from '../multiplayer/useHostRoom';
-import { HOST_ID, activeVoters, nextRuleOf, nextVotes, turnOf, votesBySlot } from '../multiplayer/protocol';
+import { HOST_ID, activeVoters, hasQuestion, nextRuleOf, nextVotes, readyToLock, turnOf, votesByAnswer, votesBySlot } from '../multiplayer/protocol';
+import { BonusOutcome, BonusQuestion } from './BonusQuestion';
 import { SharePanel } from './SharePanel';
 import { msg, useLang, useT } from '../i18n';
 import { SongNotFoundError } from '../spotify/playback';
@@ -71,7 +72,10 @@ export function Game({ state, mode, onModeChange, onChange, onQuit, host }: Prop
   const t = useT();
   const tg = t.game;
   const refillNote = useRefill(state, onChange);
-  const votes = host.room && state.phase === 'guessing' ? votesBySlot(activeVoters(host.room, state)) : undefined;
+  const voters = host.room && state.phase === 'guessing' ? activeVoters(host.room, state) : null;
+  const votes = voters ? votesBySlot(voters) : undefined;
+  const answerVotes = voters ? votesByAnswer(voters) : undefined;
+  const question = hasQuestion(state) ? state.question! : null;
   // The host on the team whose turn it is votes like everyone else on it.
   const hostMember = host.room?.members.find((m) => m.id === HOST_ID);
   const hostVoting = !!hostMember && state.phase === 'guessing' && hostMember.teamId === currentPlayer(state).id;
@@ -84,6 +88,8 @@ export function Game({ state, mode, onModeChange, onChange, onQuit, host }: Prop
   const [songMissing, setSongMissing] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
+  /** The answer picked here for the bonus question (mode 'bonus'). */
+  const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   /** The Spotify embed is opened above the bar (it shows the title). */
   const [showPlayer, setShowPlayer] = useState(false);
   const [progress, setProgress] = useState<Clock>(() => ({ positionMs: 0, durationMs: 0, at: performance.now() }));
@@ -232,12 +238,18 @@ export function Game({ state, mode, onModeChange, onChange, onQuit, host }: Prop
 
   // A new turn starts with nothing picked.
   const turn = `${state.round}:${state.currentPlayerIndex}:${state.current?.id ?? ''}`;
-  useEffect(() => setSelectedSlot(null), [turn]);
-
-  const lockIn = () => {
-    if (selectedSlot === null) return;
-    onChange(placeCurrent(state, selectedSlot));
+  useEffect(() => {
     setSelectedSlot(null);
+    setSelectedAnswer(null);
+  }, [turn]);
+
+  /** Everything the turn asks for is picked here: a spot, and an answer when there is a bonus question. */
+  const picked = readyToLock({ vote: selectedSlot, answer: selectedAnswer }, !!question);
+  const lockIn = () => {
+    if (selectedSlot === null || !picked) return;
+    onChange(placeCurrent(state, selectedSlot, selectedAnswer));
+    setSelectedSlot(null);
+    setSelectedAnswer(null);
   };
 
   const next = () => {
@@ -267,6 +279,7 @@ export function Game({ state, mode, onModeChange, onChange, onQuit, host }: Prop
     void playback?.stop();
     setPlaying(false);
     setSelectedSlot(null);
+    setSelectedAnswer(null);
     onChange(skipSong(state));
   };
 
@@ -319,6 +332,15 @@ export function Game({ state, mode, onModeChange, onChange, onQuit, host }: Prop
                     </div>
                   )}
                   {songError && <p className="warn">{songError}</p>}
+                  {question && (
+                    <BonusQuestion
+                      kind={question.kind}
+                      choices={question.choices}
+                      selected={hostVoting ? (hostMember.answer ?? null) : selectedAnswer}
+                      onSelect={(choice) => (hostVoting ? host.act({ type: 'answer', choice }) : setSelectedAnswer(choice))}
+                      votes={answerVotes}
+                    />
+                  )}
                   {songStatus === 'error' && !songMissing && (
                     <p>
                       <button className="link" onClick={() => setAttempt((n) => n + 1)}>
@@ -328,7 +350,7 @@ export function Game({ state, mode, onModeChange, onChange, onQuit, host }: Prop
                   )}
                 </div>
               ) : (
-                state.lastGuess && <Reveal correct={state.lastGuess.correct} song={state.lastGuess.song} />
+                state.lastGuess && <Reveal correct={state.lastGuess.correct} song={state.lastGuess.song} bonus={state.lastGuess.bonus} />
               )}
             </section>
 
@@ -342,10 +364,10 @@ export function Game({ state, mode, onModeChange, onChange, onQuit, host }: Prop
                   ) : (
                     <button
                       className="primary big"
-                      disabled={hostMember.vote === null}
+                      disabled={!readyToLock(hostMember, !!question)}
                       onClick={() => host.act({ type: 'lock', locked: true })}
                     >
-                      {hostMember.vote === null ? tg.tapToVote : tg.lockMyVote}
+                      {readyToLock(hostMember, !!question) ? tg.lockMyVote : question ? t.modes.tapToVoteBoth : tg.tapToVote}
                     </button>
                   )}
                   {host.decision.kind === 'waiting' && (
@@ -354,15 +376,17 @@ export function Game({ state, mode, onModeChange, onChange, onQuit, host }: Prop
                     </p>
                   )}
                   {host.decision.kind === 'split' && (
-                    <p className="warn center vote-status">{tg.split}</p>
+                    <p className="warn center vote-status">{question ? t.modes.split : tg.split}</p>
                   )}
                 </>
               ) : state.phase === 'guessing' ? (
                 <>
-                  <button className="primary big" disabled={selectedSlot === null} onClick={lockIn}>
-                    {selectedSlot === null
+                  <button className="primary big" disabled={!picked} onClick={lockIn}>
+                    {!picked
                       ? host.decision.kind === 'none'
-                        ? tg.pickSpot
+                        ? question
+                          ? t.modes.pickBoth
+                          : tg.pickSpot
                         : tg.waitingVotes
                       : tg.lockGuess}
                   </button>
@@ -372,7 +396,7 @@ export function Game({ state, mode, onModeChange, onChange, onQuit, host }: Prop
                     </p>
                   )}
                   {host.decision.kind === 'split' && (
-                    <p className="warn center vote-status">{tg.split}</p>
+                    <p className="warn center vote-status">{question ? t.modes.split : tg.split}</p>
                   )}
                 </>
               ) : (
@@ -390,7 +414,7 @@ export function Game({ state, mode, onModeChange, onChange, onQuit, host }: Prop
             <h2>
               {tg.timeline(player.name)}{' '}
               <span className="muted">
-                ({player.timeline.length}/{state.targetCards})
+                ({scoreOf(player)}/{state.targetCards})
               </span>
             </h2>
             {state.phase === 'guessing' ? (
@@ -481,14 +505,20 @@ export function Game({ state, mode, onModeChange, onChange, onQuit, host }: Prop
 }
 
 export function Scoreboard({ state }: { state: Pick<GameState, 'players' | 'currentPlayerIndex' | 'phase' | 'targetCards'> }) {
+  const t = useT();
   return (
     <ol className="scoreboard">
       {state.players.map((p, i) => (
         <li key={p.id} className={i === state.currentPlayerIndex && state.phase !== 'finished' ? 'active' : ''}>
           <span className="name">{p.name}</span>
           <span className="count">
-            {p.timeline.length}
+            {scoreOf(p)}
             <span className="muted">/{state.targetCards}</span>
+            {!!p.stars && (
+              <span className="stars" title={t.modes.stars(p.stars)} aria-label={t.modes.stars(p.stars)}>
+                {' '}⭐{p.stars}
+              </span>
+            )}
           </span>
         </li>
       ))}
@@ -496,11 +526,12 @@ export function Scoreboard({ state }: { state: Pick<GameState, 'players' | 'curr
   );
 }
 
-export function Reveal({ correct, song }: { correct: boolean; song: GameState['deck'][number] }) {
+export function Reveal({ correct, song, bonus }: { correct: boolean; song: GameState['deck'][number]; bonus?: LastGuess['bonus'] }) {
   const t = useT();
   return (
     <div className={`reveal ${correct ? 'right' : 'wrong'}`}>
       <p className="verdict">{correct ? t.game.correct : t.game.wrong}</p>
+      {bonus && <BonusOutcome result={bonus} />}
       <div className="song-card big-card">
         <span className="year">{song.year}</span>
         <span className="title">{song.title}</span>
@@ -545,7 +576,7 @@ export function Finished({
   state,
   onPlayAgain,
 }: {
-  state: Pick<GameState, 'players' | 'winnerIds'>;
+  state: Pick<GameState, 'players' | 'winnerIds' | 'mode'>;
   onPlayAgain?: () => void;
 }) {
   const t = useT();
@@ -556,7 +587,10 @@ export function Finished({
       {state.players.map((p) => (
         <div key={p.id} className="final-timeline">
           <h2>
-            {p.name} <span className="muted">{t.game.cards(p.timeline.length)}</span>
+            {p.name}{' '}
+            <span className="muted">
+              {modeOf(state) === 'bonus' ? t.modes.points(p.timeline.length, p.stars ?? 0) : t.game.cards(p.timeline.length)}
+            </span>
           </h2>
           <Timeline cards={p.timeline} selectable={false} selectedSlot={null} onSelect={() => {}} compact />
         </div>

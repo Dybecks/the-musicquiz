@@ -11,6 +11,8 @@ import {
   label,
   normalizeCode,
   votesBySlot,
+  votesByAnswer,
+  readyToLock,
   type ClientMessage,
   type Member,
   type RoomView,
@@ -19,6 +21,8 @@ import type { SpotifyProfile } from '../spotify/api';
 import { AddMyMusic } from './AddMyMusic';
 import { Finished, Reveal, Scoreboard } from './Game';
 import { Timeline } from './Timeline';
+import { BonusQuestion } from './BonusQuestion';
+import { scoreOf } from '../game/engine';
 import { msg, useT } from '../i18n';
 import { Rich } from '../i18n/Rich';
 
@@ -335,6 +339,7 @@ function Joined({
   const teamMembers = view.members.filter((m) => m.teamId === active.id && m.connected);
   const myTurn = myTeam.id === active.id && game.phase === 'guessing';
   const host = view.members.find((m) => m.id === HOST_ID);
+  const question = game.phase === 'guessing' ? game.question ?? null : null;
 
   // The votes, plus the spot the host has tapped (when the host isn't voting on this team).
   const votes = game.phase === 'guessing' ? votesBySlot(teamMembers) : undefined;
@@ -357,7 +362,7 @@ function Joined({
             </h1>
             {game.phase === 'revealed' && game.lastGuess ? (
               <>
-                <Reveal correct={game.lastGuess.correct} song={game.lastGuess.song} />
+                <Reveal correct={game.lastGuess.correct} song={game.lastGuess.song} bonus={game.lastGuess.bonus} />
                 <NextSong view={view} me={me} send={send} />
               </>
             ) : (
@@ -378,6 +383,15 @@ function Joined({
                 ) : (
                   <p className="hint">{t.otherVoting(active.name)}</p>
                 )}
+                {question && (
+                  <BonusQuestion
+                    kind={question.kind}
+                    choices={question.choices}
+                    selected={myTurn ? (mine.answer ?? null) : null}
+                    onSelect={myTurn ? (choice) => send({ type: 'answer', choice }) : undefined}
+                    votes={votesByAnswer(teamMembers)}
+                  />
+                )}
                 <ul className="voters">
                   {teamMembers.map((m) => (
                     <li key={m.id} className={m.locked ? 'locked' : m.vote !== null ? 'voted' : ''}>
@@ -386,7 +400,7 @@ function Joined({
                     </li>
                   ))}
                 </ul>
-                {view.split && <p className="warn">{tt.game.split}</p>}
+                {view.split && <p className="warn">{question ? tt.modes.split : tt.game.split}</p>}
               </>
             )}
           </section>
@@ -398,8 +412,8 @@ function Joined({
                   {tt.game.lockedTapToChange}
                 </button>
               ) : (
-                <button className="primary big" disabled={mine.vote === null} onClick={() => send({ type: 'lock', locked: true })}>
-                  {mine.vote === null ? tt.game.tapToVote : tt.game.lockMyVote}
+                <button className="primary big" disabled={!readyToLock(mine, !!question)} onClick={() => send({ type: 'lock', locked: true })}>
+                  {readyToLock(mine, !!question) ? tt.game.lockMyVote : question ? tt.modes.tapToVoteBoth : tt.game.tapToVote}
                 </button>
               )}
             </div>
@@ -410,7 +424,7 @@ function Joined({
           <h2>
             {tt.game.timeline(active.name)}{' '}
             <span className="muted">
-              ({active.timeline.length}/{game.targetCards})
+              ({scoreOf(active)}/{game.targetCards})
             </span>
           </h2>
           <Timeline

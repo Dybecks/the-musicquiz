@@ -1,4 +1,4 @@
-import type { GameState, LastGuess, Phase, Player, Song } from '../game/engine';
+import { modeOf, type GameMode, type GameState, type LastGuess, type Phase, type Player, type QuestionKind, type Song } from '../game/engine';
 
 /**
  * Shared play: the host device (the one that plays the music) opens a room
@@ -50,6 +50,8 @@ export interface Member {
   vote: number | null;
   /** Locked in their vote. */
   locked: boolean;
+  /** The answer (index into the choices) this member votes for on the bonus question. */
+  answer?: number | null;
   /** How many songs this member added from their Spotify. */
   songs?: number;
   /** A random emoji as a profile picture, given when they join. */
@@ -116,6 +118,16 @@ export interface GameView {
   lastGuess: LastGuess | null;
   winnerIds: string[];
   round: number;
+  /** Missing from hosts older than game modes: 'classic'. */
+  mode?: GameMode;
+  /** The bonus question while guessing, without its answer. */
+  question?: PublicQuestion | null;
+}
+
+/** A bonus question as phones see it: the right answer stays on the host until the reveal. */
+export interface PublicQuestion {
+  kind: QuestionKind;
+  choices: string[];
 }
 
 /** What is happening on the host's screen right now, beyond the game itself. */
@@ -148,6 +160,8 @@ export type ClientMessage =
   | { type: 'team'; teamId: string | null }
   | { type: 'vote'; slot: number | null }
   | { type: 'lock'; locked: boolean }
+  /** A vote for an answer to the bonus question (index into its choices). */
+  | { type: 'answer'; choice: number | null }
   /** A new random emoji picture. */
   | { type: 'reroll' }
   | { type: 'songs'; songs: Song[] }
@@ -177,7 +191,10 @@ export type HostMessage =
 export function gameView(game: GameState | null): GameView | null {
   if (!game) return null;
   const { players, currentPlayerIndex, phase, targetCards, lastGuess, winnerIds, round } = game;
-  return { players, currentPlayerIndex, phase, targetCards, lastGuess, winnerIds, round };
+  const mode = modeOf(game);
+  const q = mode === 'bonus' && phase === 'guessing' ? game.question : null;
+  const question = q ? { kind: q.kind, choices: q.choices } : null;
+  return { players, currentPlayerIndex, phase, targetCards, lastGuess, winnerIds, round, mode, question };
 }
 
 export function teamsOf(game: GameState | null, lobby: readonly Team[]): Team[] {
@@ -216,31 +233,61 @@ export function votesBySlot(members: readonly Member[]): Map<number, string[]> {
   return out;
 }
 
+/** Who votes for which answer to the bonus question, as choice → member names. */
+export function votesByAnswer(members: readonly Member[]): Map<number, string[]> {
+  const out = new Map<number, string[]>();
+  for (const m of members) {
+    if (m.answer === null || m.answer === undefined) continue;
+    const names = out.get(m.answer);
+    if (names) names.push(label(m));
+    else out.set(m.answer, [label(m)]);
+  }
+  return out;
+}
+
+/** The one value with the most votes, or null when two or more share the most (or there are none). */
+function mostVoted(votes: Map<number, string[]>): number | null {
+  const tally = [...votes].map(([value, names]) => ({ value, n: names.length }));
+  if (!tally.length) return null;
+  const most = Math.max(...tally.map((t) => t.n));
+  const top = tally.filter((t) => t.n === most);
+  return top.length === 1 ? top[0].value : null;
+}
+
+/** The game has a bonus question for the current song. */
+export const hasQuestion = (game: Pick<GameState, 'mode' | 'question' | 'phase'>) =>
+  modeOf(game) === 'bonus' && game.phase === 'guessing' && !!game.question;
+
+/** A member has voted for everything the turn asks: a spot, and an answer when there is a bonus question. */
+export const readyToLock = (m: Pick<Member, 'vote' | 'answer'>, question: boolean) =>
+  m.vote !== null && (!question || (m.answer !== null && m.answer !== undefined));
+
 export type Decision =
   /** Nobody on the team has joined: the host's device decides as usual. */
   | { kind: 'none' }
   /** Some members still have to vote or lock in. */
   | { kind: 'waiting'; locked: number; total: number }
-  /** Everyone locked in, but two or more spots have the most votes. */
+  /** Everyone locked in, but two or more spots (or bonus answers) have the most votes. */
   | { kind: 'split' }
-  /** Everyone locked in: this is the team's guess. */
-  | { kind: 'place'; slot: number };
+  /** Everyone locked in: this is the team's guess, and its answer to the bonus question (null if none). */
+  | { kind: 'place'; slot: number; answer: number | null };
 
 export function teamDecision(room: Room, game: GameState): Decision {
   if (game.phase !== 'guessing') return { kind: 'none' };
   const voters = activeVoters(room, game);
   if (voters.length === 0) return { kind: 'none' };
-  const locked = voters.filter((m) => m.locked && m.vote !== null).length;
+  const question = hasQuestion(game);
+  const locked = voters.filter((m) => m.locked && readyToLock(m, question)).length;
   if (locked < voters.length) return { kind: 'waiting', locked, total: voters.length };
-  const tally = [...votesBySlot(voters)].map(([slot, names]) => ({ slot, n: names.length }));
-  const most = Math.max(...tally.map((t) => t.n));
-  const top = tally.filter((t) => t.n === most);
-  return top.length === 1 ? { kind: 'place', slot: top[0].slot } : { kind: 'split' };
+  const slot = mostVoted(votesBySlot(voters));
+  const answer = question ? mostVoted(votesByAnswer(voters)) : null;
+  if (slot === null || (question && answer === null)) return { kind: 'split' };
+  return { kind: 'place', slot, answer };
 }
 
 /** Everyone's votes cleared, for a new song or turn. */
 export function clearVotes(room: Room): Room {
-  return { ...room, members: room.members.map(({ next: _, ...m }) => ({ ...m, vote: null, locked: false })) };
+  return { ...room, members: room.members.map(({ next: _, ...m }) => ({ ...m, vote: null, answer: null, locked: false })) };
 }
 
 /** Records a member's vote for the next song after the reveal of `turn`. */
@@ -329,7 +376,7 @@ export function applyMessage(
   } else if (msg.type === 'team') {
     const valid = msg.teamId === null || teams.some((t) => t.id === msg.teamId);
     if (!valid) return room;
-    members[i] = { ...m, teamId: msg.teamId, vote: null, locked: false };
+    members[i] = { ...m, teamId: msg.teamId, vote: null, answer: null, locked: false };
   } else {
     const canVote =
       !!game && game.phase === 'guessing' && m.teamId === game.players[game.currentPlayerIndex]?.id;
@@ -340,8 +387,13 @@ export function applyMessage(
       if (slot !== null && (slot < 0 || slot > timeline.length)) return room;
       // A changed vote has to be locked in again.
       members[i] = { ...m, vote: slot, locked: false };
+    } else if (msg.type === 'answer') {
+      const choices = hasQuestion(game) ? game.question!.choices.length : 0;
+      const choice = msg.choice === null ? null : Math.trunc(msg.choice);
+      if (choice !== null && !(choice >= 0 && choice < choices)) return room;
+      members[i] = { ...m, answer: choice, locked: false };
     } else {
-      members[i] = { ...m, locked: msg.locked && m.vote !== null };
+      members[i] = { ...m, locked: msg.locked && readyToLock(m, hasQuestion(game)) };
     }
   }
   return { ...room, members };
@@ -378,7 +430,7 @@ export function renameLobbyTeam(names: readonly string[], teamId: string, name: 
 /** The host moves a member to a team (or to none). */
 export function moveMember(room: Room, memberId: string, teamId: string | null, teams: readonly Team[]): Room {
   if (teamId !== null && !teams.some((t) => t.id === teamId)) return room;
-  return { ...room, members: room.members.map((m) => (m.id === memberId ? { ...m, teamId, vote: null, locked: false } : m)) };
+  return { ...room, members: room.members.map((m) => (m.id === memberId ? { ...m, teamId, vote: null, answer: null, locked: false } : m)) };
 }
 
 /** The host removes a member; they can't join again until let back in. Not the host itself. */
