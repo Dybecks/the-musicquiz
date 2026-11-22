@@ -90,12 +90,18 @@ shuffled together, and a song that appears in two decks is only used once.
 | Deck | Songs | Range |
 | --- | --- | --- |
 | Classic hits | 160 | Well-known songs from the 1950s to today |
+| Swedish favourites | 50 | Swedish artists, from Jan Johansson (1964) to Loreen (2023) |
+| Party anthems | 45 | Disco, dance and floor-fillers, The O'Jays (1972) to Kylie Minogue (2023) |
+| Summer hits | 40 | Sunny songs, from Brian Hyland (1960) to Shaboozey (2024) |
+| Love songs | 36 | Ballads and love songs, Ella & Louis (1950) to Lady Gaga & Bruno Mars (2024) |
 | Movie songs | 49 | The Wizard of Oz (1939) to Barbie (2023) |
 | Musicals | 45 | Oklahoma! (1943) to Beetlejuice (2019) |
 | TV themes | 33 | Peter Gunn (1958) to Arcane (2021) |
 | Video game music | 38 | Super Mario Bros. (1985) to Baldur's Gate 3 (2023) |
 
 All decks are lists of songs from the song catalogue (see **The song catalogue** below).
+The four theme decks (Swedish, party, summer, love) may share songs with each other and
+with Classic hits; a song in two ticked decks is still only played once.
 The four soundtrack decks only hold songs written
 for the film, show, game or musical, so the year on the card is the year that work first
 came out: the film's release, the show's premiere, the game's first release, or the
