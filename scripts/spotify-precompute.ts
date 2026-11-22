@@ -526,7 +526,7 @@ async function fixSuspects(): Promise<void> {
       delete progress.suspect![key];
       continue;
     }
-    const firstArtist = song.artist.split(/\s*(?:,|&|feat\.|ft\.)\s*/i)[0];
+    const firstArtist = song.artist.split(/\s*(?:,|&|\band\b|\boch\b|feat\.|ft\.)\s*/i)[0];
     const found = bestMatch(song, (await search(`track:"${quoteless(song.title)}" artist:"${quoteless(firstArtist)}"`)).items);
     progress.tried[key] = today();
     if (found && found.track.id !== id && !rows.some((o) => o !== song && o.id === found.track.id)) {
@@ -544,7 +544,7 @@ async function fillIds(): Promise<void> {
   for (const song of [...rows]) {
     const key = keyOf(song);
     if (song.id || progress.tried[key] || !inFocus(song)) continue;
-    const firstArtist = song.artist.split(/\s*(?:,|&|feat\.|ft\.)\s*/i)[0];
+    const firstArtist = song.artist.split(/\s*(?:,|&|\band\b|\boch\b|feat\.|ft\.)\s*/i)[0];
     // At most two searches: the exact one, then a looser one.
     const queries = [`track:"${quoteless(song.title)}" artist:"${quoteless(firstArtist)}"`, `${quoteless(song.title)} ${quoteless(firstArtist)}`];
     let found: ReturnType<typeof bestMatch> = null;
@@ -579,7 +579,7 @@ async function recheckOddYears(): Promise<void> {
   for (const key of Object.keys(progress.yearNotes ?? {})) {
     const song = byKey.get(key);
     if (!song?.id || progress.rechecked![key]) continue;
-    const firstArtist = song.artist.split(/\s*(?:,|&|feat\.|ft\.)\s*/i)[0];
+    const firstArtist = song.artist.split(/\s*(?:,|&|\band\b|\boch\b|feat\.|ft\.)\s*/i)[0];
     const found = bestMatch(song, (await search(`track:"${quoteless(song.title)}" artist:"${quoteless(firstArtist)}"`)).items);
     progress.rechecked![key] = today();
     if (found) {
@@ -633,7 +633,7 @@ interface MbRecording {
 
 /** Tags on MusicBrainz for every recording of the song; the release group's genres when the recordings have none. */
 async function musicBrainzTags(row: Row): Promise<Tags> {
-  const firstArtist = row.artist.split(/\s*(?:,|&|feat\.|ft\.)\s*/i)[0];
+  const firstArtist = row.artist.split(/\s*(?:,|&|\band\b|\boch\b|feat\.|ft\.)\s*/i)[0];
   const query = `recording:${lucene(row.title)} AND artist:${lucene(firstArtist)}`;
   const body = await getJson<{ recordings?: MbRecording[] }>(
     `https://musicbrainz.org/ws/2/recording?${new URLSearchParams({ query, fmt: 'json', limit: '25' })}`,
@@ -664,7 +664,7 @@ async function musicBrainzTags(row: Row): Promise<Tags> {
 
 /** Last.fm's top tags for the song (weights 0–100). */
 async function lastFmTags(row: Row, key: string): Promise<Tags> {
-  const params = new URLSearchParams({ method: 'track.gettoptags', artist: row.artist.split(/\s*(?:,|&|feat\.|ft\.)\s*/i)[0], track: row.title, autocorrect: '1', api_key: key, format: 'json' });
+  const params = new URLSearchParams({ method: 'track.gettoptags', artist: row.artist.split(/\s*(?:,|&|\band\b|\boch\b|feat\.|ft\.)\s*/i)[0], track: row.title, autocorrect: '1', api_key: key, format: 'json' });
   const body = await getJson<{ toptags?: { tag?: { name: string; count: number }[] } }>(`https://ws.audioscrobbler.com/2.0/?${params}`, 250);
   return (body?.toptags?.tag ?? []).slice(0, 15).map((t) => [t.name, Number(t.count) || 0]);
 }
