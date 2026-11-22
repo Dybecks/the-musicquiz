@@ -326,7 +326,7 @@ describe('steal', () => {
       let g = game();
       g = { ...g, players: g.players.map((p) => ({ ...p, coins: 5 })) };
       expect(applyPower(g, 'grab', 'p2')).toBe(g); // B has one card
-      const extra = many[19];
+      const extra = many.find((x) => !g.players.some((p) => p.timeline.includes(x)))!;
       g = { ...g, players: g.players.map((p) => (p.id === 'p2' ? { ...p, timeline: insertSorted(p.timeline, extra) } : p)) };
       g = applyPower(g, 'grab', 'p2');
       expect(g.players[0].timeline).toHaveLength(2);

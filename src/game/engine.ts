@@ -541,10 +541,11 @@ export function applyPower(state: GameState, power: Power, targetId?: string, rn
   let players = state.players.map((p) => (p.id === me.id ? { ...p, coins: (p.coins ?? 0) - cost } : p));
   if (power === 'freeze') players = players.map((p) => (p.id === target!.id ? { ...p, frozen: true } : p));
   if (power === 'grab') {
-    const card = target!.timeline[Math.min(target!.timeline.length - 1, Math.floor(rng() * target!.timeline.length))];
+    const at = Math.min(target!.timeline.length - 1, Math.floor(rng() * target!.timeline.length));
+    const card = target!.timeline[at];
     players = players.map((p) =>
       p.id === target!.id
-        ? { ...p, timeline: p.timeline.filter((s) => s !== card) }
+        ? { ...p, timeline: p.timeline.filter((_, i) => i !== at) }
         : p.id === me.id
           ? { ...p, timeline: insertSorted(p.timeline, card) }
           : p,
