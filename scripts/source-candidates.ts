@@ -1,8 +1,8 @@
 /**
  * Finds candidate songs for one genre from a real source instead of by hand:
  * Wikidata, the data behind Wikipedia. Songs are taken from Wikidata's genre
- * field (for schlager instead: every Melodifestivalen and Eurovision entry,
- * and nothing else), and ranked by how
+ * field (for schlager instead: the Eurovision and Melodifestivalen top 3 of every year and every
+ * Swedish Eurovision entry, read from Wikipedia: see contest-placings.ts), and ranked by how
  * many Wikipedia languages have an article about them, which is a good
  * measure of how well known a song is. It costs no Spotify requests.
  *
@@ -17,7 +17,8 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { SEARCH_GENRE_DEFS } from '../src/data/searchGenres';
-import { normalizeKey, songKey } from '../src/spotify/personalDeck';
+import { songKey } from '../src/spotify/personalDeck';
+import { contestSongs, type ContestYear } from './contest-placings';
 
 const file = (p: string) => fileURLToPath(new URL(p, import.meta.url));
 const SONGS_FILE = file('../src/data/catalog/songs.json');
@@ -160,34 +161,6 @@ const STAGE_NAMES: Record<string, string> = {
   'Daði Freyr Pétursson': 'Daði Freyr',
 };
 
-/**
- * Melodifestivalen entries Wikidata doesn't link to their edition: the Swedish Wikipedia page for
- * each year lists the entries in tables, one row per song. Returns a check for a title and artist
- * standing in the same row (or list line) of any year's page.
- */
-async function melodifestivalenPages(): Promise<(title: string, artist: string) => boolean> {
-  const plain = (t: string) =>
-    ` ${normalizeKey(t.replace(/\bi morgon\b/gi, 'imorgon')).replace(/\bmej\b/g, 'mig').replace(/\bdej\b/g, 'dig')} `;
-  const strip = (t: string) =>
-    t
-      .replace(/\{\{[^{}]*\}\}/g, '')
-      .replace(/<ref[^>]*\/>|<ref[^>]*>[\s\S]*?<\/ref>/g, '')
-      .replace(/<[^>]+>/g, ' ')
-      .replace(/\[\[(?:[^|\]]*\|)?([^\]]*)\]\]/g, '$1');
-  const rows: string[] = [];
-  for (let year = 1959; year <= new Date().getFullYear(); year++) {
-    const url = `https://sv.wikipedia.org/w/api.php?${new URLSearchParams({ action: 'parse', page: `Melodifestivalen ${year}`, prop: 'wikitext', format: 'json', formatversion: '2', redirects: '1' })}`;
-    const text = ((await (await fetch(url, { headers: agent })).json()) as { parse?: { wikitext?: string } }).parse?.wikitext ?? '';
-    rows.push(...text.split(/\n\|-/).map((r) => plain(strip(r))), ...text.split('\n').filter((l) => /^[*#:]/.test(l)).map((l) => plain(strip(l))));
-    await sleep(300);
-  }
-  return (title, artist) => {
-    const t = plain(title);
-    const a = plain(artist.split(/\s*(?:,|&|\boch\b)\s*/)[0]);
-    return rows.some((r) => r.includes(t) && r.includes(a));
-  };
-}
-
 async function songsFor(where: string, via: string, contest = false): Promise<Found[]> {
   let rows: Record<string, { value: string }>[];
   try {
@@ -210,6 +183,20 @@ async function songsFor(where: string, via: string, contest = false): Promise<Fo
     .filter((s) => s.title && !/^Q\d+$/.test(s.title) && s.artist && s.year >= 1950 && s.year <= new Date().getFullYear());
 }
 
+/** The contest results by year, to check at a glance. */
+function yearTable(years: ContestYear[]): string[] {
+  if (!years.length) return [];
+  const list = (rows: { place: number; title: string; artist: string }[]) => rows.map((r) => `${r.place}. ${r.title} – ${r.artist}`).join('<br>') || '–';
+  return [
+    '## By year',
+    '',
+    '| Year | Eurovision top 3 | Sweden at Eurovision | Melodifestivalen top 3 |',
+    '|---:|---|---|---|',
+    ...years.map((y) => `| ${y.year} | ${list(y.eurovision)} | ${y.sweden ? `${y.sweden.title} – ${y.sweden.artist} (${y.sweden.place})` : '–'} | ${list(y.melodifestivalen)} |`),
+    '',
+  ];
+}
+
 async function main(): Promise<void> {
   const items: string[] = [];
   // Schlager means a song that took part in Melodifestivalen or Eurovision, nothing else (Markus, 2026-11-22).
@@ -223,16 +210,17 @@ async function main(): Promise<void> {
   if (items.length) {
     found.push(...(await songsFor(`VALUES ?g { ${items.map((i) => `wd:${i}`).join(' ')} } ?song GENRE_PATH ?g.`, 'genre')));
   }
+  let contestYears: ContestYear[] = [];
+  const contestAka: string[] = [];
   if (GENRE === 'schlager') {
-    // Every Melodifestivalen and Eurovision entry. Editions are in the contest's series (P179:
-    // Melodifestivalen Q58884, Eurovision Song Contest Q276); a song "participated in" its edition
-    // (P1344), and some winners are only linked from the edition (P1346).
-    for (const [series, via] of [['Q58884', 'Melodifestivalen'], ['Q276', 'Eurovision']]) {
-      const where = `?edition wdt:P179 wd:${series}. { ?song wdt:P1344 ?edition. } UNION { ?edition wdt:P1346 ?song. }`;
-      const songs = await songsFor(where, via, true);
-      console.log(`${via}: ${songs.length} entries`);
-      found.push(...songs);
-    }
+    // Schlager is the Eurovision and Melodifestivalen top 3 of every year plus every Swedish
+    // Eurovision entry (Markus, 2026-11-22), from Wikipedia's results tables.
+    const contest = await contestSongs();
+    contestYears = contest.years;
+    for (const c of contest.songs) contestAka.push(...c.aka);
+    for (const c of contest.songs)
+      found.push({ title: c.title, artist: STAGE_NAMES[c.artist] ?? c.artist, year: c.year, fame: 0, spotify: null, via: c.via.join(', ') });
+    console.log(`Contest songs: ${contest.songs.length} (years ${contest.years[0].year}–${contest.years.at(-1)!.year}).`);
   }
 
   // Wikidata often names artists in full ("Carola Häggkvist" for "Carola"), so a song matches
@@ -283,6 +271,7 @@ async function main(): Promise<void> {
     '|---:|---:|---|---|---|---|---|',
     ...ranked.map((s) => `| ${s.fame} | ${s.year} | ${s.title} | ${s.artist} | ${s.spotify ?? ''} | ${s.via} | ${status(s)} |`),
     '',
+    ...yearTable(contestYears),
   ].join('\n');
   writeFileSync(file(`./sources/${GENRE}.md`), report);
   console.log(`\n${ranked.length} songs: ${ranked.filter((s) => status(s) === 'in the catalogue').length} in the catalogue, ${ranked.filter((s) => status(s) === 'already a candidate').length} already candidates, ${ranked.filter((s) => status(s) === 'new').length} new.`);
@@ -291,20 +280,12 @@ async function main(): Promise<void> {
   // Schlager is contest songs only: other songs tagged schlager lose the tag. One with no other genre
   // is set aside in scripts/skipped.json (a candidate) or left without a genre (a catalogue song), never
   // moved to another genre by guess.
-  const contestTitles = new Set(found.filter((s) => s.via !== 'genre').map((s) => songKey(s.title, '').split('|')[0]));
+  const contestTitles = new Set([...found.filter((s) => s.via !== 'genre').map((s) => s.title), ...contestAka].map((t) => songKey(t, '').split('|')[0]));
   const notContest = (r: { title: string; genres: string[] }) => GENRE === 'schlager' && r.genres.includes('schlager') && !contestTitles.has(songKey(r.title, '').split('|')[0]);
   const songs = JSON.parse(readFileSync(SONGS_FILE, 'utf8')) as { title: string; artist: string; genres: string[] }[];
-  const untagged = [...songs, ...candidates].filter(notContest);
-  // Wikidata misses many entries; the yearly Wikipedia pages catch some of them.
-  const onPage = untagged.length ? await melodifestivalenPages() : () => false;
-  const saved = untagged.filter((r) => onPage(r.title, r.artist));
-  if (saved.length) {
-    console.log(`\n${saved.length} songs tagged schlager were found on the Melodifestivalen pages of Swedish Wikipedia and keep it:`);
-    for (const r of saved) console.log(`  ${r.title} – ${r.artist}`);
-  }
-  const retag = untagged.filter((r) => !saved.includes(r));
+  const retag = [...songs, ...candidates].filter(notContest);
   if (retag.length) {
-    console.log(`\n${retag.length} songs tagged schlager were not in Melodifestivalen or Eurovision${process.env.APPLY === '1' ? ' and lose the tag' : ' (APPLY=1 takes the tag away; one with no other genre is set aside)'}:`);
+    console.log(`\n${retag.length} songs tagged schlager were not in the Eurovision or Melodifestivalen top 3, nor a Swedish entry${process.env.APPLY === '1' ? ' and lose the tag' : ' (APPLY=1 takes the tag away; one with no other genre is set aside)'}:`);
     for (const r of retag) console.log(`  ${r.title} – ${r.artist}`);
   }
 

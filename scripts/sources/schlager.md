@@ -1,922 +1,474 @@
 # schlager songs on Wikidata
 
-Written by `scripts/source-candidates.ts`. 915 songs, the best-known first (fame = Wikipedia languages with an article).
-200 new ones would be added (run with APPLY=1) to scripts/candidates.json.
+Written by `scripts/source-candidates.ts`. 391 songs, the best-known first (fame = Wikipedia languages with an article).
+318 new ones would be added (run with APPLY=1) to scripts/candidates.json.
 
 | Fame | Year | Song | Artist | Spotify id on Wikidata | Found via | Status |
 |---:|---:|---|---|---|---|---|
-| 44 | 2012 | Euphoria | Loreen |  | Melodifestivalen, Eurovision | in the catalogue |
-| 39 | 2011 | Running Scared | Ell & Nikki |  | Eurovision | new |
-| 38 | 2018 | Toy | Netta | 7vuTcvFnvlqWlWb4u60nvY | Eurovision | new |
-| 37 | 2026 | Bangaranga | Dara |  | Eurovision | new |
-| 34 | 2007 | Molitva | Marija Šerifović |  | Eurovision | new |
-| 34 | 2021 | Zitti e buoni | Måneskin |  | Eurovision | in the catalogue |
-| 34 | 2019 | Arcade | Duncan Laurence |  | Eurovision | new |
-| 32 | 2023 | Tattoo | Loreen | 1DmW5Ep6ywYwxc2HMT5BG6 | Eurovision, Melodifestivalen | in the catalogue |
-| 32 | 2024 | The Code | Nemo |  | Eurovision | new |
-| 32 | 2025 | Wasted Love | JJ |  | Eurovision | new |
-| 30 | 2022 | Stefania | Kalush Orchestra |  | Eurovision | new |
-| 27 | 2024 | Espresso Macchiato | Tommy Cash |  | Eurovision | new |
-| 24 | 2011 | Popular | Eric Saade |  | Melodifestivalen, Eurovision | already a candidate |
-| 24 | 1967 | L'amour est bleu | Vicky Leandros |  | Eurovision | new |
-| 24 | 2025 | Ich komme | Erika Vikman |  | Eurovision | new |
-| 24 | 2023 | Cha Cha Cha | Käärijä | 5RX8T3EoTuXcybAxe6oPAw | Eurovision | new |
-| 23 | 2025 | Bara bada bastu | KAJ |  | Melodifestivalen, Eurovision | in the catalogue |
-| 23 | 2022 | Snap | Rosa Linn |  | Eurovision | new |
-| 23 | 2026 | Eclipse | Delta Goodrem |  | Eurovision | new |
-| 23 | 2025 | Maman | Louane |  | Eurovision | new |
-| 23 | 2024 | Rim Tim Tagi Dim | Baby Lasagna | 5TswDbxMnxptgFTf6ZxvXQ | Eurovision | new |
-| 22 | 1985 | La det swinge | Bobbysocks |  | Eurovision | in the catalogue |
-| 22 | 2021 | SloMo | Chanel |  | Eurovision | new |
-| 22 | 2024 | Zjerm | Shkodra Elektronike |  | Eurovision | new |
-| 22 | 2026 | Viva, Moldova! | Satoshi |  | Eurovision | new |
-| 22 | 2025 | Nân | Alis |  | Eurovision | new |
-| 22 | 2025 | Mother Nature | Eva Marija |  | Eurovision | new |
-| 21 | 2019 | Roi | Bilal Hassani |  | Eurovision | new |
-| 21 | 2019 | She Got Me | Luca Hänni |  | Eurovision | new |
-| 21 | 2022 | In corpore sano | Konstrakta |  | Eurovision | new |
-| 21 | 2026 | Liekinheitin | Linda Lampenius |  | Eurovision | new |
-| 21 | 2019 | Say Na Na Na | Serhat |  | Eurovision | new |
-| 21 | 2024 | Europapa | Joost Klein |  | Eurovision | new |
-| 21 | 2025 | Asteromata | Klavdia | 2aE2SRm4QraCuDBNnBsRIz | Eurovision | new |
-| 21 | 2024 | La noia | Angelina Mango | 49R1F3rIdSzuPk7AcHi6d1 | Eurovision | new |
-| 21 | 2019 | Hatrið mun sigra | Hatari |  | Eurovision | new |
-| 20 | 2022 | Brividi | Mahmood |  | Eurovision | new |
-| 20 | 2019 | Scream | Sergey Lazarev |  | Eurovision | new |
-| 20 | 2016 | World | Lindita Halimi |  | Eurovision | new |
-| 20 | 2015 | Goodbye to Yesterday | Elina Born |  | Eurovision | new |
-| 20 | 2023 | Mama ŠČ! | Let 3 |  | Eurovision | new |
-| 20 | 2025 | How Much Time Do We Have Left | Klemen Slakonja |  | Eurovision | new |
-| 20 | 2024 | Unforgettable | Marcus & Martinus | 5L8C1PZGCpZf8STcN79H5j | Eurovision, Melodifestivalen | in the catalogue |
-| 20 | 2026 | Per sempre sì | Sal Da Vinci |  | Eurovision | new |
-| 20 | 2017 | Requiem | Alma |  | Eurovision | new |
-| 20 | 2024 | Teresa & Maria | Alyona Alyona |  | Eurovision | new |
-| 20 | 2021 | 10 Years | Daði Freyr |  | Eurovision | new |
-| 20 | 2025 | Laika Party | Emmy |  | Eurovision | new |
-| 20 | 2026 | Bella | Aidan Cassar | 6xMZVKtQ76THTiJBntzmwz | Eurovision | new |
-| 20 | 2025 | Run with U | Mamagama |  | Eurovision | new |
-| 20 | 2021 | Shum | Go_A |  | Eurovision | new |
-| 19 | 2019 | Friend of a Friend | Lake Malawi |  | Eurovision | new |
-| 19 | 2019 | Ktheju tokës | Jonida Maliqi |  | Eurovision | new |
-| 19 | 2019 | La venda | Miki Núñez |  | Eurovision | new |
-| 19 | 2022 | Space Man | Sam Ryder |  | Eurovision | new |
-| 19 | 2025 | Tutta l'Italia | Gabry Ponte |  | Eurovision | new |
-| 19 | 2023 | Unicorn | Noa Kirel |  | Eurovision | new |
-| 19 | 2024 | Dobrodošli | Nina Žižić |  | Eurovision | new |
-| 19 | 2025 | Ēnā | Atvara |  | Eurovision | new |
-| 19 | 2021 | Discoteque | The Roop |  | Eurovision | new |
-| 19 | 2021 | Tout l'univers | Gjon's Tears |  | Eurovision | new |
-| 19 | 2024 | La poupée monte le son | Laura Thorn |  | Eurovision | new |
-| 19 | 2025 | Strobe Lights | Red Sebastian | 0Tx2AeVKiYQjk8u9p4j6kV | Eurovision | new |
-| 19 | 2025 | New Day Will Rise | Yuval Raphael |  | Eurovision | new |
-| 19 | 2025 | Serving | Miriana Conte |  | Eurovision | new |
-| 19 | 2025 | Róa | Væb |  | Eurovision | new |
-| 19 | 2025 | Hallucination | Sissal |  | Eurovision | new |
-| 19 | 2026 | Dancing on the Ice | Essyla |  | Eurovision | new |
-| 19 | 2026 | Choke Me | Alexandra Căpitănescu |  | Eurovision | new |
-| 19 | 2026 | Før vi går hjem | Søren Torpegaard Lund |  | Eurovision | new |
-| 19 | 2026 | Ferto | Akylas |  | Eurovision | new |
-| 19 | 2026 | Andromeda | Lelek |  | Eurovision | new |
-| 18 | 2022 | Hold Me Closer | Cornelia Jakobs |  | Melodifestivalen, Eurovision | already a candidate |
-| 18 | 2006 | Silvía Night | Ágústa Eva Erlendsdóttir |  | Eurovision | new |
-| 18 | 1956 | De vogels van Holland | Jetty Paerl |  | Eurovision | new |
-| 18 | 2019 | Proud | Tamara Todevska |  | Eurovision | new |
-| 18 | 2019 | Zero Gravity | Kate Miller-Heidke |  | Eurovision | new |
-| 18 | 2019 | Storm | Victor Crone |  | Eurovision | new |
-| 18 | 2016 | Say Yay! | Barei |  | Eurovision | new |
-| 18 | 2012 | Should've Known Better | Soluna Samay |  | Eurovision | new |
-| 18 | 2018 | That's How You Write a Song | Alexander Rybak |  | Eurovision | new |
-| 18 | 2021 | Adrenalina | Senhit |  | Eurovision | new |
-| 18 | 2018 | Mall | Eugent Bushpepa |  | Eurovision | new |
-| 18 | 2022 | Eat Your Salad | Citi Zēni |  | Eurovision | new |
-| 18 | 2023 | Due vite | Marco Mengoni |  | Eurovision | new |
-| 18 | 2026 | Pray | Alicja Szemplińska |  | Eurovision | new |
-| 18 | 2026 | Crossroads | Daniel Žižka |  | Eurovision | new |
-| 18 | 2024 | Dizzy | Olly Alexander |  | Eurovision | new |
-| 18 | 2025 | Too Epic to Be True | Vanilla Ninja |  | Eurovision | new |
-| 18 | 2024 | Hurricane | Eden Golan |  | Eurovision | new |
-| 18 | 2020 | Voilà | Barbara Pravi |  | Eurovision | new |
-| 18 | 2023 | Jako | Ladaniva | 2MiEtw8UquKvxOwu47oTMu | Eurovision | new |
-| 18 | 2025 | Shh | Theo Evan | 3mwqwFYIrO8hE3YBN8gk14 | Eurovision | new |
-| 18 | 2025 | Survivor | Parg |  | Eurovision | new |
-| 18 | 2019 | Chameleon | Michela Pace |  | Eurovision | new |
-| 18 | 2023 | My Sister's Crown | Vesna |  | Eurovision | new |
-| 18 | 2025 | Tavo akys | Katarsis |  | Eurovision | new |
-| 18 | 2025 | Milkshake Man | Go-Jo |  | Eurovision | new |
-| 18 | 2024 | Fighter | Tali Golergant |  | Eurovision | new |
-| 18 | 2023 | Évidemment | La Zarra |  | Eurovision | new |
-| 18 | 2025 | Baller | Abor & Tynna |  | Eurovision | new |
-| 18 | 2025 | Voyage | Zoë Më |  | Eurovision | new |
-| 18 | 2025 | Freedom | Mariam Shengelia |  | Eurovision | new |
-| 18 | 2026 | My System | Felicia |  | Eurovision, Melodifestivalen | new |
-| 18 | 2025 | Nova zora | Tamara Živković |  | Eurovision | new |
-| 17 | 2010 | This Is My Life | Anna Bergendahl |  | Melodifestivalen, Eurovision | already a candidate |
-| 17 | 2014 | Undo | Sanna Nielsen |  | Melodifestivalen, Eurovision | already a candidate |
-| 17 | 2019 | Replay | Tamta |  | Eurovision | new |
-| 17 | 2019 | Look Away | Darude |  | Eurovision | new |
-| 17 | 2016 | J'ai cherché | Amir | 1lzRxwbdl86iJlYMz48KoD | Eurovision | new |
-| 17 | 2019 | Better Love | Katerine Duska |  | Eurovision | new |
-| 17 | 2012 | Aphrodisiac | Eleftheria Eleftheriou |  | Eurovision | new |
-| 17 | 2023 | Ulveham | Gåte |  | Eurovision | new |
-| 17 | 2015 | Rhythm Inside | Loïc Nottet |  | Eurovision | new |
-| 17 | 2023 | Samo mi se spava | Luke Black | 7wLxoyWoClSUAlKGjaefQn | Eurovision | new |
-| 17 | 2012 | Gravity | Zlata Ognevich | 0d3CHhMj2veGNsFJ8bpeT2 | Eurovision | new |
-| 17 | 2024 | Esa diva | Melody |  | Eurovision | new |
-| 17 | 2017 | Yodel It! | Ilinca |  | Eurovision | new |
-| 17 | 2024 | No Rules! | Teemu Keisteri |  | Eurovision | new |
-| 17 | 2026 | Regarde! | Monroe |  | Eurovision | new |
-| 17 | 2021 | Mata Hari | Samira Efendi |  | Eurovision | new |
-| 17 | 2018 | Nobody but You | Cesár Sampson |  | Eurovision | new |
-| 17 | 2017 | Lie to Me | Mikolas Josef |  | Eurovision | new |
-| 17 | 2024 | Bur man laimi | Tautumeitas |  | Eurovision | new |
-| 17 | 2022 | Heart of Steel | Tvorchi |  | Eurovision | new |
-| 17 | 2024 | Ramonda | Teya Dora |  | Eurovision | new |
-| 17 | 2025 | Volevo essere un duro | Lucio Corsi |  | Eurovision | new |
-| 17 | 2025 | Kiss Kiss Goodbye | Adonxs | 2ceIi1kJxozE30OURIMkfN | Eurovision | new |
-| 17 | 2025 | Poison Cake | Marko Bošnjak |  | Eurovision | new |
-| 17 | 2019 | Walking Out | Srbuk |  | Eurovision | new |
-| 17 | 2026 | Ridnym | Viktoria Leléka | 52IlNxHUoQ3ZZyw9atSGVN | Eurovision | new |
-| 17 | 2025 | C'est la vie | Claude |  | Eurovision | new |
-| 17 | 2026 | Michelle | Noam Bettan |  | Eurovision | new |
-| 17 | 2023 | Who the Hell Is Edgar? | Salena | 3gUC7tGDPVLOq42vvTUVdI | Eurovision | new |
-| 17 | 2025 | Bird of Pray | Ziferblat |  | Eurovision | new |
-| 17 | 2025 | Lighter | Kyle Alessandro |  | Eurovision | new |
-| 17 | 2026 | Kraj mene | Lavina | 3cnVAUGWZcXNqojO8PfYOu | Eurovision | new |
-| 17 | 2026 | Jalla | Antigoni Buxton | 1h2xmg6pH7r5pr2prKmWGc | Eurovision | new |
-| 17 | 2023 | Doomsday Blue | Bambie Thug | 7qiEoVlFjb3KaytT2zgK1g | Eurovision | new |
-| 16 | 2013 | You | Robin Stjernberg |  | Melodifestivalen, Eurovision | already a candidate |
-| 16 | 2021 | Voices | Tusse |  | Melodifestivalen, Eurovision | already a candidate |
-| 16 | 2019 | Wake Up | Eliot Vassamillet |  | Eurovision | new |
-| 16 | 2015 | Pioneer | Freddie |  | Eurovision | new |
-| 16 | 2021 | Trenulețul | Zdob și Zdub |  | Eurovision | new |
-| 16 | 2014 | Tick-Tock | Mariya Yaremchuk | 4kIheg2ykamUNNrSxL7t56 | Eurovision | new |
-| 16 | 2019 | Limits | Pænda |  | Eurovision | new |
-| 16 | 2021 | Sekret | Ronela Hajati |  | Eurovision | new |
-| 16 | 2013 | Lonely Planet | Dorians |  | Eurovision | new |
-| 16 | 2021 | Lights Off | We Are Domi |  | Eurovision | new |
-| 16 | 2011 | Feel the Passion | Aurela Gaçe |  | Eurovision | new |
-| 16 | 2022 | Sentimentai | Monika Liu |  | Eurovision | new |
-| 16 | 2019 | Kruna | Nevena Božović |  | Eurovision | new |
-| 16 | 2021 | Amen | Vincent Bueno |  | Eurovision | new |
-| 16 | 2022 | Give That Wolf a Banana | Subwoolfer |  | Eurovision | new |
-| 16 | 2022 | Fade to Black | Nadir Rüstəmli |  | Eurovision | new |
-| 16 | 2017 | Line | Triana Park |  | Eurovision | new |
-| 16 | 2023 | Titan | Besa |  | Eurovision | new |
-| 16 | 2022 | Með hækkandi sól | Systur |  | Eurovision | new |
-| 16 | 2022 | Fulenn | Alvan |  | Eurovision | new |
-| 16 | 2021 | Growing Up Is Getting Old | Victoria Georgieva |  | Eurovision | new |
-| 16 | 2021 | Je me casse | Destiny Chukunyere |  | Eurovision | new |
-| 16 | 2021 | Dark Side | Blind Channel |  | Eurovision | new |
-| 16 | 2021 | Technicolour | Montaigne |  | Eurovision | new |
-| 16 | 2022 | Saudade, saudade | Maro |  | Eurovision | new |
-| 16 | 2017 | Blackbird | Norma John |  | Eurovision | new |
-| 16 | 2024 | Gaja | Justyna Steczkowska |  | Eurovision | new |
-| 16 | 2024 | Zari | Marina Satti |  | Eurovision | new |
-| 16 | 2021 | Russian Woman | Manizha |  | Eurovision | new |
-| 16 | 2024 | Before the Party's Over | Mustii |  | Eurovision | new |
-| 16 | 2023 | Aijā | Sudden Lights |  | Eurovision | new |
-| 16 | 2008 | Rodolfo Chikilicuatre | David Fernández Ortiz |  | Eurovision | new |
-| 16 | 2023 | Mon amour | Slimane |  | Eurovision | new |
-| 16 | 2023 | Hollow | Dons |  | Eurovision | new |
-| 16 | 2019 | Truth | Chingiz Mustafayev |  | Eurovision | new |
-| 16 | 2023 | (Nendest) narkootikumidest ei tea me (küll) midagi | 5miinust |  | Eurovision | new |
-| 16 | 2025 | Deslocado | NAPA |  | Eurovision | new |
-| 16 | 2024 | Luktelk | Silvester Belt |  | Eurovision | new |
-| 16 | 2021 | Loco Loco | Hurricane |  | Eurovision | new |
-| 16 | 2025 | Mila | Princ od Vranje |  | Eurovision | new |
-| 16 | 2024 | Grito | Iolanda | 1MJqdZY2srI7SVxLO6fJ1s | Eurovision | new |
-| 16 | 2021 | Tick-Tock | Albina Grčić |  | Eurovision | new |
-| 16 | 2023 | Carpe Diem | Joker Out | 14ibwN44PVKuvEqLiaNkKu | Eurovision | new |
-| 16 | 2023 | Zorra | Nebulossa | 4ypCNolz6aRYZPO3UOGp8Z | Eurovision | new |
-| 16 | 2022 | Eaea | Blanca Paloma | 1NzoDUn5bLqpS36GD00Smi | Eurovision | new |
-| 16 | 2021 | Love Is on My Side | The Black Mamba |  | Eurovision | new |
-| 16 | 2021 | I Don't Feel Hate | Jendrik Sigwart |  | Eurovision | new |
-| 16 | 2019 | Telemóveis | Conan Osíris |  | Eurovision | new |
-| 16 | 2026 | Tanzschein | Benjamin Gedeon |  | Eurovision | new |
-| 16 | 2023 | Queen of Kings | Alessandra Mele |  | Eurovision | new |
-| 16 | 2026 | Ya Ya Ya | Jonas Lovv |  | Eurovision | new |
-| 15 | 2019 | Heaven | D mol |  | Eurovision | new |
-| 15 | 2019 | That Night | Carousel |  | Eurovision | new |
-| 15 | 2019 | Home | Kobi Marimi |  | Eurovision | new |
-| 15 | 2016 | Made of Stars | Hovi Star |  | Eurovision | new |
-| 15 | 2010 | Sweet People | Olena Topolia | 7CJ8kE34MpQpL8jZUazdPt | Eurovision | new |
-| 15 | 2017 | On My Way | Omar Naber |  | Eurovision | new |
-| 15 | 2022 | De diepte | S10 |  | Eurovision | new |
-| 15 | 2022 | River | Ochman |  | Eurovision | new |
-| 15 | 2022 | Miss You | Jérémie Makiese |  | Eurovision | new |
-| 15 | 2009 | Always | Aysel Teymurzadeh |  | Eurovision | new |
-| 15 | 2017 | Time | O.Torvald |  | Eurovision | new |
-| 15 | 2011 | Boom Boom | Emmy |  | Eurovision | new |
-| 15 | 2022 | Llámame | Andrei Ursu |  | Eurovision | new |
-| 15 | 2019 | Too Late for Love | John Lundvik |  | Eurovision, Melodifestivalen | already a candidate |
-| 15 | 2021 | Omaga | Ben Cristovao |  | Eurovision | new |
-| 15 | 2026 | Superstar | Senhit | 5fYAsg12ms7UkZLtEmS4J6 | Eurovision | new |
-| 15 | 2021 | Karma | Anxhela Peristeri |  | Eurovision | new |
-| 15 | 2021 | The Wrong Place | Hooverphonic |  | Eurovision | new |
-| 15 | 2020 | Uno | Little Big |  | Eurovision | new |
-| 15 | 2024 | Veronika | Raiven |  | Eurovision | new |
-| 15 | 2018 | Forever | Alekseev |  | Eurovision | new |
-| 15 | 2026 | Eins, Zwei, Drei | Sam Battle | 26xlJAlQoCMbnAWd0sGCQf | Eurovision | new |
-| 15 | 2018 | Under the Ladder | Mélovin |  | Eurovision | new |
-| 15 | 2024 | In the Middle | Natalia Barbu |  | Eurovision | new |
-| 15 | 2026 | Paloma rumba | Simón |  | Eurovision | new |
-| 15 | 2017 | Never Give Up on You | Lucie Jones |  | Eurovision | new |
-| 15 | 2018 | La forza | Elina Nechayeva |  | Eurovision | new |
-| 15 | 2024 | Firefighter | Nutsa Buzaladze |  | Eurovision | new |
-| 15 | 2021 | El Diablo | Elena Tsagkrinou |  | Eurovision | new |
-| 15 | 2024 | Always on the Run | Isaak |  | Eurovision | new |
-| 15 | 2019 | Pali się | Tulia |  | Eurovision | new |
-| 15 | 2024 | 11:11 | Megara | 6XIerJ9V7H9byQFRZiqyCv | Eurovision | new |
-| 15 | 2023 | I Wrote a Song | Mae Muller | 7JTww9J0sqx8tqm872Nsnu | Eurovision | new |
-| 15 | 2024 | Sand | Saba |  | Eurovision | new |
-| 15 | 2021 | Set Me Free | Eden Alene |  | Eurovision | new |
-| 15 | 2021 | Øve os på hinanden | Fyr & Flamme |  | Eurovision | new |
-| 15 | 2020 | Think About Things | Gagnamagnið |  | Eurovision | new |
-| 15 | 2025 | What the Hell Just Happened? | Remember Monday | 0z64zsYHTmiTyddbFJ1S6y | Eurovision | new |
-| 15 | 2022 | Bridges | Alika Milova |  | Eurovision | new |
-| 14 | 2016 | Fairytale | Eneda Tarifa |  | Eurovision | new |
-| 14 | 2021 | Hope | Stefan Airapetjan |  | Eurovision | new |
-| 14 | 2022 | Die Together | Amanda Tenfjord |  | Eurovision | new |
-| 14 | 2022 | Breathe | Vladana Vučinić |  | Eurovision | new |
-| 14 | 2012 | Stay | Tooji |  | Eurovision | new |
-| 14 | 2011 | Ding Dong | Dana International |  | Eurovision | new |
-| 14 | 2016 | Keep the Faith | Tako Gachechiladze |  | Eurovision | new |
-| 14 | 2021 | Intention | Intelligent Music Project |  | Eurovision | new |
-| 14 | 2021 | Sugar | Natalia Gordienko |  | Eurovision | new |
-| 14 | 2015 | I'm Alive | Elhaida Dani | 37Iemq844Q9wKENnwbFtWe | Eurovision | new |
-| 14 | 2018 | I Won't Break | Yulia Samoylova |  | Eurovision | new |
-| 14 | 2012 | The Social Network Song | Valentina Monetta |  | Eurovision | new |
-| 14 | 2020 | The Lucky One | Uku Suviste |  | Eurovision | new |
-| 14 | 2021 | The Ride | Rafał Brzozowski |  | Eurovision | new |
-| 14 | 2021 | Maps | Lesley Roy |  | Eurovision | new |
-| 14 | 2021 | Voy a quedarme | Blas Cantó |  | Eurovision | new |
-| 14 | 2026 | Just Go | Jiva |  | Eurovision | new |
-| 14 | 2025 | Alice | Veronica Fusaro |  | Eurovision | new |
-| 14 | 2011 | In Love for a While | Anna Rossinelli |  | Eurovision | new |
-| 14 | 2019 | 22 | Sarah McTernan |  | Eurovision | new |
-| 14 | 2024 | Scared of Heights | Hera Björk |  | Eurovision | new |
-| 14 | 2023 | Ai Coração | Mimicat |  | Eurovision | new |
-| 14 | 2026 | Fire | Sarah Engels |  | Eurovision | new |
-| 14 | 2021 | Fallen Angel | Tix |  | Eurovision | new |
-| 14 | 2021 | Birth of a New Age | Jeangu Macrooy |  | Eurovision | new |
-| 14 | 2018 | Higher Ground | Rasmussen |  | Eurovision | new |
-| 14 | 2024 | One Milkali (One Blood) | Electric Fields |  | Eurovision | new |
-| 14 | 2024 | Liar | Silia Kapsis |  | Eurovision | new |
-| 14 | 2024 | Özünlə apar | Fahree |  | Eurovision | new |
-| 14 | 2024 | We Will Rave | Kaleen |  | Eurovision | new |
-| 14 | 2023 | Watergun | Remo Forrer |  | Eurovision | new |
-| 14 | 2021 | Amnesia | Roxen |  | Eurovision | new |
-| 14 | 2020 | Solovey | Go_A |  | Eurovision | new |
-| 14 | 2021 | Last Dance | Stefania |  | Eurovision | new |
-| 14 | 2019 | Stay | Anna Odobescu |  | Eurovision | new |
-| 14 | 2022 | Duje | Albina Kelmendi |  | Eurovision | new |
-| 14 | 2022 | Solo | Blanka |  | Eurovision | new |
-| 14 | 2023 | Future Lover | Brunette | 3MKTciJfDAJjO0SjFZQsVx | Eurovision | new |
-| 14 | 2019 | Sul tsin iare | Oto Nemsadze |  | Eurovision | new |
-| 13 | 2020 | Move | The Mamas |  | Melodifestivalen | already a candidate |
-| 13 | 1956 | Germany in the Eurovision Song Contest 1956 | Walter Andreas Schwarz |  | Eurovision | new |
-| 13 | 2019 | The Dream | Roko Blažević |  | Eurovision | new |
-| 13 | 2019 | On a Sunday | Ester Peony | 67gDqPeyqOo3DKICrz5Y8Y | Eurovision | new |
-| 13 | 2014 | Running | Kállay Saunders |  | Eurovision | new |
-| 13 | 2014 | Silent Storm | Carl Espen |  | Eurovision | new |
-| 13 | 2014 | Mother | Axel Hirsoux |  | Eurovision | new |
-| 13 | 2013 | It's My Life | Cezar | 1RCLwB4gj44JWKtjn0Kwok | Eurovision | new |
-| 13 | 2022 | Rockstars | Malik Harris |  | Eurovision | new |
-| 13 | 2022 | Guilty Pleasure | Mia Dimšić |  | Eurovision | new |
-| 13 | 2022 | Circles | Andrea Koevska |  | Eurovision | new |
-| 13 | 2022 | Halo | Lumix |  | Eurovision | new |
-| 13 | 2023 | Soarele şi Luna | Pasha Parfeni | 6SO3p9lb1qiPMN1e7iHAjv | Eurovision | new |
-| 13 | 2022 | Not the Same | Sheldon Riley |  | Eurovision | new |
-| 13 | 2015 | Golden Boy | Nadav Guedj |  | Eurovision | new |
-| 13 | 2012 | Time | Izabo |  | Eurovision | new |
-| 13 | 2021 | The Moon Is Rising | Samanta Tīna |  | Eurovision | new |
-| 13 | 2026 | On Replay | Bzikebi |  | Eurovision | new |
-| 13 | 2022 | Ela | Andromache |  | Eurovision | new |
-| 13 | 2026 | Sólo quiero más | Lion Ceccah |  | Eurovision | new |
-| 13 | 2012 | Beautiful Song | Anmary |  | Eurovision | new |
-| 13 | 2026 | Rosa | Bandidos do Cante |  | Eurovision | new |
-| 13 | 2021 | Embers | James Newman |  | Eurovision | new |
-| 13 | 2018 | Qami | Sevak Khanagyan |  | Eurovision | new |
-| 13 | 2021 | Here I Stand | Vasil Garvanliev |  | Eurovision | new |
-| 13 | 2023 | Echo | Iru Khechanovi | 6Dw7BShqIiGPq69VEQ2hpd | Eurovision | new |
-| 13 | 2023 | Pedestal | Aiko | 3GNmo4ljOTnd8k6VKug1Ut | Eurovision | new |
-| 13 | 2023 | Breaking My Heart | Reiley |  | Eurovision | new |
-| 13 | 2023 | Dance (Our Own Party) | The Busker |  | Eurovision | new |
-| 12 | 1957 | Telefon | Margot Hielscher |  | Eurovision | new |
-| 12 | 1956 | Netherlands in the Eurovision Song Contest 1956 | Jetty Paerl |  | Eurovision | new |
-| 12 | 1957 | Tant de peine | Danièle Dupré |  | Eurovision | new |
-| 12 | 1956 | Switzerland in the Eurovision Song Contest 1956 | Lys Assia |  | Eurovision | new |
-| 12 | 2022 | Stripper | Achille Lauro |  | Eurovision | new |
-| 12 | 2022 | I Am What I Am | Emma Muscat |  | Eurovision | new |
-| 12 | 2018 | Crazy | Franka Batelić |  | Eurovision | new |
-| 12 | 2015 | Aina mun pitää | Pertti Kurikan Nimipäivät |  | Eurovision | new |
-| 12 | 2018 | Monsters | Saara Aalto |  | Eurovision | new |
-| 12 | 2022 | Boys Do Cry | Marius Bear |  | Eurovision | new |
-| 12 | 2020 | Universo | Blas Cantó |  | Eurovision | new |
-| 12 | 1973 | Power to All Our Friends | Cliff Richard |  | Eurovision | new |
-| 12 | 2022 | Lock Me In | Circus Mircus |  | Eurovision | new |
-| 12 | 2022 | That's Rich | Brooke Scullion |  | Eurovision | new |
-| 12 | 2010 | Israel in the Eurovision Song Contest 2010 | Harel Skaat |  | Eurovision | new |
-| 12 | 2021 | Disko | Last Pizza Slice |  | Eurovision | new |
-| 12 | 2020 | Grow | Jeangu Macrooy |  | Eurovision | new |
-| 12 | 2018 | Tu canción | Alfred García |  | Eurovision | new |
-| 12 | 2018 | X My Heart | Aisel |  | Eurovision | new |
-| 12 | 2021 | You | Tornike Kipiani |  | Eurovision | new |
-| 12 | 2023 | Like an Animal | Piqued Jacks |  | Eurovision | new |
-| 12 | 2023 | We Are One | Wild Youth |  | Eurovision | new |
-| 12 | 2023 | Burning Daylight | Mia Nicolai |  | Eurovision | new |
-| 12 | 2023 | Break a Broken Heart | Andrew Lambrou | 5dRAJ9UsR0qyMMKnonWewz | Eurovision | new |
-| 12 | 2024 | Loop | Sarah Bonnici | 3DlWvRuHXQ3iQicBauinOd | Eurovision | new |
-| 12 | 2023 | What They Say | Victor Vernicos |  | Eurovision | new |
-| 12 | 2023 | Tell Me More | TuralTuranX | 2pXSRhFrsoG57v4tZ36ogu | Eurovision | new |
-| 11 | 2006 | Without Your Love | André |  | Eurovision | new |
-| 11 | 1956 | France in the Eurovision Song Contest 1956 | Mathé Altéry |  | Eurovision | new |
-| 11 | 1956 | Il est là | Dany Dauberson |  | Eurovision | new |
-| 11 | 1957 | All | Patricia Bredin |  | Eurovision | new |
-| 11 | 1956 | Belgium in the Eurovision Song Contest 1956 | Fud Leclerc |  | Eurovision | new |
-| 11 | 2016 | Sing It Away | Sandhja |  | Eurovision | new |
-| 11 | 2008 | Russia in the Eurovision Song Contest 2008 | Dima Bilan |  | Eurovision | new |
-| 11 | 2020 | Release Me | Hooverphonic |  | Eurovision | new |
-| 11 | 2022 | I.M | Michael Ben David |  | Eurovision | new |
-| 11 | 1974 | Sì | Gigliola Cinquetti |  | Eurovision | new |
-| 11 | 2018 | Nova deca | Sanja Ilic |  | Eurovision | new |
-| 11 | 2022 | Blood & Glitter | Lord of the Lost |  | Eurovision | new |
-| 11 | 2022 | The Show | Reddi |  | Eurovision | new |
-| 11 | 2023 | Stay | Monika Linkytė |  | Eurovision | new |
-| 11 | 2020 | Don't Break Me | Montaigne |  | Eurovision | new |
-| 11 | 2020 | Cleopatra | Samira Efendi |  | Eurovision | new |
-| 11 | 2018 | Our Choice | Ari Ólafsson |  | Eurovision | new |
-| 11 | 2018 | A Matter of Time | Laura Groeseneken | 2776nsJOmk3psqGSocg6lK | Eurovision | new |
-| 11 | 2018 | Bones | Equinox | 39qWzdNJSioJzfemhwXtDw | Eurovision | new |
-| 11 | 2020 | Hasta la vista | Hurricane |  | Eurovision | new |
-| 11 | 2020 | Voda | Ana Soklič |  | Eurovision | new |
-| 11 | 2022 | D.G.T. (Off and On) | Theodor Andrei | 3gv3bOnIkZfyBVze4qKsUK | Eurovision | new |
-| 11 | 2023 | Power | Diljá |  | Eurovision | new |
-| 10 | 2014 | Israel in the Eurovision Song Contest 2014 | Mei Finegold |  | Eurovision | new |
-| 10 | 2008 | Germany in the Eurovision Song Contest 2008 | No Angels |  | Eurovision | new |
-| 10 | 2010 | Algo pequeñito | Daniel Diges |  | Eurovision | new |
-| 10 | 2015 | Israel in the Eurovision Song Contest 2015 | Nadav Guedj |  | Eurovision | new |
-| 10 | 2011 | Change | Hotel FM |  | Eurovision | new |
-| 10 | 1976 | Israel in the Eurovision Song Contest 1976 | Chocolat, Menta, Mastik |  | Eurovision | new |
-| 10 | 2020 | Iceland in the Eurovision Song Contest 2020 | Daði Freyr |  | Eurovision | new |
-| 10 | 2020 | Looking Back | Aksel Kankaanranta |  | Eurovision | new |
-| 10 | 2020 | Yes | Ben & Tan |  | Eurovision | new |
-| 9 | 1957 | Germany in the Eurovision Song Contest 1957 | Margot Hielscher |  | Eurovision | new |
-| 9 | 1957 | Netherlands in the Eurovision Song Contest 1957 | Corry Brokken |  | Eurovision | new |
-| 9 | 1956 | Luxembourg in the Eurovision Song Contest 1956 | Michèle Arnaud |  | Eurovision | new |
-| 9 | 1957 | Switzerland in the Eurovision Song Contest 1957 | Lys Assia |  | Eurovision | new |
-| 9 | 1979 | Disco Tango | Tommy Seebach |  | Eurovision | new |
-| 9 | 2013 | Israel in the Eurovision Song Contest 2013 | Moran Mazor |  | Eurovision | new |
-| 9 | 2011 | Israel in the Eurovision Song Contest 2011 | Dana International |  | Eurovision | new |
-| 9 | 1977 | Casanova | Anita Skorgan |  | Eurovision | new |
-| 9 | 2008 | Israel in the Eurovision Song Contest 2008 | Bo'az Ma'uda |  | Eurovision | new |
-| 9 | 2010 | Russia in the Eurovision Song Contest 2010 | Peter Nalitch |  | Eurovision | new |
-| 9 | 1976 | Mata Hari | Anne-Karine Strøm |  | Eurovision | new |
-| 9 | 2012 | Israel in the Eurovision Song Contest 2012 | Izabo |  | Eurovision | new |
-| 9 | 2015 | Time | Jurij Navrotskij |  | Eurovision | new |
-| 9 | 2018 | Who We Are | Jessika Muscat |  | Eurovision | new |
-| 9 | 2015 | Há um mar que nos separa | Leonor Andrade |  | Eurovision | new |
-| 9 | 2008 | Lose Control | Waldo's People |  | Eurovision | new |
-| 9 | 2020 | Running | Sandro Nicolas |  | Eurovision | new |
-| 9 | 2018 | Goodbye | The Humans |  | Eurovision | new |
-| 9 | 2024 | Luxembourg in the Eurovision Song Contest 2024 | Tali Golergant |  | Eurovision | new |
-| 8 | 2006 | Invincible | Carola |  | Melodifestivalen, Eurovision | new |
-| 8 | 2005 | Israel in the Eurovision Song Contest 2005 | Shiri Maimon |  | Eurovision | new |
-| 8 | 1958 | Netherlands in the Eurovision Song Contest 1958 | Corry Brokken |  | Eurovision | new |
-| 8 | 1956 | Italy in the Eurovision Song Contest 1956 | Franca Raimondi |  | Eurovision | new |
-| 8 | 1958 | Sweden in the Eurovision Song Contest 1958 | Alice Babs |  | Eurovision | new |
-| 8 | 1957 | United Kingdom in the Eurovision Song Contest 1957 | Patricia Bredin |  | Eurovision | new |
-| 8 | 1958 | Italy in the Eurovision Song Contest 1958 | Domenico Modugno |  | Eurovision | new |
-| 8 | 1959 | Netherlands in the Eurovision Song Contest 1959 | Teddy Scholten |  | Eurovision | new |
-| 8 | 1957 | Italy in the Eurovision Song Contest 1957 | Nunzio Gallo |  | Eurovision | new |
-| 8 | 2019 | Siren Song | Maruv |  | Eurovision | new |
-| 8 | 1972 | Beg, Steal or Borrow | The New Seekers |  | Eurovision | new |
-| 8 | 1977 | Israel in the Eurovision Song Contest 1977 | Ilanit |  | Eurovision | new |
-| 8 | 2016 | Israel in the Eurovision Song Contest 2016 | Hovi Star |  | Eurovision | new |
-| 8 | 2014 | Latvia in the Eurovision Song Contest 2014 | Aarzemnieki |  | Eurovision | new |
-| 8 | 1962 | Germany in the Eurovision Song Contest 1962 | Cornelia Froboess |  | Eurovision | new |
-| 8 | 1975 | Let Me Be the One | The Shadows |  | Eurovision | new |
-| 8 | 1960 | Germany in the Eurovision Song Contest 1960 | Wyn Hoop |  | Eurovision | new |
-| 8 | 2008 | Hasta la Vista | Ruslan Alekhno |  | Eurovision | new |
-| 8 | 2009 | Israel in the Eurovision Song Contest 2009 | Achinoam "Noa" Nini |  | Eurovision | new |
-| 8 | 2011 | Romania in the Eurovision Song Contest 2011 | Hotel FM |  | Eurovision | new |
-| 8 | 2021 | Australia in the Eurovision Song Contest 2021 | Montaigne |  | Eurovision | new |
-| 8 | 1975 | Israel in the Eurovision Song Contest 1975 | Shlomo Artzi |  | Eurovision | new |
-| 8 | 2008 | Romanca | Kraljevi ulice |  | Eurovision | new |
-| 8 | 2013 | Finland in the Eurovision Song Contest 2013 | Krista Siegfrids |  | Eurovision | new |
-| 8 | 2017 | Israel in the Eurovision Song Contest 2017 | Imri Ziv |  | Eurovision | new |
-| 8 | 2018 | Israel in the Eurovision Song Contest 2018 | Netta |  | Eurovision | new |
-| 7 | 1962 | Sol och vår | Inger Berggren |  | Melodifestivalen, Eurovision | new |
-| 7 | 2005 | Le grand soir | Nuno Resende |  | Eurovision | new |
-| 7 | 2006 | Israel in the Eurovision Song Contest 2006 | Eddie Butler |  | Eurovision | new |
-| 7 | 2003 | Hasta la Vista | Oleksandr Ponomariov |  | Eurovision | new |
-| 7 | 1958 | Germany in the Eurovision Song Contest 1958 | Margot Hielscher |  | Eurovision | new |
-| 7 | 2005 | Russia in the Eurovision Song Contest 2005 | Natalia Podolskaya |  | Eurovision | new |
-| 7 | 1957 | Denmark in the Eurovision Song Contest 1957 | Birthe Wilke |  | Eurovision | new |
-| 7 | 1957 | Austria in the Eurovision Song Contest 1957 | Bob Martin |  | Eurovision | new |
-| 7 | 1957 | France in the Eurovision Song Contest 1957 | Paule Desjardins |  | Eurovision | new |
-| 7 | 1958 | Austria in the Eurovision Song Contest 1958 | Liane Augustin |  | Eurovision | new |
-| 7 | 1957 | Belgium in the Eurovision Song Contest 1957 | Bobbejaan Schoepen |  | Eurovision | new |
-| 7 | 1998 | Guildo hat euch lieb! | Guildo Horn |  | Eurovision | new |
-| 7 | 1961 | Germany in the Eurovision Song Contest 1961 | Lale Andersen |  | Eurovision | new |
-| 7 | 2011 | Sweden in the Eurovision Song Contest 2011 | Eric Saade |  | Eurovision | new |
-| 7 | 2016 | Finland in the Eurovision Song Contest 2016 | Sandhja |  | Eurovision | new |
-| 7 | 2000 | Solo | Alsou |  | Eurovision | new |
-| 7 | 1979 | Israel in the Eurovision Song Contest 1979 | Milk and Honey |  | Eurovision | new |
-| 7 | 1999 | Israel in the Eurovision Song Contest 1999 | Eden |  | Eurovision | new |
-| 7 | 2000 | My Heart Goes Boom | Charmed |  | Eurovision | new |
-| 7 | 2000 | Israel in the Eurovision Song Contest 2000 | PingPong |  | Eurovision | new |
-| 7 | 2022 | Croatia in the Eurovision Song Contest 2022 | Mia Dimšić |  | Eurovision | new |
-| 7 | 2013 | Germany in the Eurovision Song Contest 2013 | Cascada |  | Eurovision | new |
-| 7 | 2018 | Finland in the Eurovision Song Contest 2018 | Saara Aalto |  | Eurovision | new |
-| 7 | 1992 | Germany in the Eurovision Song Contest 1992 | Wind |  | Eurovision | new |
-| 7 | 1969 | Primaballerina | Siw Malmkvist |  | Eurovision | new |
-| 7 | 1960 | United Kingdom in the Eurovision Song Contest 1960 | Bryan Johnson |  | Eurovision | new |
-| 7 | 2023 | Croatia in the Eurovision Song Contest 2023 | Let 3 |  | Eurovision | new |
-| 7 | 1974 | Israel in the Eurovision Song Contest 1974 | Kaveret |  | Eurovision | new |
-| 7 | 2024 | Slovenia in the Eurovision Song Contest 2024 | Raiven |  | Eurovision | new |
-| 7 | 1960 | Ce soir-là | François Deguelt |  | Eurovision | new |
-| 7 | 2017 | Portugal in the Eurovision Song Contest 2017 | Salvador Sobral |  | Eurovision | new |
-| 7 | 2018 | Portugal in the Eurovision Song Contest 2018 | Cláudia Pascoal |  | Eurovision | new |
-| 7 | 2025 | Azerbaijan in the Eurovision Song Contest 2025 | Mamagama |  | Eurovision | new |
-| 7 | 2021 | Ya nauchu tebya | Galasy ZMesta |  | Eurovision | new |
-| 7 | 2023 | Spain in the Eurovision Song Contest 2024 | Nebulossa |  | Eurovision | new |
-| 7 | 2024 | Croatia in the Eurovision Song Contest 2024 | Baby Lasagna |  | Eurovision | new |
-| 6 | 2014 | Busy Doin' Nothin' | Ace Wilder |  | Melodifestivalen | already a candidate |
-| 6 | 1990 | Som en vind | Edin-Ådahl |  | Melodifestivalen, Eurovision | already a candidate |
-| 6 | 2007 | Israel in the Eurovision Song Contest 2007 | Teapacks |  | Eurovision | new |
-| 6 | 2002 | Latvia in the Eurovision Song Contest 2002 | Marija Naumova |  | Eurovision | new |
-| 6 | 2007 | L'Amour à la française | Les Fatals Picards |  | Eurovision | new |
-| 6 | 1997 | Let Me Fly | Debbie Scerri |  | Eurovision | new |
-| 6 | 1963 | Een speeldoos | Annie Palmen |  | Eurovision | new |
-| 6 | 2006 | No No Never | Texas Lightning |  | Eurovision | new |
-| 6 | 1963 | Algo prodigioso | José Guardiola |  | Eurovision | new |
-| 6 | 1961 | Luxembourg in the Eurovision Song Contest 1961 | Jean-Claude Pascal |  | Eurovision | new |
-| 6 | 1958 | France in the Eurovision Song Contest 1958 | André Claveau |  | Eurovision | new |
-| 6 | 1959 | Italy in the Eurovision Song Contest 1959 | Domenico Modugno |  | Eurovision | new |
-| 6 | 1985 | Israel in the Eurovision Song Contest 1985 | Izhar Cohen |  | Eurovision | new |
-| 6 | 1959 | Denmark in the Eurovision Song Contest 1959 | Birthe Wilke |  | Eurovision | new |
-| 6 | 1961 | Italy in the Eurovision Song Contest 1961 | Betty Curtis |  | Eurovision | new |
-| 6 | 1958 | Belgium in the Eurovision Song Contest 1958 | Fud Leclerc |  | Eurovision | new |
-| 6 | 1959 | France in the Eurovision Song Contest 1959 | Jean Philippe |  | Eurovision | new |
-| 6 | 1959 | Germany in the Eurovision Song Contest 1959 | Kessler Twins |  | Eurovision | new |
-| 6 | 1958 | Denmark in the Eurovision Song Contest 1958 | Raquel Rastenni |  | Eurovision | new |
-| 6 | 1959 | Sweden in the Eurovision Song Contest 1959 | Siw Malmkvist |  | Eurovision | new |
-| 6 | 1959 | Belgium in the Eurovision Song Contest 1959 | Bob Benny |  | Eurovision | new |
-| 6 | 1961 | Belgium in the Eurovision Song Contest 1961 | Bob Benny |  | Eurovision | new |
-| 6 | 1999 | All Out of Luck | Selma Björnsdóttir |  | Eurovision | new |
-| 6 | 1979 | Raggio di luna | Matia Bazar |  | Eurovision | new |
-| 6 | 2016 | Poland in the Eurovision Song Contest 2016 | Michał Szpak |  | Eurovision | new |
-| 6 | 2016 | Austria in the Eurovision Song Contest 2016 | Zoe |  | Eurovision | new |
-| 6 | 2000 | Finland in the Eurovision Song Contest 2000 | Nina Åström |  | Eurovision | new |
-| 6 | 1983 | Israel in the Eurovision Song Contest 1983 | Ofra Haza |  | Eurovision | new |
-| 6 | 2001 | Germany in the Eurovision Song Contest 2001 | Michelle |  | Eurovision | new |
-| 6 | 2001 | Israel in the Eurovision Song Contest 2001 | Tal Sondak |  | Eurovision | new |
-| 6 | 1970 | Germany in the Eurovision Song Contest 1970 | Katja Ebstein |  | Eurovision | new |
-| 6 | 1982 | Germany in the Eurovision Song Contest 1982 | Nicole |  | Eurovision | new |
-| 6 | 1998 | Israel in the Eurovision Song Contest 1998 | Dana International |  | Eurovision | new |
-| 6 | 1987 | Ireland in the Eurovision Song Contest 1987 | Johnny Logan |  | Eurovision | new |
-| 6 | 1960 | Norway in the Eurovision Song Contest 1960 | Nora Brockstedt |  | Eurovision | new |
-| 6 | 2008 | Romania in the Eurovision Song Contest 2008 | Nicoleta Matei |  | Eurovision | new |
-| 6 | 1988 | Croire | Lara Fabian |  | Eurovision | new |
-| 6 | 1977 | Boom Boom Boomerang | Schmetterlinge |  | Eurovision | new |
-| 6 | 1977 | Lapponia | Monica Aspelund |  | Eurovision | new |
-| 6 | 1960 | France in the Eurovision Song Contest 1960 | Jacqueline Boyer |  | Eurovision | new |
-| 6 | 1960 | Sweden in the Eurovision Song Contest 1960 | Siw Malmkvist |  | Eurovision | new |
-| 6 | 1960 | Denmark in the Eurovision Song Contest 1960 | Katy Bødtger |  | Eurovision | new |
-| 6 | 1993 | Donne-moi une chance | Modern Times |  | Eurovision | new |
-| 6 | 2008 | All Night Long | Simon Mathew |  | Eurovision | new |
-| 6 | 1991 | Brazil | Bebi Dol |  | Eurovision | new |
-| 6 | 1990 | Quand je te rêve | Céline Carzo |  | Eurovision | new |
-| 6 | 1960 | Italy in the Eurovision Song Contest 1960 | Renato Rascel |  | Eurovision | new |
-| 6 | 1998 | ¿Qué voy a hacer sin ti? | Mikel Herzog |  | Eurovision | new |
-| 6 | 2020 | Australia in the Eurovision Song Contest 2020 | Montaigne |  | Eurovision | new |
-| 6 | 1975 | Era | Wess & Dori Ghezzi |  | Eurovision | new |
-| 6 | 1993 | Israel in the Eurovision Song Contest 1993 | Sara Sharon |  | Eurovision | new |
-| 6 | 1991 | Kan | Duo Datz |  | Eurovision | new |
-| 6 | 2021 | Slovenia in the Eurovision Song Contest 2021 | Ana Soklič |  | Eurovision | new |
-| 6 | 2021 | Croatia in the Eurovision Song Contest 2021 | Albina Grčić |  | Eurovision | new |
-| 5 | 2020 | Brave | Hanna Ferm |  | Melodifestivalen | new |
-| 5 | 2025 | Revolution | Måns Zelmerlöw |  | Melodifestivalen | new |
-| 5 | 2023 | Where You Are (Sávežan) | Jon Henrik Fjällgren |  | Melodifestivalen | new |
-| 5 | 2003 | Israel in the Eurovision Song Contest 2003 | Lior Narkis |  | Eurovision | new |
-| 5 | 2004 | Albania in the Eurovision Song Contest 2004 | Anjeza Shahini |  | Eurovision | new |
-| 5 | 2006 | Sweden in the Eurovision Song Contest 2006 | Carola |  | Eurovision | new |
-| 5 | 2006 | Germany in the Eurovision Song Contest 2006 | Texas Lightning |  | Eurovision | new |
-| 5 | 2006 | Croatia in the Eurovision Song Contest 2006 | Severina |  | Eurovision | new |
-| 5 | 2004 | Heaven | Jónsi |  | Eurovision | new |
-| 5 | 2002 | Israel in the Eurovision Song Contest 2002 | Sarit Hadad |  | Eurovision | new |
-| 5 | 1963 | Denmark in the Eurovision Song Contest 1963 | Grethe and Jørgen Ingmann |  | Eurovision | new |
-| 5 | 1965 | ¡Qué bueno, qué bueno! | Conchita Bautista |  | Eurovision | new |
-| 5 | 2002 | Estonia in the Eurovision Song Contest 2002 | Anna Sahlene |  | Eurovision | new |
-| 5 | 1964 | Denmark in the Eurovision Song Contest 1964 | Bjørn Tidmand |  | Eurovision | new |
-| 5 | 1997 | Sin rencor | Marcos Llunas |  | Eurovision | new |
-| 5 | 1958 | Luxembourg in the Eurovision Song Contest 1958 | Solange Berry |  | Eurovision | new |
-| 5 | 1957 | Luxembourg in the Eurovision Song Contest 1957 | Danièle Dupré |  | Eurovision | new |
-| 5 | 1968 | La source | Isabelle Aubret |  | Eurovision | new |
-| 5 | 1979 | Je suis l'enfant soleil | Anne-Marie David |  | Eurovision | new |
-| 5 | 1981 | Reggae OK | Riki Sorsa |  | Eurovision | new |
-| 5 | 1978 | Det blir alltid värre framåt natten | Björn Skifs |  | Eurovision, Melodifestivalen | already a candidate |
-| 5 | 1981 | Israel in the Eurovision Song Contest 1981 | Hakol Over Habibi |  | Eurovision | new |
-| 5 | 1981 | Halayla | Hakol Over Habibi |  | Eurovision | new |
-| 5 | 1978 | L'Amour ça fait chanter la vie | Jean Vallée |  | Eurovision | new |
-| 5 | 1980 | Ireland in the Eurovision Song Contest 1980 | Johnny Logan |  | Eurovision | new |
-| 5 | 1978 | Anna Rakkaudelle Tilaisuus | Seija Simola |  | Eurovision | new |
-| 5 | 2000 | Denmark in the Eurovision Song Contest 2000 | Olsen Brothers |  | Eurovision | new |
-| 5 | 1978 | Boom Boom | Mike Tramp |  | Eurovision | new |
-| 5 | 1972 | À la folie ou pas du tout | Serge & Christine Ghisoland |  | Eurovision | new |
-| 5 | 1999 | Yom Huledet | Eden |  | Eurovision | new |
-| 5 | 1992 | Nei eða já | Heart 2 Heart |  | Eurovision | new |
-| 5 | 1966 | Austria in the Eurovision Song Contest 1966 | Udo Jürgens |  | Eurovision | new |
-| 5 | 2008 | Casanova | Gisela |  | Eurovision | new |
-| 5 | 1987 | Amour | Plastic Bertrand |  | Eurovision | new |
-| 5 | 1988 | Israel in the Eurovision Song Contest 1988 | Yardena Arazi |  | Eurovision | new |
-| 5 | 2015 | Romania in the Eurovision Song Contest 2015 | Voltaj |  | Eurovision | new |
-| 5 | 1987 | Israel in the Eurovision Song Contest 1987 | Natan Datner |  | Eurovision | new |
-| 5 | 1992 | Israel in the Eurovision Song Contest 1992 | Dafna Dekel |  | Eurovision | new |
-| 5 | 1966 | Ce soir je t'attendais | Michèle Torr |  | Eurovision | new |
-| 5 | 1970 | Ireland in the Eurovision Song Contest 1970 | Dana Rosemary Scallon |  | Eurovision | new |
-| 5 | 1969 | Pozdrav svijetu | 4M |  | Eurovision | new |
-| 5 | 1982 | Israel in the Eurovision Song Contest 1982 | Avi Toledano |  | Eurovision | new |
-| 5 | 1989 | Israel in the Eurovision Song Contest 1990 | Rita |  | Eurovision | new |
-| 5 | 1986 | Belgium in the Eurovision Song Contest 1986 | Sandra Kim |  | Eurovision | new |
-| 5 | 1988 | Chanteur de charme | Gérard Lenorman |  | Eurovision | new |
-| 5 | 1989 | Nacida para amar | Nina |  | Eurovision | new |
-| 5 | 1986 | L'amour de ma vie | Sherisse Laurence |  | Eurovision | new |
-| 5 | 1993 | Mama Corsica | Patrick Fiori |  | Eurovision | new |
-| 5 | 1975 | Toi | Geraldine Brannigan |  | Eurovision | new |
-| 5 | 1989 | Israel in the Eurovision Song Contest 1989 | Gili & Galit |  | Eurovision | new |
-| 5 | 1995 | Israel in the Eurovision Song Contest 1995 | Liora |  | Eurovision | new |
-| 5 | 1960 | Luxembourg in the Eurovision Song Contest 1960 | Camillo Felgen |  | Eurovision | new |
-| 5 | 1989 | Sweden in the Eurovision Song Contest 1989 | Tommy Nilsson |  | Eurovision | new |
-| 5 | 1991 | Israel in the Eurovision Song Contest 1991 | Duo Datz |  | Eurovision | new |
-| 5 | 2018 | Lo Malo | Aitana |  | Eurovision | new |
-| 4 | 2020 | Kingdom Come | Anna Bergendahl |  | Melodifestivalen | new |
-| 4 | 2022 | Higher Power | Anna Bergendahl |  | Melodifestivalen | new |
-| 4 | 2021 | In the Middle | The Mamas |  | Melodifestivalen | new |
-| 4 | 2020 | Ballerina | Malou Prytz |  | Melodifestivalen | new |
-| 4 | 2023 | One Day | Mariette |  | Melodifestivalen | new |
-| 4 | 2007 | On Top of the World | Edsilia Rombley |  | Eurovision | new |
-| 4 | 2005 | Tout de moi | Lise Darly |  | Eurovision | new |
-| 4 | 1964 | Austria in the Eurovision Song Contest 1964 | Udo Jürgens |  | Eurovision | new |
-| 4 | 1985 | Sweden in the Eurovision Song Contest 1985 | Kikki Danielsson |  | Eurovision | new |
-| 4 | 1985 | La fiesta terminó | Paloma San Basilio |  | Eurovision | new |
-| 4 | 1961 | Nous aurons demain | Franca di Rienzo |  | Eurovision | new |
-| 4 | 1983 | Sweden in the Eurovision Song Contest 1983 | Carola |  | Eurovision | new |
-| 4 | 1979 | Austria in the Eurovision Song Contest 1979 | Christina Simon |  | Eurovision | new |
-| 4 | 1981 | Y sólo tú | Bacchelli |  | Eurovision | new |
-| 4 | 1999 | Denmark in the Eurovision Song Contest 1999 | Trine Jepsen |  | Eurovision | new |
-| 4 | 2000 | Sweden in the Eurovision Song Contest 2000 | Roger Pontare |  | Eurovision | new |
-| 4 | 1991 | Canzone per te | Sandra Studer |  | Eurovision | new |
-| 4 | 1966 | Denmark in the Eurovision Song Contest 1966 | Ulla Pia |  | Eurovision | new |
-| 4 | 1987 | Les Mots d'amour n'ont pas de dimanche | Christine Minier |  | Eurovision | new |
-| 4 | 1966 | Sweden in the Eurovision Song Contest 1966 | Lill Lindfors |  | Eurovision | new |
-| 4 | 1988 | Clown | Afroditi Frida |  | Eurovision | new |
-| 4 | 1991 | SOS | Elena Patroklou |  | Eurovision | new |
-| 4 | 1994 | Ella no es ella | Alejandro Abad |  | Eurovision | new |
-| 4 | 1984 | Hengaillaan | Kirka |  | Eurovision | new |
-| 4 | 1974 | Celui qui reste et celui qui s'en va | Romuald Figuier |  | Eurovision | new |
-| 4 | 1971 | Sweden in the Eurovision Song Contest 1971 | Family Four |  | Eurovision | new |
-| 4 | 1996 | ¡Ay, qué deseo! | Antonio Carbonell |  | Eurovision | new |
-| 3 | 2020 | Take a Chance | Robin Bengtsson |  | Melodifestivalen | new |
-| 3 | 2016 | Human | Oscar Zia |  | Melodifestivalen | new |
-| 3 | 2019 | I Do | Arvingarna |  | Melodifestivalen | new |
-| 3 | 2021 | Tänker inte alls gå hem | Arvingarna |  | Melodifestivalen | new |
-| 3 | 2023 | Rhythm of My Show | Tone Sekelius |  | Melodifestivalen | new |
-| 3 | 2018 | For You | Mariette |  | Melodifestivalen | new |
-| 3 | 2025 | Kamikaze Life | Maja Ivarsson |  | Melodifestivalen | new |
-| 3 | 2023 | Diamonds | Victor Crone |  | Melodifestivalen | new |
-| 3 | 2025 | Yihaa | Dolly Style |  | Melodifestivalen | new |
-| 3 | 2025 | On and On and On | Klara Hammarström |  | Melodifestivalen | new |
-| 3 | 2025 | Voice of the Silent | John Lundvik | 4E0st5Y809Aro5GG7oEzas | Melodifestivalen | new |
-| 3 | 2015 | Chameleon | Ira Losco |  | Eurovision | new |
-| 3 | 1979 | Sobe, sobe, balão sobe | Manuela Bravo |  | Eurovision | new |
-| 3 | 1979 | Denmark in the Eurovision Song Contest 1979 | Tommy Seebach |  | Eurovision | new |
-| 3 | 1996 | Mon cœur l'aime | Kathy Leander |  | Eurovision | new |
-| 3 | 1993 | Denmark in the Eurovision Song Contest 1993 | Tommy Seebach |  | Eurovision | new |
-| 3 | 1998 | Genesis | Michalis Chatzigiannis |  | Eurovision | new |
-| 2 | 2009 | It's My Life | Amy Diamond |  | Melodifestivalen | new |
-| 2 | 2009 | You're My World | Emilia |  | Melodifestivalen | new |
-| 2 | 2003 | Crazy in Love | Jill Johnson | 3M1MbdMOc0MMD9oxsscdtw | Melodifestivalen | new |
-| 2 | 2011 | Something in Your Eyes | Jenny Silver |  | Melodifestivalen | new |
-| 2 | 1988 | 100% | Lotta Engberg |  | Melodifestivalen | new |
-| 2 | 2011 | Try Again | Dilba Demirbağ |  | Melodifestivalen | new |
-| 2 | 2009 | Higher | Star Pilots |  | Melodifestivalen | new |
-| 2 | 2007 | Jag tror på människan | Tommy Nilsson |  | Melodifestivalen | new |
-| 2 | 2007 | Live Forever | Magnus Carlsson |  | Melodifestivalen | new |
-| 2 | 1989 | Upp över mina öron | Orup |  | Melodifestivalen | new |
-| 2 | 2011 | Leaving Home | Nicke Borg |  | Melodifestivalen | new |
-| 2 | 2011 | Oh, My God! | The Moniker |  | Melodifestivalen | new |
-| 2 | 2011 | The King | The Playtones |  | Melodifestivalen | new |
-| 2 | 2018 | Fuldans | Rolandz |  | Melodifestivalen | new |
-| 2 | 2023 | Raggen går | Elov & Beny |  | Melodifestivalen | new |
-| 2 | 2016 | 100% | Victor och Natten |  | Melodifestivalen | new |
-| 2 | 2025 | Show Me What Love Is | Erik Segerstedt |  | Melodifestivalen | new |
-| 2 | 2025 | Hate You So Much | Saga Ludvigsson |  | Melodifestivalen | new |
-| 2 | 2025 | Sweet n’ Psycho | SCARLET |  | Melodifestivalen | new |
-| 2 | 2025 | Hush Hush | Meira Omar |  | Melodifestivalen | new |
-| 2 | 2025 | Life Again | Annika Wickihalder |  | Melodifestivalen | new |
-| 2 | 2005 | Boys and Girls | Angelica Agurbash |  | Eurovision | new |
-| 2 | 1981 | Denmark in the Eurovision Song Contest 1981 | Tommy Seebach |  | Eurovision | new |
-| 2 | 1969 | Bonjour, Bonjour | Paola del Medico |  | Eurovision | new |
-| 1 | 2006 | This Woman | Anna Sahlene |  | Melodifestivalen | new |
-| 1 | 1969 | Hej clown | Jan Malmsjö |  | Melodifestivalen | in the catalogue |
-| 1 | 2011 | I Thought It Was Forever | Shirley's Angels |  | Melodifestivalen | new |
-| 1 | 1977 | Charlie Chaplin | Eva Rydberg |  | Melodifestivalen | new |
-| 1 | 2013 | On Top of the World | Swedish House Wives |  | Melodifestivalen | new |
-| 1 | 1990 | Vi vill ha värme | N'Gang |  | Melodifestivalen | new |
-| 1 | 1988 | Nästa weekend | Ulf Bork |  | Melodifestivalen | new |
-| 1 | 1989 | Jorden är din | True Blue |  | Melodifestivalen | new |
-| 1 | 2023 | Inga sorger | Loulou Lamotte |  | Melodifestivalen | new |
-| 1 | 2023 | Haunted | Rejhan |  | Melodifestivalen | new |
-| 1 | 2025 | Den känslan | Linnea Henriksson |  | Melodifestivalen | new |
-| 1 | 2023 | Länge leve livet | Eva Rydberg |  | Melodifestivalen | new |
-| 1 | 1979 | Hallelujah | Milk and Honey |  | Eurovision | new |
-| 1 | 2015 | Odbrojavanje za Beč | Bojana Stamenov |  | Eurovision | new |
-| 0 | 1983 | Främling | Carola |  | Melodifestivalen, Eurovision | in the catalogue |
-| 0 | 1991 | Fångad av en stormvind | Carola |  | Melodifestivalen, Eurovision | in the catalogue |
-| 0 | 2006 | Evighet | Carola |  | Melodifestivalen | already a candidate |
-| 0 | 2008 | Hero | Charlotte Perrelli |  | Melodifestivalen, Eurovision | in the catalogue |
-| 0 | 1999 | Tusen och en natt | Charlotte Perrelli |  | Melodifestivalen | already a candidate |
-| 0 | 1985 | Sjung din sång | Stefan Borsch |  | Melodifestivalen | new |
-| 0 | 2009 | La voix | Malena Ernman |  | Melodifestivalen, Eurovision | already a candidate |
-| 0 | 1996 | Juliette & Jonathan | Lotta Engberg |  | Melodifestivalen | new |
-| 0 | 1973 | Ring ring (bara du slog en signal) | ABBA |  | Melodifestivalen | new |
-| 0 | 2012 | Don't Let Me Down | Lotta Engberg |  | Melodifestivalen | new |
-| 0 | 2002 | Hon är en annan nu | Sylvia Vrethammar |  | Melodifestivalen | new |
-| 0 | 2002 | Never Let It Go | Afro-dite |  | Melodifestivalen, Eurovision | in the catalogue |
-| 0 | 2013 | Trivialitet | Sylvia Vrethammar |  | Melodifestivalen | new |
-| 0 | 1986 | Kärleken är evig | Lena Philipsson |  | Melodifestivalen | in the catalogue |
-| 0 | 1984 | Sankta Cecilia | Göran Folkestad |  | Melodifestivalen | new |
-| 0 | 1985 | Bra vibrationer | Kikki Danielsson |  | Melodifestivalen, Eurovision | in the catalogue |
-| 0 | 1983 | Varför är kärleken röd? | Kikki Danielsson |  | Melodifestivalen | new |
-| 0 | 1992 | En enda gång | Kikki Danielsson |  | Melodifestivalen | new |
-| 0 | 2006 | I dag & i morgon | Kikki Danielsson |  | Melodifestivalen | new |
-| 0 | 2002 | Vem é dé du vill ha | Kikki, Bettan & Lotta |  | Melodifestivalen | new |
-| 0 | 1959 | Augustin | Siw Malmkvist |  | Melodifestivalen, Eurovision | new |
-| 0 | 1988 | Om igen | Lena Philipsson |  | Melodifestivalen | new |
-| 0 | 1987 | Dansa i neon | Lena Philipsson |  | Melodifestivalen | in the catalogue |
-| 0 | 1984 | Kärleksmagi | Elisabeth Andreassen |  | Melodifestivalen | new |
-| 0 | 1961 | April, april | Siw Malmkvist |  | Melodifestivalen, Eurovision | new |
-| 0 | 2006 | Jag ljuger så bra | Linda Bengtzing |  | Melodifestivalen | already a candidate |
-| 0 | 2005 | Alla flickor | Linda Bengtzing |  | Melodifestivalen | already a candidate |
-| 0 | 2008 | One Love | Carola |  | Melodifestivalen | new |
-| 0 | 1990 | Jag ser en stjärna falla | Elisabeth Andreassen |  | Melodifestivalen | new |
-| 0 | 1998 | Kärleken är | Jill Johnson |  | Melodifestivalen, Eurovision | already a candidate |
-| 0 | 1963 | En gång i Stockholm | Monica Zetterlund |  | Melodifestivalen, Eurovision | already a candidate |
-| 0 | 1979 | Satellit | Ted Gärdestad |  | Melodifestivalen, Eurovision | in the catalogue |
-| 0 | 1980 | Låt solen värma dig | Ted Gärdestad |  | Melodifestivalen | new |
-| 0 | 1974 | Waterloo | ABBA |  | Melodifestivalen, Eurovision | in the catalogue |
-| 0 | 1990 | Mitt i ett äventyr | Carola |  | Melodifestivalen | already a candidate |
-| 0 | 2008 | I Love Europe | Christer Sjögren |  | Melodifestivalen | new |
-| 0 | 2011 | En blick och nånting händer | Lasse Stefanz |  | Melodifestivalen | new |
-| 0 | 1980 | Jag ger mig inte | Eva Dahlgren |  | Melodifestivalen | new |
-| 0 | 1979 | Om jag skriver en sång | Eva Dahlgren |  | Melodifestivalen | new |
-| 0 | 1966 | Nygammal vals | Lill Lindfors |  | Melodifestivalen, Eurovision | already a candidate |
-| 0 | 1987 | Fyra Bugg & en Coca Cola | Lotta Engberg |  | Melodifestivalen | in the catalogue |
-| 0 | 1990 | En gång till | Lotta Engberg |  | Melodifestivalen | new |
-| 0 | 1975 | Jennie, Jennie | Lasse Berghagen |  | Melodifestivalen, Eurovision | already a candidate |
-| 0 | 1994 | Stjärnorna | Roger Pontare |  | Melodifestivalen, Eurovision | new |
-| 0 | 1975 | Bang en boomerang | Svenne & Lotta |  | Melodifestivalen | already a candidate |
-| 0 | 1967 | Som en dröm | Östen Warnerbring |  | Melodifestivalen, Eurovision | already a candidate |
-| 0 | 1960 | Alla andra får varann | Östen Warnerbring |  | Melodifestivalen, Eurovision | new |
-| 0 | 1978 | Miss Decibel | Wizex |  | Melodifestivalen | new |
-| 0 | 1981 | Fångad i en dröm | Björn Skifs |  | Melodifestivalen, Eurovision | already a candidate |
-| 0 | 1984 | Diggi loo diggi ley | Herreys |  | Melodifestivalen, Eurovision | already a candidate |
-| 0 | 1985 | Piccadilly Circus | Pernilla Wahlgren |  | Melodifestivalen | already a candidate |
-| 0 | 1991 | Tvillingsjäl | Pernilla Wahlgren |  | Melodifestivalen | new |
-| 0 | 1972 | Andra kan väl också se | Björn Skifs |  | Melodifestivalen | new |
-| 0 | 1969 | Judy, min vän | Tommy Körberg |  | Melodifestivalen, Eurovision | in the catalogue |
-| 0 | 1993 | Eloise | Arvingarna |  | Melodifestivalen, Eurovision | in the catalogue |
-| 0 | 1996 | Den vilda | One More Time |  | Melodifestivalen, Eurovision | already a candidate |
-| 0 | 1995 | Bo Diddley | Arvingarna |  | Melodifestivalen | new |
-| 0 | 2001 | Allt som jag ser | Barbados |  | Melodifestivalen | new |
-| 0 | 1986 | E' de' det här du kallar kärlek? | Lasse Holm |  | Melodifestivalen, Eurovision | already a candidate |
-| 0 | 1972 | Härliga sommardag | Family Four |  | Melodifestivalen, Eurovision | new |
-| 0 | 1988 | Det är kärlek | Siw Malmkvist |  | Melodifestivalen | new |
-| 0 | 1999 | Det svär jag på | Arvingarna |  | Melodifestivalen | new |
-| 0 | 2000 | Se mig | Barbados |  | Melodifestivalen | new |
-| 0 | 2003 | Give Me Your Love | Fame |  | Melodifestivalen, Eurovision | already a candidate |
-| 0 | 2011 | Vaken i en dröm | Elisabeth Andreassen |  | Melodifestivalen | new |
-| 0 | 1992 | I morgon är en annan dag | Christer Björkman |  | Melodifestivalen, Eurovision | new |
-| 0 | 1982 | Dag efter dag | Chips |  | Melodifestivalen, Eurovision | in the catalogue |
-| 0 | 1980 | Mycke' mycke' mer | Chips |  | Melodifestivalen | new |
-| 0 | 1981 | God morgon | Chips |  | Melodifestivalen | new |
-| 0 | 1980 | Just nu! | Tomas Ledin |  | Melodifestivalen, Eurovision | already a candidate |
-| 0 | 2000 | När jag tänker på i morgon | Friends |  | Melodifestivalen | new |
-| 0 | 1999 | Välkommen hem | Christer Björkman |  | Melodifestivalen | new |
-| 0 | 2009 | Du är älskad där du går | Susanne Alfvengren |  | Melodifestivalen | new |
-| 0 | 1986 | ABC | Anna Book |  | Melodifestivalen | new |
-| 0 | 1984 | Kall som is | Anders Glenmark |  | Melodifestivalen | new |
-| 0 | 2008 | Empty Room | Sanna Nielsen |  | Melodifestivalen | already a candidate |
-| 0 | 2011 | The Hunter | Melody Club |  | Melodifestivalen | new |
-| 0 | 2000 | När vindarna viskar mitt namn | Roger Pontare |  | Melodifestivalen | already a candidate |
-| 0 | 1980 | Tusen sekunder | Paul Sahlin |  | Melodifestivalen | new |
-| 0 | 1999 | Som av is | Roger Pontare |  | Melodifestivalen | new |
-| 0 | 1987 | Högt över havet | Arja Saijonmaa |  | Melodifestivalen | new |
-| 0 | 1974 | Min kärlekssång till dig | Lasse Berghagen |  | Melodifestivalen | new |
-| 0 | 2001 | Lyssna till ditt hjärta | Friends |  | Melodifestivalen | already a candidate |
-| 0 | 2005 | Las Vegas | Martin Stenmarck |  | Melodifestivalen, Eurovision | already a candidate |
-| 0 | 1971 | Vita vidder | Family Four |  | Melodifestivalen, Eurovision | already a candidate |
-| 0 | 1971 | Heja mamma | Family Four |  | Melodifestivalen | new |
-| 0 | 1987 | Sommarnatt | Robert Wells |  | Melodifestivalen | new |
-| 0 | 1977 | Minns du Hollywood? | Tomas Ledin |  | Melodifestivalen | new |
-| 0 | 2009 | Du vinner över mig | Mikael Rickfors |  | Melodifestivalen | new |
-| 0 | 2007 | The Worrying Kind | The Ark |  | Melodifestivalen, Eurovision | already a candidate |
-| 0 | 1998 | Cherie | Black Ingvars |  | Melodifestivalen | new |
-| 0 | 1990 | En sensation | Peter Jöback |  | Melodifestivalen | new |
-| 0 | 1989 | Världen är vår | Visitors |  | Melodifestivalen | new |
-| 0 | 2005 | Var mig nära | Cecilia Vennersten |  | Melodifestivalen | new |
-| 0 | 1995 | Det vackraste | Cecilia Vennersten |  | Melodifestivalen | new |
-| 0 | 2001 | I går, i dag | Sanna Nielsen |  | Melodifestivalen | new |
-| 0 | 1965 | Annorstädes vals | Ingvar Wixell |  | Melodifestivalen | new |
-| 0 | 1973 | Oh, vilken härlig da' | Ted Gärdestad |  | Melodifestivalen | new |
-| 0 | 1984 | Livet är som ett träd | Vicki Benckert |  | Melodifestivalen | new |
-| 0 | 1999 | Stjärna på himmelen | Therese Grankvist |  | Melodifestivalen | new |
-| 0 | 1992 | Jag kan se en ängel | Wizex |  | Melodifestivalen | new |
-| 0 | 1975 | Rockin' n' Reelin' | Ted Gärdestad |  | Melodifestivalen | new |
-| 0 | 1968 | Det börjar verka kärlek, banne mej | Claes-Göran Hederström |  | Melodifestivalen | in the catalogue |
-| 0 | 1980 | Å sjuttiotal | Britta Johansson |  | Melodifestivalen | new |
-| 0 | 1980 | Utan att fråga | Kenta |  | Melodifestivalen | new |
-| 0 | 2000 | Anropar försvunnen | Hanna Hedlund |  | Melodifestivalen | new |
-| 0 | 2000 | Varje timma, var minut | Javiera Muñoz |  | Melodifestivalen | new |
-| 0 | 1989 | När stormen går | Catrin Olsson |  | Melodifestivalen | new |
-| 0 | 1993 | Sjunde himlen | Lena Pålsson |  | Melodifestivalen | new |
-| 0 | 1993 | Sången över havet | Lizette Pålsson |  | Melodifestivalen | new |
-| 0 | 1995 | Du är drömmen jag drömt | Björn Hedström |  | Melodifestivalen | new |
-| 0 | 1988 | Stad i ljus | Tommy Körberg |  | Melodifestivalen, Eurovision | already a candidate |
-| 0 | 1997 | Bara hon älskar mig | Blond |  | Melodifestivalen, Eurovision | already a candidate |
-| 0 | 2005 | Du med dig | Miriam Bryant |  | Melodifestivalen | new |
-| 0 | 1989 | En dag | Tommy Nilsson |  | Melodifestivalen, Eurovision | already a candidate |
-| 0 | 1973 | Sommar'n som aldrig säger nej | Malta |  | Melodifestivalen | new |
-| 0 | 1995 | Se på mig | Jan Johansen |  | Melodifestivalen, Eurovision | new |
-| 0 | 2001 | Ingenmansland | Jan Johansen |  | Melodifestivalen | new |
-| 0 | 1993 | We Are All the Winners | Nick Borgen |  | Melodifestivalen | new |
-| 0 | 1990 | Symfonin | Loa Falkman |  | Melodifestivalen | new |
-| 0 | 1987 | Nya illusioner | Annica Jonsson |  | Melodifestivalen | new |
-| 0 | 1997 | Missarna | Wille Crafoord |  | Melodifestivalen | new |
-| 0 | 1974 | Fröken ur sång | Titti Sjöblom |  | Melodifestivalen | new |
-| 0 | 1986 | Eldorado | Sound of Music |  | Melodifestivalen | new |
-| 0 | 1985 | Ta min hand | Dan Tillberg |  | Melodifestivalen | new |
-| 0 | 1986 | Jag har en dröm | Baden-Baden |  | Melodifestivalen | new |
-| 0 | 1986 | ABCD | Dan Tillberg |  | Melodifestivalen | new |
-| 0 | 1991 | Kommer du ihåg mig? | Jim Jidhed |  | Melodifestivalen | new |
-| 0 | 1984 | Nu är jag tillbaks igen | Janne Önnerud |  | Melodifestivalen | new |
-| 0 | 1987 | Ung och evig | Paul Sahlin |  | Melodifestivalen | new |
-| 0 | 1977 | Beatles | Forbes |  | Melodifestivalen, Eurovision | already a candidate |
-| 0 | 1998 | Avundsjuk | Nanne Grönvall |  | Melodifestivalen | new |
-| 0 | 1989 | Okey, okey | Lili & Susie |  | Melodifestivalen | new |
-| 0 | 1989 | Genom eld | Cajsa Bergström |  | Melodifestivalen | new |
-| 0 | 1989 | Du (öppnar min värld) | Lisa Nilsson |  | Melodifestivalen | new |
-| 0 | 2018 | Osby–Tennessee | Kikki Danielsson |  | Melodifestivalen | new |
-| 0 | 1997 | Charlie | Jim Jidhed |  | Melodifestivalen | new |
-| 0 | 1988 | Måndag i mitt liv | Billy Gezon |  | Melodifestivalen | new |
-| 0 | 1988 | Kärlek är | Sten Nilsson |  | Melodifestivalen | new |
-| 0 | 1987 | Flyktingen | Jan-Eric Karlzon |  | Melodifestivalen | new |
-| 0 | 1979 | Johnny the Rocker | Magnus Uggla Band |  | Melodifestivalen | new |
-| 0 | 1982 | Hallå hela pressen | Chattanooga |  | Melodifestivalen | new |
-| 0 | 1980 | Växeln hallå | Janne Persson |  | Melodifestivalen | new |
-| 0 | 1981 | Rocky Mountain | Janne Persson |  | Melodifestivalen | new |
-| 0 | 1999 | (Du är så) Yeah Yeah Wow Wow | Martin Svensson |  | Melodifestivalen | new |
-| 0 | 2019 | Ashes to Ashes | Anna Bergendahl |  | Melodifestivalen | new |
-| 0 | 1988 | Säg är det sant? | Karin Ljung |  | Melodifestivalen | new |
-| 0 | 1974 | En enda jord | Lena Ericsson |  | Melodifestivalen | new |
-| 0 | 1987 | När morgonstjärnan brinner | Cyndee Peters |  | Melodifestivalen | new |
-| 0 | 1990 | Varje natt | Lisbet Jagedal |  | Melodifestivalen | new |
-| 0 | 1988 | Dansa med vindarna | All of a Sudden |  | Melodifestivalen | new |
-| 0 | 1987 | Hand i hand | Style |  | Melodifestivalen | new |
-| 0 | 1987 | Alexandra | Sound of Music |  | Melodifestivalen | new |
-| 0 | 1975 | Ska vi plocka körsbär i min trädgård? | Ann-Christine Bärnsten |  | Melodifestivalen | new |
-| 0 | 1992 | Långt härifrån | Py Bäckman |  | Melodifestivalen | new |
-| 0 | 2003 | Hela världen för mig | Sanna Nielsen |  | Melodifestivalen | already a candidate |
-| 0 | 1987 | Leva livet | Baden-Baden |  | Melodifestivalen | new |
-| 0 | 1988 | Bang, en explosion | Haakon Pedersen |  | Melodifestivalen | new |
-| 0 | 1988 | Bara du och jag | Paul Rein |  | Melodifestivalen | new |
-| 0 | 1977 | Sommar'n -65 | Landslaget |  | Melodifestivalen | new |
-| 0 | 1991 | Ett liv med dej | Towe Jaarnek |  | Melodifestivalen | new |
-| 0 | 1991 | Annie | Laila Dahl |  | Melodifestivalen | new |
-| 0 | 1994 | Det vackraste jag vet | Gladys del Pilar |  | Melodifestivalen | new |
-| 0 | 1990 | Handen på hjärtat | Sofia Källgren |  | Melodifestivalen | new |
-| 0 | 1997 | World Wide Web | Nick Borgen |  | Melodifestivalen | new |
-| 0 | 1998 | Julia | Myrra Malmberg |  | Melodifestivalen | new |
-| 0 | 2011 | Ge mig en spanjor | Lars-Åke Wilhelmsson |  | Melodifestivalen | new |
-| 0 | 2009 | Jag tror på oss | Scotts |  | Melodifestivalen | new |
-| 0 | 2004 | Det gör ont | Lena Philipsson |  | Melodifestivalen | in the catalogue |
-| 0 | 2017 | I Can't Go On | Robin Bengtsson |  | Melodifestivalen, Eurovision | already a candidate |
-| 0 | 1988 | I en ding ding värld | Annica Burman |  | Melodifestivalen | new |
-| 0 | 1987 | Det finns en morgondag | Anna Book |  | Melodifestivalen | new |
-| 0 | 1977 | Det bästa som finns | Lena Andersson |  | Melodifestivalen | new |
-| 0 | 2019 | Kärleken finns kvar | Ann-Louise Hanson |  | Melodifestivalen | new |
-| 0 | 2004 | C'est la vie | Ann-Louise Hanson |  | Melodifestivalen | new |
-| 0 | 1989 | Mitt ibland änglar | Fingerprints |  | Melodifestivalen | new |
-| 0 | 1993 | Venus Butterfly | Angel |  | Melodifestivalen | new |
-| 0 | 1996 | Du är alltid en del utav mej | Henrik Åberg |  | Melodifestivalen | new |
-| 0 | 1986 | Dover–Calais | Style |  | Melodifestivalen | new |
-| 0 | 2021 | 90-talet | Christopher Wahlberg |  | Melodifestivalen | new |
-| 0 | 2022 | Let There Be Angels | Shirley Clamp |  | Melodifestivalen | new |
-| 0 | 2019 | Leva livet | Jan Malmsjö |  | Melodifestivalen | new |
-| 0 | 2025 | Love It! | Victoria Silvstedt |  | Melodifestivalen | new |
-| 0 | 2025 | Vicious | Andreas Lundstedt |  | Melodifestivalen | new |
-| 0 | 2025 | Ring baby ring | Arvingarna |  | Melodifestivalen | new |
-| 0 | 2025 | 24K Gold | Malou Prytz |  | Melodifestivalen | new |
-| 0 | 2025 | Vår första gång | Adrian Macéus |  | Melodifestivalen | new |
-| 0 | 2025 | Salute | Kaliffa Karlsson |  | Melodifestivalen | new |
-| 0 | 2025 | Upp i luften | Albin Johnsén |  | Melodifestivalen | new |
-| 0 | 2025 | Rädda mig | Björn Holmgren |  | Melodifestivalen | new |
-| 0 | 2025 | Teardrops | Angelino Markenhorn |  | Melodifestivalen | new |
-| 0 | 2025 | Bara du är där | Ella Tiritiello |  | Melodifestivalen | new |
-| 0 | 2025 | Yours | Tennessee Tears |  | Melodifestivalen | new |
-| 0 | 2025 | Funniest Thing | Nomi Tales |  | Melodifestivalen | new |
-| 0 | 2025 | Don Juan | Schlagerz |  | Melodifestivalen | new |
-| 0 | 2025 | The Heart of a Swedish Cowboy | Fredrik Lundman |  | Melodifestivalen | new |
-| 0 | 2025 | Believe Me | Greczula |  | Melodifestivalen | new |
-| 0 | 2025 | Do Good Be Better | AmenA |  | Melodifestivalen | new |
-| 0 | 2025 | This Dream of Mine | Arwin |  | Melodifestivalen | new |
-| 0 | 2025 | I'm Yours | Vilhelm Buchaus |  | Melodifestivalen | new |
-| 0 | 2006 | Hard Rock Hallelujah | Lordi |  | Eurovision | in the catalogue |
-| 0 | 2004 | Wild Dances | Ruslana Lyzhychko |  | Eurovision | new |
-| 0 | 2003 | Everyway That I Can | Sertab Erener |  | Eurovision | new |
-| 0 | 2004 | It Hurts | Lena Philipsson |  | Eurovision | new |
-| 0 | 2002 | I Wanna | Marija Naumova |  | Eurovision | new |
-| 0 | 2005 | My Number One | Helena Paparizou |  | Eurovision | new |
-| 0 | 1964 | Non ho l'età | Gigliola Cinquetti |  | Eurovision | new |
-| 0 | 1963 | Dansevise | Grethe and Jørgen Ingmann |  | Eurovision | new |
-| 0 | 1968 | Det börjar verka kärlek, banne mig | Claes-Göran Hederström |  | Eurovision | new |
-| 0 | 1968 | La, la, la | Massiel |  | Eurovision | new |
-| 0 | 1957 | Net als toen | Corry Brokken |  | Eurovision | new |
-| 0 | 2002 | Runaway | Anna Sahlene |  | Eurovision | new |
-| 0 | 1965 | Absent Friend | Ingvar Wixell |  | Eurovision | new |
-| 0 | 1958 | Dors, mon amour | André Claveau |  | Eurovision | new |
-| 0 | 1961 | Nous les amoureux | Jean-Claude Pascal |  | Eurovision | new |
-| 0 | 1958 | Lilla stjärna | Alice Babs |  | Eurovision | new |
-| 0 | 1968 | Congratulations | Cliff Richard |  | Eurovision | new |
-| 0 | 1997 | Love Shine a Light | Katrina and the Waves |  | Eurovision | new |
-| 0 | 1997 | San Francisco | Tor Endresen |  | Eurovision | new |
-| 0 | 1959 | Een beetje | Teddy Scholten |  | Eurovision | new |
-| 0 | 1956 | Refrain | Lys Assia |  | Eurovision | new |
-| 0 | 1956 | Refrain / Arrivederci, Roma | Lys Assia |  | Eurovision | new |
-| 0 | 2016 | IF I Were Sorry | Frans |  | Eurovision | already a candidate |
-| 0 | 2016 | 1944 | Jamala |  | Eurovision | new |
-| 0 | 2014 | Rise Like a Phoenix | Conchita Wurst |  | Eurovision | new |
-| 0 | 2010 | Satellite | Lena Meyer-Landrut |  | Eurovision | new |
-| 0 | 1999 | Take Me to Your Heaven | Charlotte Perrelli |  | Eurovision | already a candidate |
-| 0 | 1979 | Dschinghis Khan | Dschinghis Khan |  | Eurovision | new |
-| 0 | 1972 | Après toi | Vicky Leandros |  | Eurovision | new |
-| 0 | 2022 | Jezebel | The Rasmus |  | Eurovision | new |
-| 0 | 1988 | Ne partez pas sans moi | Céline Dion |  | Eurovision | new |
-| 0 | 1983 | Si la vie est cadeau | Corinne Hermès |  | Eurovision | new |
-| 0 | 1999 | Marija Magdalena | Doris Dragović |  | Eurovision | new |
-| 0 | 1980 | What's Another Year? | Johnny Logan |  | Eurovision | new |
-| 0 | 1978 | A-Ba-Ni-Bi | Izhar Cohen |  | Eurovision | new |
-| 0 | 1978 | Questo amore | Ricchi e Poveri |  | Eurovision | new |
-| 0 | 2008 | Belive | Dima Bilan |  | Eurovision | new |
-| 0 | 2000 | Fly on the Wings of Love | Olsen Brothers |  | Eurovision | new |
-| 0 | 2001 | Everybody | Tanel Padar |  | Eurovision | new |
-| 0 | 1981 | Making Your Mind Up | Bucks Fizz |  | Eurovision | new |
-| 0 | 1978 | Parlez-vous français? | Baccara |  | Eurovision | new |
-| 0 | 2013 | Only Teardrops | Emmelie de Forest |  | Eurovision | new |
-| 0 | 1966 | Merci Chérie | Udo Jürgens |  | Eurovision | new |
-| 0 | 2009 | Fairytale | Alexander Rybak |  | Eurovision | new |
-| 0 | 1981 | Johnny Blue | Lena Valaitis |  | Eurovision | new |
-| 0 | 1980 | Theater | Katja Ebstein |  | Eurovision | new |
-| 0 | 2000 | When Spirits Are Calling My Name | Roger Pontare |  | Eurovision | new |
-| 0 | 1983 | Džuli | Daniel |  | Eurovision | new |
-| 0 | 1986 | J'aime la vie | Sandra Kim |  | Eurovision | new |
-| 0 | 1973 | Tu te reconnaîtras | Anne-Marie David |  | Eurovision | new |
-| 0 | 1971 | Un banc, un arbre, une rue | Séverine |  | Eurovision | new |
-| 0 | 1977 | L'oiseau et l'enfant | Marie Myriam |  | Eurovision | new |
-| 0 | 1995 | Nocturne | Secret Garden |  | Eurovision | new |
-| 0 | 1973 | You're Summer | Malta |  | Eurovision | new |
-| 0 | 2001 | Listen to Your Heartbeat | Friends |  | Eurovision | new |
-| 0 | 2015 | Heroes | Måns Zelmerlöw |  | Eurovision | in the catalogue |
-| 0 | 1982 | Ein bißchen Frieden | Nicole |  | Eurovision | new |
-| 0 | 1998 | Diva | Dana International |  | Eurovision | new |
-| 0 | 2018 | Dance You Off | Benjamin Ingrosso |  | Eurovision | already a candidate |
-| 0 | 1992 | Why Me? | Linda Martin |  | Eurovision | new |
-| 0 | 1965 | Poupée de cire, poupée de son | France Gall |  | Eurovision | new |
-| 0 | 1993 | In Your Eyes | Niamh Kavanagh |  | Eurovision | new |
-| 0 | 1969 | Boom Bang-a-Bang | Lulu |  | Eurovision | new |
-| 0 | 1969 | Vivo cantando | Salomé |  | Eurovision | new |
-| 0 | 1994 | Rock 'n' Roll Kids | Paul Harrington |  | Eurovision | new |
-| 0 | 1988 | For vår jord | Karoline Krüger |  | Eurovision | new |
-| 0 | 1967 | Puppet on a String | Sandie Shaw |  | Eurovision | new |
-| 0 | 1987 | Hold Me Now | Johnny Logan |  | Eurovision | new |
-| 0 | 1987 | Gente di mare | Umberto Tozzi |  | Eurovision | new |
-| 0 | 1969 | Un jour, un enfant | Frida Boccara |  | Eurovision | new |
-| 0 | 1987 | Boogaloo | Lotta Engberg |  | Eurovision | new |
-| 0 | 1996 | The Voice | Eimear Quinn |  | Eurovision | new |
-| 0 | 1969 | De troubadour | Lenny Kuhr |  | Eurovision | new |
-| 0 | 1987 | Mitt liv | Kate Gulbrandsen |  | Eurovision | new |
-| 0 | 1960 | Tom Pillibi | Jacqueline Boyer |  | Eurovision | new |
-| 0 | 1962 | Un premier amour | Isabelle Aubret |  | Eurovision | new |
-| 0 | 1970 | All Kinds of Everything | Dana Rosemary Scallon |  | Eurovision | new |
-| 0 | 1996 | I evighet | Elisabeth Andreassen |  | Eurovision | new |
-| 0 | 1986 | Romeo | Ketil Stokkan |  | Eurovision | new |
-| 0 | 1996 | Liefde is een kaartspel | Lisa del Bo |  | Eurovision | new |
-| 0 | 1990 | Insieme: 1992 | Toto Cutugno |  | Eurovision | new |
-| 0 | 1989 | Rock Me | Riva |  | Eurovision | new |
-| 0 | 1975 | Ding-a-dong | Teach-In |  | Eurovision | in the catalogue |
-| 0 | 1976 | Save Your Kisses for Me | Brotherhood of Man |  | Eurovision | new |
-| 0 | 1990 | Brandenburger Tor | Ketil Stokkan |  | Eurovision | new |
-| 0 | 2017 | Amar pelos dois | Salvador Sobral |  | Eurovision | new |
-| 0 | 1994 | Duett | Bettan & Jan Werner |  | Eurovision | new |
+| 0 | 1956 | Refrain | Lys Assia |  | Eurovision 1st | new |
+| 0 | 1957 | Net als toen | Corry Brokken |  | Eurovision 1st | new |
+| 0 | 1957 | La Belle Amour | Paule Desjardins |  | Eurovision 2nd | new |
+| 0 | 1957 | Skibet skal sejle i nat | Birthe Wilke and Gustav Winckler |  | Eurovision 3rd | new |
+| 0 | 1958 | Dors mon amour | André Claveau |  | Eurovision 1st | new |
+| 0 | 1958 | Giorgio | Lys Assia |  | Eurovision 2nd | new |
+| 0 | 1958 | Nel blu, dipinto di blu | Domenico Modugno |  | Eurovision 3rd | new |
+| 0 | 1958 | Lilla stjärna | Alice Babs |  | Sweden at Eurovision 4th | new |
+| 0 | 1959 | Een beetje | Teddy Scholten |  | Eurovision 1st | new |
+| 0 | 1959 | Sing Little Birdie | Pearl Carr and Teddy Johnson |  | Eurovision 2nd | new |
+| 0 | 1959 | Oui oui oui oui | Jean Philippe |  | Eurovision 3rd | new |
+| 0 | 1959 | Augustin | Siw Malmkvist |  | Sweden at Eurovision 9th, Melodifestivalen 1st | new |
+| 0 | 1959 | Dags igen att vara kära | Staffan Broms |  | Melodifestivalen 2nd | new |
+| 0 | 1959 | Nya fågelsången | Britt Damberg |  | Melodifestivalen 3rd | new |
+| 0 | 1960 | Tom Pillibi | Jacqueline Boyer |  | Eurovision 1st | new |
+| 0 | 1960 | Looking High, High, High | Bryan Johnson |  | Eurovision 2nd | new |
+| 0 | 1960 | Ce soir-là | François Deguelt |  | Eurovision 3rd | new |
+| 0 | 1960 | Alla andra får varann | Östen Warnerbring |  | Sweden at Eurovision 10th, Melodifestivalen 1st | new |
+| 0 | 1960 | Underbar, så underbar | Inger Berggren |  | Melodifestivalen 2nd | new |
+| 0 | 1960 | Alexander | Mona Grain |  | Melodifestivalen 3rd | new |
+| 0 | 1961 | Nous les amoureux | Jean-Claude Pascal |  | Eurovision 1st | new |
+| 0 | 1961 | Are You Sure? | The Allisons |  | Eurovision 2nd | new |
+| 0 | 1961 | Nous aurons demain | Franca di Rienzo |  | Eurovision 3rd | new |
+| 0 | 1961 | April april | Siw Malmkvist |  | Sweden at Eurovision 14th, Melodifestivalen 1st | new |
+| 0 | 1961 | Spela på regnbågen | Lars Lönndahl |  | Melodifestivalen 2nd | new |
+| 0 | 1961 | Vårvinter | Lill-Babs |  | Melodifestivalen 2nd | new |
+| 0 | 1962 | Un premier amour | Isabelle Aubret |  | Eurovision 1st | new |
+| 0 | 1962 | Dis rien | François Deguelt |  | Eurovision 2nd | new |
+| 0 | 1962 | Petit bonhomme | Camillo Felgen |  | Eurovision 3rd | new |
+| 0 | 1962 | Sol och vår | Inger Berggren |  | Sweden at Eurovision 7th, Melodifestivalen 1st | new |
+| 0 | 1962 | När min vän | Monica Zetterlund |  | Melodifestivalen 2nd | new |
+| 0 | 1962 | Anneli | Carli Tornehave |  | Melodifestivalen 3rd | new |
+| 0 | 1963 | Dansevise | Grethe and Jørgen Ingmann |  | Eurovision 1st | new |
+| 0 | 1963 | T'en va pas | Esther Ofarim |  | Eurovision 2nd | new |
+| 0 | 1963 | Uno per tutte | Emilio Pericoli |  | Eurovision 3rd | new |
+| 0 | 1963 | En gång i Stockholm | Monica Zetterlund |  | Sweden at Eurovision 13 ◁, Melodifestivalen 1st | in the catalogue |
+| 0 | 1963 | Storstadsmelodi | Gerd Söderberg |  | Melodifestivalen 2nd | new |
+| 0 | 1963 | Twist till menuett | Carli Tornehave |  | Melodifestivalen 3rd | new |
+| 0 | 1964 | Non ho l'età | Gigliola Cinquetti |  | Eurovision 1st | new |
+| 0 | 1964 | I Love the Little Things | Matt Monro |  | Eurovision 2nd | new |
+| 0 | 1964 | Où sont-elles passées ? | Romuald |  | Eurovision 3rd | new |
+| 0 | 1965 | Poupée de cire, poupée de son | France Gall |  | Eurovision 1st | new |
+| 0 | 1965 | I Belong | Kathy Kirby |  | Eurovision 2nd | new |
+| 0 | 1965 | N'avoue jamais | Guy Mardel |  | Eurovision 3rd | new |
+| 0 | 1965 | Annorstädes vals | Ingvar Wixell |  | Sweden at Eurovision 10th, Melodifestivalen 1st | new |
+| 0 | 1966 | Merci, Chérie | Udo Jürgens |  | Eurovision 1st | new |
+| 0 | 1966 | Intet er nytt under solen | Åse Kleveland |  | Eurovision 3rd | new |
+| 0 | 1966 | Nygammal vals | Lill Lindfors & Svante Thuresson |  | Sweden at Eurovision 2nd, Eurovision 2nd, Melodifestivalen 1st | in the catalogue |
+| 0 | 1966 | Monte Carlo | Carli Tornehave |  | Melodifestivalen 2nd | new |
+| 0 | 1966 | Vinterrosor | Gunnar Wiklund |  | Melodifestivalen 3rd | new |
+| 0 | 1967 | Puppet on a String | Sandie Shaw |  | Eurovision 1st | new |
+| 0 | 1967 | If I Could Choose | Sean Dunphy |  | Eurovision 2nd | new |
+| 0 | 1967 | Il doit faire beau là-bas | Noëlle Cordier |  | Eurovision 3rd | new |
+| 0 | 1967 | Som en dröm | Östen Warnerbring |  | Sweden at Eurovision 8th, Melodifestivalen 1st | new |
+| 0 | 1967 | En valsfan | Östen Warnerbring |  | Melodifestivalen 2nd | new |
+| 0 | 1967 | Ren vals | Rolf Berg |  | Melodifestivalen 3rd | new |
+| 0 | 1967 | Alla har glömt | Towa Carson |  | Melodifestivalen 3rd | new |
+| 0 | 1968 | La La La | Massiel |  | Eurovision 1st | new |
+| 0 | 1968 | Congratulations | Cliff Richard |  | Eurovision 2nd | new |
+| 0 | 1968 | La Source | Isabelle Aubret |  | Eurovision 3rd | new |
+| 0 | 1968 | Det börjar verka kärlek, banne mej | Claes-Göran Hederström |  | Sweden at Eurovision 5th, Melodifestivalen 1st | in the catalogue |
+| 0 | 1968 | Du är en vårvind i april | Svante Thuresson |  | Melodifestivalen 2nd | new |
+| 0 | 1968 | Du vet var jag finns | Towa Carson |  | Melodifestivalen 3rd | new |
+| 0 | 1968 | Gå och göm dig, Åke Tråk | Mona Wessman |  | Melodifestivalen 3rd | new |
+| 0 | 1969 | Vivo cantando | Salomé |  | Eurovision 1st | new |
+| 0 | 1969 | Boom Bang-a-Bang | Lulu |  | Eurovision 1st | new |
+| 0 | 1969 | De troubadour | Lenny Kuhr |  | Eurovision 1st | new |
+| 0 | 1969 | Un jour, un enfant | Frida Boccara |  | Eurovision 1st | new |
+| 0 | 1969 | Judy min vän | Tommy Körberg |  | Sweden at Eurovision 9th, Melodifestivalen 1st | in the catalogue |
+| 0 | 1969 | Hej clown | Jan Malmsjö |  | Melodifestivalen 2nd | in the catalogue |
+| 0 | 1970 | All Kinds of Everything | Dana |  | Eurovision 1st | new |
+| 0 | 1970 | Knock, Knock (Who's There?) | Mary Hopkin |  | Eurovision 2nd | new |
+| 0 | 1970 | Wunder gibt es immer wieder | Katja Ebstein |  | Eurovision 3rd | new |
+| 0 | 1971 | Un banc, un arbre, une rue | Séverine |  | Eurovision 1st | new |
+| 0 | 1971 | En un mundo nuevo | Karina |  | Eurovision 2nd | new |
+| 0 | 1971 | Diese Welt | Katja Ebstein |  | Eurovision 3rd | new |
+| 0 | 1971 | Vita vidder | Family Four |  | Sweden at Eurovision 6th, Melodifestivalen 1st | in the catalogue |
+| 0 | 1971 | Tjänare kärlek | Family Four |  | Melodifestivalen 2nd | new |
+| 0 | 1971 | Heja mamma | Family Four |  | Melodifestivalen 3rd | new |
+| 0 | 1972 | Après toi | Vicky Leandros |  | Eurovision 1st | new |
+| 0 | 1972 | Beg, Steal or Borrow | The New Seekers |  | Eurovision 2nd | new |
+| 0 | 1972 | Nur die Liebe läßt uns leben | Mary Roos |  | Eurovision 3rd | new |
+| 0 | 1972 | Härliga sommardag | Family Four |  | Sweden at Eurovision 13th, Melodifestivalen 1st | new |
+| 0 | 1972 | Sån e' du sån e' jag | Östen Warnerbring |  | Melodifestivalen 2nd | new |
+| 0 | 1972 | Säg det med en sång | Lena Andersson |  | Melodifestivalen 3rd | new |
+| 0 | 1973 | Tu te reconnaîtras | Anne-Marie David |  | Eurovision 1st | new |
+| 0 | 1973 | Eres tú | Mocedades |  | Eurovision 2nd | new |
+| 0 | 1973 | Power to All Our Friends | Cliff Richard |  | Eurovision 3rd | new |
+| 0 | 1973 | Sommaren som aldrig säger nej | The Nova |  | Sweden at Eurovision 5th, Melodifestivalen 1st | new |
+| 0 | 1973 | I våran värld | Ann-Kristin Hedmark |  | Melodifestivalen 2nd | new |
+| 0 | 1973 | Ring ring (bara du slog en signal) | Björn & Benny, Agnetha & Anni-Frid |  | Melodifestivalen 3rd | new |
+| 0 | 1974 | Sì | Gigliola Cinquetti |  | Eurovision 2nd | new |
+| 0 | 1974 | I See a Star | Mouth and MacNeal |  | Eurovision 3rd | new |
+| 0 | 1974 | Waterloo | Abba |  | Sweden at Eurovision 1st, Eurovision 1st, Melodifestivalen 1st | in the catalogue |
+| 0 | 1974 | Min kärlekssång till dig | Lasse Berghagen |  | Melodifestivalen 2nd | new |
+| 0 | 1974 | En enda jord | Lena Ericsson |  | Melodifestivalen 3rd | new |
+| 0 | 1975 | Ding-a-dong | Teach-In |  | Eurovision 1st | in the catalogue |
+| 0 | 1975 | Let Me Be the One | The Shadows |  | Eurovision 2nd | new |
+| 0 | 1975 | Era | Wess and Dori Ghezzi |  | Eurovision 3rd | new |
+| 0 | 1975 | Jennie, Jennie | Lasse Berghagen |  | Sweden at Eurovision 8th, Melodifestivalen 1st | in the catalogue |
+| 0 | 1975 | Sången lär ha vingar | Gimmicks |  | Melodifestivalen 2nd | new |
+| 0 | 1975 | Bang en boomerang | Svenne & Lotta |  | Melodifestivalen 3rd | in the catalogue |
+| 0 | 1976 | Save Your Kisses for Me | Brotherhood of Man |  | Eurovision 1st | new |
+| 0 | 1976 | Un, deux, trois | Catherine Ferry |  | Eurovision 2nd | new |
+| 0 | 1976 | Toi, la musique et moi | Mary Christy |  | Eurovision 3rd | new |
+| 0 | 1977 | L'Oiseau et l'Enfant | Marie Myriam |  | Eurovision 1st | new |
+| 0 | 1977 | Rock Bottom | Lynsey de Paul and Mike Moran |  | Eurovision 2nd | new |
+| 0 | 1977 | It's Nice to Be in Love Again | The Swarbriggs Plus Two |  | Eurovision 3rd | new |
+| 0 | 1977 | Beatles | Forbes |  | Sweden at Eurovision 18 ◁, Melodifestivalen 1st | in the catalogue |
+| 0 | 1977 | Johan B. Lund | Svante Thuresson |  | Melodifestivalen 2nd | new |
+| 0 | 1977 | Sommaren -65 | Landslaget |  | Melodifestivalen 3rd | new |
+| 0 | 1978 | A-Ba-Ni-Bi | Izhar Cohen and the Alphabeta |  | Eurovision 1st | new |
+| 0 | 1978 | L'amour ça fait chanter la vie | Jean Vallée |  | Eurovision 2nd | new |
+| 0 | 1978 | Il y aura toujours des violons | Joël Prévost |  | Eurovision 3rd | new |
+| 0 | 1978 | Det blir alltid värre framåt natten | Björn Skifs |  | Sweden at Eurovision 14th, Melodifestivalen 1st | in the catalogue |
+| 0 | 1978 | Miss Decibel | Kikki Danielsson, Lasse Holm & Wizex |  | Melodifestivalen 2nd | new |
+| 0 | 1979 | Hallelujah | Milk and Honey |  | Eurovision 1st | new |
+| 0 | 1979 | Su canción | Betty Missiego |  | Eurovision 2nd | new |
+| 0 | 1979 | Je suis l'enfant soleil | Anne-Marie David |  | Eurovision 3rd | new |
+| 0 | 1979 | Satellit | Ted Gärdestad |  | Sweden at Eurovision 17th, Melodifestivalen 1st | in the catalogue |
+| 0 | 1979 | Det ligger i luften | Tomas Ledin |  | Melodifestivalen 2nd | new |
+| 0 | 1979 | Det känns som jag vandrar fram | Ola+3 |  | Melodifestivalen 3rd | new |
+| 0 | 1979 | Om jag skriver en sång | Eva Dahlgren |  | Melodifestivalen 3rd | new |
+| 0 | 1980 | What's Another Year | Johnny Logan |  | Eurovision 1st | new |
+| 0 | 1980 | Theater | Katja Ebstein |  | Eurovision 2nd | new |
+| 0 | 1980 | Love Enough for Two | Prima Donna |  | Eurovision 3rd | new |
+| 0 | 1980 | Just nu! | Tomas Ledin |  | Sweden at Eurovision 10th, Melodifestivalen 1st | in the catalogue |
+| 0 | 1980 | Växeln hallå | Janne Lucas Persson |  | Melodifestivalen 2nd | new |
+| 0 | 1980 | Hit men inte längre | Liza Öhman |  | Melodifestivalen 3rd | new |
+| 0 | 1981 | Making Your Mind Up | Bucks Fizz |  | Eurovision 1st | new |
+| 0 | 1981 | Johnny Blue | Lena Valaitis |  | Eurovision 2nd | new |
+| 0 | 1981 | Humanahum | Jean Gabilou |  | Eurovision 3rd | new |
+| 0 | 1981 | Fångad i en dröm | Björn Skifs |  | Sweden at Eurovision 10th, Melodifestivalen 1st | in the catalogue |
+| 0 | 1981 | God morgon | Sweets 'n Chips |  | Melodifestivalen 2nd | new |
+| 0 | 1981 | Rocky Mountain | Janne Lucas |  | Melodifestivalen 3rd | new |
+| 0 | 1982 | Ein bißchen Frieden | Nicole |  | Eurovision 1st | new |
+| 0 | 1982 | Hora | Avi Toledano |  | Eurovision 2nd | new |
+| 0 | 1982 | Amour on t'aime | Arlette Zola |  | Eurovision 3rd | new |
+| 0 | 1982 | Dag efter dag | Chips |  | Sweden at Eurovision 8th, Melodifestivalen 1st | in the catalogue |
+| 0 | 1982 | Någonting har hänt | Lena Ericsson |  | Melodifestivalen 2nd | new |
+| 0 | 1982 | Hey hi ho | Liza Öhman |  | Melodifestivalen 3rd | new |
+| 0 | 1983 | Si la vie est cadeau | Corinne Hermès |  | Eurovision 1st | new |
+| 0 | 1983 | Chai | Ofra Haza |  | Eurovision 2nd | new |
+| 0 | 1983 | Främling | Carola |  | Sweden at Eurovision 3rd, Eurovision 3rd, Melodifestivalen 1st | in the catalogue |
+| 0 | 1983 | Varför är kärleken röd? | Kikki Danielsson |  | Melodifestivalen 2nd | new |
+| 0 | 1983 | Se | Karin Glenmark |  | Melodifestivalen 3rd | new |
+| 0 | 1984 | Terminal 3 | Linda Martin |  | Eurovision 2nd | new |
+| 0 | 1984 | Lady, Lady | Bravo |  | Eurovision 3rd | new |
+| 0 | 1984 | Diggi loo diggi ley | Herreys |  | Sweden at Eurovision 1st, Eurovision 1st, Melodifestivalen 1st | already a candidate |
+| 0 | 1984 | Sankta Cecilia | Göran Folkestad & Lotta Pedersen |  | Melodifestivalen 2nd | new |
+| 0 | 1984 | Rendez-vous | John Ballard |  | Melodifestivalen 3rd | new |
+| 0 | 1985 | La det swinge | Bobbysocks |  | Eurovision 1st | in the catalogue |
+| 0 | 1985 | Für alle | Wind |  | Eurovision 2nd | new |
+| 0 | 1985 | Bra vibrationer | Kikki Danielsson |  | Sweden at Eurovision 3rd, Eurovision 3rd, Melodifestivalen 1st | in the catalogue |
+| 0 | 1985 | Ta min hand | Dan Tillberg |  | Melodifestivalen 2nd | new |
+| 0 | 1985 | Eld och lågor | Göran Folkestad |  | Melodifestivalen 3rd | new |
+| 0 | 1986 | J'aime la vie | Sandra Kim |  | Eurovision 1st | new |
+| 0 | 1986 | Pas pour moi | Daniela Simons |  | Eurovision 2nd | new |
+| 0 | 1986 | L'Amour de ma vie | Sherisse Laurence |  | Eurovision 3rd | new |
+| 0 | 1986 | E' de' det här du kallar kärlek | Lasse Holm & Monica Törnell |  | Sweden at Eurovision 5th, Melodifestivalen 1st | in the catalogue |
+| 0 | 1986 | Kärleken är evig | Lena Philipsson |  | Melodifestivalen 2nd | in the catalogue |
+| 0 | 1986 | Dover-Calais | Style |  | Melodifestivalen 3rd | new |
+| 0 | 1987 | Hold Me Now | Johnny Logan |  | Eurovision 1st | new |
+| 0 | 1987 | Laß die Sonne in dein Herz | Wind |  | Eurovision 2nd | new |
+| 0 | 1987 | Gente di mare | Umberto Tozzi and Raf |  | Eurovision 3rd | new |
+| 0 | 1987 | Fyra Bugg & en Coca Cola | Lotta Engberg |  | Sweden at Eurovision 12th, Melodifestivalen 1st | in the catalogue |
+| 0 | 1987 | Högt över havet | Arja Saijonmaa |  | Melodifestivalen 2nd | new |
+| 0 | 1987 | När morgonstjärnan brinner | Cyndee Peters |  | Melodifestivalen 3rd | new |
+| 0 | 1988 | Ne partez pas sans moi | Céline Dion |  | Eurovision 1st | new |
+| 0 | 1988 | Go | Scott Fitzgerald |  | Eurovision 2nd | new |
+| 0 | 1988 | Ka' du se hva' jeg sa' | Hot Eyes |  | Eurovision 3rd | new |
+| 0 | 1988 | Stad i ljus | Tommy Körberg |  | Sweden at Eurovision 12th, Melodifestivalen 1st | in the catalogue |
+| 0 | 1988 | Om igen | Lena Philipsson |  | Melodifestivalen 2nd | new |
+| 0 | 1988 | 100% | Lotta Engberg & Triple & Touch |  | Melodifestivalen 3rd | new |
+| 0 | 1989 | Rock Me | Riva |  | Eurovision 1st | new |
+| 0 | 1989 | Why Do I Always Get It Wrong | Live Report |  | Eurovision 2nd | new |
+| 0 | 1989 | Vi maler byen rød | Birthe Kjær |  | Eurovision 3rd | new |
+| 0 | 1989 | En dag | Tommy Nilsson |  | Sweden at Eurovision 4th, Melodifestivalen 1st | in the catalogue |
+| 0 | 1989 | Upp över mina öron | Eriksson-Glenmark |  | Melodifestivalen 2nd | new |
+| 0 | 1989 | Mitt ibland änglar | Fingerprints |  | Melodifestivalen 3rd | new |
+| 0 | 1990 | Insieme: 1992 | Toto Cutugno |  | Eurovision 1st | new |
+| 0 | 1990 | White and Black Blues | Joëlle Ursull |  | Eurovision 2nd | new |
+| 0 | 1990 | Somewhere in Europe | Liam Reilly |  | Eurovision 2nd | new |
+| 0 | 1990 | Som en vind | Edin-Ådahl |  | Sweden at Eurovision 16th, Melodifestivalen 1st | in the catalogue |
+| 0 | 1990 | Mitt i ett äventyr | Carola |  | Melodifestivalen 2nd | in the catalogue |
+| 0 | 1990 | Varje natt | Lisbet Jagedal |  | Melodifestivalen 3rd | new |
+| 0 | 1991 | C'est le dernier qui a parlé qui a raison | Amina |  | Eurovision 2nd | new |
+| 0 | 1991 | Kan | Duo Datz |  | Eurovision 3rd | new |
+| 0 | 1991 | Fångad av en stormvind | Carola |  | Sweden at Eurovision 1st, Eurovision 1st, Melodifestivalen 1st | in the catalogue |
+| 0 | 1991 | Ett liv med dej | Towe Jaarnek |  | Melodifestivalen 2nd | new |
+| 0 | 1992 | Why Me | Linda Martin |  | Eurovision 1st | new |
+| 0 | 1992 | One Step Out of Time | Michael Ball |  | Eurovision 2nd | new |
+| 0 | 1992 | Little Child | Mary Spiteri |  | Eurovision 3rd | new |
+| 0 | 1992 | I morgon är en annan dag | Christer Björkman |  | Sweden at Eurovision 22nd, Melodifestivalen 1st | new |
+| 0 | 1992 | Som om himlen brann | Lizette Pålsson & Bizazz |  | Melodifestivalen 2nd | new |
+| 0 | 1992 | Vad som än händer | Maria Rådsten |  | Melodifestivalen 3rd | new |
+| 0 | 1993 | In Your Eyes | Niamh Kavanagh |  | Eurovision 1st | new |
+| 0 | 1993 | Better the Devil You Know | Sonia |  | Eurovision 2nd | new |
+| 0 | 1993 | Moi, tout simplement | Annie Cotton |  | Eurovision 3rd | new |
+| 0 | 1993 | Eloise | Arvingarna |  | Sweden at Eurovision 7th, Melodifestivalen 1st | in the catalogue |
+| 0 | 1993 | We Are All the Winners | Nick Borgen |  | Melodifestivalen 2nd | new |
+| 0 | 1993 | I dina ögon | Pernilla Emme |  | Melodifestivalen 3rd | new |
+| 0 | 1994 | Rock 'n' Roll Kids | Paul Harrington and Charlie McGettigan |  | Eurovision 1st | new |
+| 0 | 1994 | To nie ja! | Edyta Górniak |  | Eurovision 2nd | new |
+| 0 | 1994 | Wir geben 'ne Party | Mekado |  | Eurovision 3rd | new |
+| 0 | 1994 | Stjärnorna | Marie Bergman & Roger Pontare |  | Sweden at Eurovision 13th, Melodifestivalen 1st | in the catalogue |
+| 0 | 1994 | Det vackraste jag vet | Gladys del Pilar |  | Melodifestivalen 2nd | new |
+| 0 | 1994 | Stanna hos mig | Cayenne |  | Melodifestivalen 3rd | new |
+| 0 | 1995 | Nocturne | Secret Garden |  | Eurovision 1st | new |
+| 0 | 1995 | Vuelve conmigo | Anabel Conde |  | Eurovision 2nd | new |
+| 0 | 1995 | Se på mej | Jan Johansen |  | Eurovision 3rd | new |
+| 0 | 1995 | Se på mig | Jan Johansen |  | Sweden at Eurovision 3rd, Melodifestivalen 1st | new |
+| 0 | 1995 | Det vackraste | Cecilia Vennersten |  | Melodifestivalen 2nd | new |
+| 0 | 1995 | Jag ger dig allt | Jessica G. Pilnäs |  | Melodifestivalen 3rd | new |
+| 0 | 1996 | The Voice | Eimear Quinn |  | Eurovision 2nd | new |
+| 0 | 1996 | Ooh Aah... Just a Little Bit | Gina G |  | Eurovision 3rd | new |
+| 0 | 1996 | Den vilda | One More Time |  | Sweden at Eurovision 3rd, Eurovision 1st, Melodifestivalen 1st | in the catalogue |
+| 0 | 1996 | Driver dagg faller regn | Andreas Lundstedt |  | Melodifestivalen 2nd | new |
+| 0 | 1996 | Juliette & Jonathan | Lotta Engberg |  | Melodifestivalen 3rd | new |
+| 0 | 1997 | Love Shine a Light | Katrina and the Waves |  | Eurovision 1st | new |
+| 0 | 1997 | Mysterious Woman | Marc Roberts |  | Eurovision 2nd | new |
+| 0 | 1997 | Dinle | Şebnem Paker and Grup Ethnic |  | Eurovision 3rd | new |
+| 0 | 1997 | Bara hon älskar mig | Blond |  | Sweden at Eurovision 14th, Melodifestivalen 1st | in the catalogue |
+| 0 | 1997 | Där en ängel hälsat på | N-Mix |  | Melodifestivalen 2nd | new |
+| 0 | 1997 | Missarna | Wille Crafoord |  | Melodifestivalen 3rd | new |
+| 0 | 1998 | Diva | Dana International |  | Eurovision 1st | new |
+| 0 | 1998 | Where Are You? | Imaani |  | Eurovision 2nd | new |
+| 0 | 1998 | The One That I Love | Chiara |  | Eurovision 3rd | new |
+| 0 | 1998 | Kärleken är | Jill Johnson |  | Sweden at Eurovision 10th, Melodifestivalen 1st | in the catalogue |
+| 0 | 1998 | Ingen annan väg | B.I.G. |  | Melodifestivalen 2nd | new |
+| 0 | 1998 | Julia | Myrra Malmberg |  | Melodifestivalen 3rd | new |
+| 0 | 1999 | All Out of Luck | Selma |  | Eurovision 2nd | new |
+| 0 | 1999 | Journey to Jerusalem – Kudüs'e Seyahat | Sürpriz |  | Eurovision 3rd | new |
+| 0 | 1999 | Tusen och en natt | Charlotte Nilsson |  | Sweden at Eurovision 1st, Eurovision 1st, Melodifestivalen 1st | new |
+| 0 | 1999 | Stjärna på himmelen | Drömhus |  | Melodifestivalen 2nd | new |
+| 0 | 1999 | Det svär jag på | Arvingarna |  | Melodifestivalen 3rd | new |
+| 0 | 2000 | Fly on the Wings of Love | Olsen Brothers |  | Eurovision 1st | new |
+| 0 | 2000 | Solo | Alsou |  | Eurovision 2nd | new |
+| 0 | 2000 | My Star | Brainstorm |  | Eurovision 3rd | new |
+| 0 | 2000 | När vindarna viskar mitt namn | Roger Pontare |  | Sweden at Eurovision 7th, Melodifestivalen 1st | in the catalogue |
+| 0 | 2000 | Se mig | Barbados |  | Melodifestivalen 2nd | new |
+| 0 | 2000 | När jag tänker på i morgon | Friends |  | Melodifestivalen 2nd | new |
+| 0 | 2001 | Everybody | Tanel Padar, Dave Benton and 2XL |  | Eurovision 1st | new |
+| 0 | 2001 | Never Ever Let You Go | Rollo & King |  | Eurovision 2nd | new |
+| 0 | 2001 | Die for You | Antique |  | Eurovision 3rd | new |
+| 0 | 2001 | Lyssna till ditt hjärta | Friends |  | Sweden at Eurovision 5th, Melodifestivalen 1st | in the catalogue |
+| 0 | 2001 | Allt som jag ser | Barbados |  | Melodifestivalen 2nd | new |
+| 0 | 2001 | I går, i dag | Sanna Nielsen |  | Melodifestivalen 3rd | new |
+| 0 | 2002 | I Wanna | Marie N |  | Eurovision 1st | new |
+| 0 | 2002 | 7th Wonder | Ira Losco |  | Eurovision 2nd | new |
+| 0 | 2002 | Come Back | Jessica Garlick |  | Eurovision 3rd | new |
+| 0 | 2002 | Runaway | Sahlene |  | Eurovision 3rd | new |
+| 0 | 2002 | Never Let It Go | Afro-Dite |  | Sweden at Eurovision 8th, Melodifestivalen 1st | in the catalogue |
+| 0 | 2002 | Adrenaline | Méndez |  | Melodifestivalen 2nd | new |
+| 0 | 2002 | Vem é dé du vill ha | Kikki, Bettan & Lotta |  | Melodifestivalen 3rd | new |
+| 0 | 2003 | Everyway That I Can | Sertab Erener |  | Eurovision 1st | new |
+| 0 | 2003 | Sanomi | Urban Trad |  | Eurovision 2nd | new |
+| 0 | 2003 | Ne ver', ne boisia | t.A.T.u. |  | Eurovision 3rd | new |
+| 0 | 2003 | Give Me Your Love | Fame |  | Sweden at Eurovision 5th, Melodifestivalen 1st | in the catalogue |
+| 0 | 2003 | Let Your Spirit Fly | Jan Johansen & Pernilla Wahlgren |  | Melodifestivalen 2nd | new |
+| 0 | 2003 | Not a Sinner Nor a Saint | Alcazar |  | Melodifestivalen 3rd | in the catalogue |
+| 0 | 2004 | Wild Dances | Ruslana |  | Eurovision 1st | new |
+| 0 | 2004 | Lane moje | Željko Joksimović and Ad-Hoc Orchestra |  | Eurovision 2nd | new |
+| 0 | 2004 | Shake It | Sakis Rouvas |  | Eurovision 3rd | new |
+| 0 | 2004 | Det gör ont | Lena Philipsson |  | Sweden at Eurovision 5th, Melodifestivalen 1st | in the catalogue |
+| 0 | 2004 | Min kärlek | Shirley Clamp |  | Melodifestivalen 2nd | in the catalogue |
+| 0 | 2004 | La dolce vita | After Dark |  | Melodifestivalen 3rd | new |
+| 0 | 2005 | Let Me Try | Luminița Anghel and Sistem |  | Eurovision 1st | new |
+| 0 | 2005 | Boonika bate doba | Zdob și Zdub |  | Eurovision 2nd | new |
+| 0 | 2005 | Talking to You | Jakob Sveistrup |  | Eurovision 3rd | new |
+| 0 | 2005 | Las Vegas | Martin Stenmarck |  | Sweden at Eurovision 19th, Melodifestivalen 1st | in the catalogue |
+| 0 | 2005 | Håll om mig | Nanne Grönvall |  | Melodifestivalen 2nd | new |
+| 0 | 2005 | Alcastar | Alcazar |  | Melodifestivalen 3rd | new |
+| 0 | 2006 | Hard Rock Hallelujah | Lordi |  | Eurovision 1st | in the catalogue |
+| 0 | 2006 | Never Let You Go | Dima Bilan |  | Eurovision 2nd | new |
+| 0 | 2006 | Lejla | Hari Mata Hari |  | Eurovision 3rd | new |
+| 0 | 2006 | Evighet | Carola |  | Sweden at Eurovision 5th, Melodifestivalen 1st | in the catalogue |
+| 0 | 2006 | Temple of Love | BWO |  | Melodifestivalen 2nd | new |
+| 0 | 2006 | Sing for Me | Andreas Johnson |  | Melodifestivalen 3rd | in the catalogue |
+| 0 | 2007 | Molitva | Marija Šerifović |  | Eurovision 1st | new |
+| 0 | 2007 | Unsubstantial Blues | Magdi Rúzsa |  | Eurovision 2nd | new |
+| 0 | 2007 | Shake It Up Şekerim | Kenan Doğulu |  | Eurovision 3rd | new |
+| 0 | 2007 | The Worrying Kind | The Ark |  | Sweden at Eurovision 18th, Melodifestivalen 1st | in the catalogue |
+| 0 | 2007 | A Little Bit of Love | Andreas Johnson |  | Melodifestivalen 2nd | new |
+| 0 | 2007 | Cara Mia | Måns Zelmerlöw |  | Melodifestivalen 3rd | in the catalogue |
+| 0 | 2008 | Believe | Dima Bilan |  | Eurovision 1st | new |
+| 0 | 2008 | Shady Lady | Ani Lorak |  | Eurovision 2nd | new |
+| 0 | 2008 | Secret Combination | Kalomira |  | Eurovision 3rd | new |
+| 0 | 2008 | Hero | Charlotte Perrelli |  | Sweden at Eurovision 18th, Melodifestivalen 1st | in the catalogue |
+| 0 | 2008 | Empty Room | Sanna Nielsen |  | Melodifestivalen 2nd | in the catalogue |
+| 0 | 2008 | Lay Your Love On Me | BWO |  | Melodifestivalen 3rd | new |
+| 0 | 2009 | Fairytale | Alexander Rybak |  | Eurovision 1st | new |
+| 0 | 2009 | Is It True? | Yohanna |  | Eurovision 2nd | new |
+| 0 | 2009 | Always | Aysel and Arash |  | Eurovision 3rd | new |
+| 0 | 2009 | La voix | Malena Ernman |  | Sweden at Eurovision 21st, Melodifestivalen 1st | in the catalogue |
+| 0 | 2009 | Snälla, snälla | Caroline af Ugglas |  | Melodifestivalen 2nd | new |
+| 0 | 2009 | Baby Goodbye | E.M.D. |  | Melodifestivalen 3rd | in the catalogue |
+| 0 | 2010 | Satellite | Lena |  | Eurovision 1st | new |
+| 0 | 2010 | We Could Be the Same | Manga |  | Eurovision 2nd | new |
+| 0 | 2010 | Playing with Fire | Paula Seling and Ovi |  | Eurovision 3rd | new |
+| 0 | 2010 | This Is My Life | Anna Bergendahl |  | Sweden at Eurovision Failed to qualify, Melodifestivalen 1st | in the catalogue |
+| 0 | 2010 | Keep On Walking | Salem Al Fakir |  | Melodifestivalen 2nd | new |
+| 0 | 2010 | Manboy | Eric Saade |  | Melodifestivalen 3rd | in the catalogue |
+| 0 | 2011 | Running Scared | Ell and Nikki |  | Eurovision 1st | new |
+| 0 | 2011 | Madness of Love | Raphael Gualazzi |  | Eurovision 2nd | new |
+| 0 | 2011 | Popular | Eric Saade |  | Sweden at Eurovision 3rd, Eurovision 3rd, Melodifestivalen 1st | in the catalogue |
+| 0 | 2011 | In the Club | Danny Saucedo |  | Melodifestivalen 2nd | in the catalogue |
+| 0 | 2011 | Oh My God! | The Moniker |  | Melodifestivalen 3rd | new |
+| 0 | 2012 | Party for Everybody | Buranovskiye Babushki |  | Eurovision 2nd | new |
+| 0 | 2012 | Nije ljubav stvar | Željko Joksimović |  | Eurovision 3rd | new |
+| 0 | 2012 | Euphoria | Loreen |  | Sweden at Eurovision 1st, Eurovision 1st, Melodifestivalen 1st | in the catalogue |
+| 0 | 2012 | Amazing | Danny Saucedo |  | Melodifestivalen 2nd | in the catalogue |
+| 0 | 2012 | Soldiers | Ulrik Munther |  | Melodifestivalen 3rd | new |
+| 0 | 2013 | Only Teardrops | Emmelie de Forest |  | Eurovision 1st | new |
+| 0 | 2013 | Hold Me | Farid Mammadov |  | Eurovision 2nd | new |
+| 0 | 2013 | Gravity | Zlata Ognevich |  | Eurovision 3rd | new |
+| 0 | 2013 | You | Robin Stjernberg |  | Sweden at Eurovision 14th, Melodifestivalen 1st | in the catalogue |
+| 0 | 2013 | Heartbreak Hotel | Yohio |  | Melodifestivalen 2nd | new |
+| 0 | 2013 | Tell the World I'm Here | Ulrik Munther |  | Melodifestivalen 3rd | new |
+| 0 | 2014 | Rise Like a Phoenix | Conchita Wurst |  | Eurovision 1st | new |
+| 0 | 2014 | Calm After the Storm | The Common Linnets |  | Eurovision 2nd | new |
+| 0 | 2014 | Undo | Sanna Nielsen |  | Sweden at Eurovision 3rd, Eurovision 3rd, Melodifestivalen 1st | in the catalogue |
+| 0 | 2014 | Busy Doin’ Nothin’ | Ace Wilder |  | Melodifestivalen 2nd | in the catalogue |
+| 0 | 2014 | Blame It on the Disco | Alcazar |  | Melodifestivalen 3rd | new |
+| 0 | 2015 | A Million Voices | Polina Gagarina |  | Eurovision 2nd | new |
+| 0 | 2015 | Grande amore | Il Volo |  | Eurovision 3rd | new |
+| 0 | 2015 | Heroes | Måns Zelmerlöw |  | Sweden at Eurovision 1st, Eurovision 1st, Melodifestivalen 1st | in the catalogue |
+| 0 | 2015 | Jag är fri (Manne Leam Frijje) | Jon Henrik Fjällgren |  | Melodifestivalen 2nd | new |
+| 0 | 2015 | Don't Stop Believing | Mariette |  | Melodifestivalen 3rd | new |
+| 0 | 2016 | 1944 | Jamala |  | Eurovision 1st | new |
+| 0 | 2016 | Sound of Silence | Dami Im |  | Eurovision 2nd | new |
+| 0 | 2016 | You Are the Only One | Sergey Lazarev |  | Eurovision 3rd | new |
+| 0 | 2016 | If I Were Sorry | Frans |  | Sweden at Eurovision 5th, Melodifestivalen 1st | in the catalogue |
+| 0 | 2016 | Human | Oscar Zia |  | Melodifestivalen 2nd | new |
+| 0 | 2016 | Don't Worry | Ace Wilder |  | Melodifestivalen 3rd | new |
+| 0 | 2017 | Amar pelos dois | Salvador Sobral |  | Eurovision 1st | new |
+| 0 | 2017 | Beautiful Mess | Kristian Kostov |  | Eurovision 2nd | new |
+| 0 | 2017 | Hey Mamma | SunStroke Project |  | Eurovision 3rd | new |
+| 0 | 2017 | I Can't Go On | Robin Bengtsson |  | Sweden at Eurovision 5th, Melodifestivalen 1st | in the catalogue |
+| 0 | 2017 | Hold On | Nano |  | Melodifestivalen 2nd | new |
+| 0 | 2017 | En värld full av strider (Eatneme gusnie jeenh dåaroeh) | Jon Henrik Fjällgren feat. Aninia |  | Melodifestivalen 3rd | new |
+| 0 | 2018 | Toy | Netta |  | Eurovision 1st | new |
+| 0 | 2018 | Fuego | Eleni Foureira |  | Eurovision 2nd | new |
+| 0 | 2018 | Nobody but You | Cesár Sampson |  | Eurovision 3rd | new |
+| 0 | 2018 | Dance You Off | Benjamin Ingrosso |  | Sweden at Eurovision 7th, Melodifestivalen 1st | in the catalogue |
+| 0 | 2018 | Every Single Day | Felix Sandman |  | Melodifestivalen 2nd | new |
+| 0 | 2018 | My Turn | John Lundvik |  | Melodifestivalen 3rd | new |
+| 0 | 2019 | Arcade | Duncan Laurence |  | Eurovision 1st | new |
+| 0 | 2019 | Soldi | Mahmood |  | Eurovision 2nd | new |
+| 0 | 2019 | Scream | Sergey Lazarev |  | Eurovision 3rd | new |
+| 0 | 2019 | Too Late for Love | John Lundvik |  | Sweden at Eurovision 5th, Melodifestivalen 1st | in the catalogue |
+| 0 | 2019 | On My Own | Bishara |  | Melodifestivalen 2nd | new |
+| 0 | 2019 | Hold You | Hanna Ferm & LIAMOO |  | Melodifestivalen 3rd | in the catalogue |
+| 0 | 2020 | Move | The Mamas |  | Sweden at Eurovision Contest cancelled, Melodifestivalen 1st | in the catalogue |
+| 0 | 2020 | Bulletproof | Dotter |  | Melodifestivalen 2nd | in the catalogue |
+| 0 | 2020 | Kingdom Come | Anna Bergendahl |  | Melodifestivalen 3rd | new |
+| 0 | 2021 | Zitti e buoni | Måneskin |  | Eurovision 1st | in the catalogue |
+| 0 | 2021 | Voilà | Barbara Pravi |  | Eurovision 2nd | new |
+| 0 | 2021 | Tout l'univers | Gjon's Tears |  | Eurovision 3rd | new |
+| 0 | 2021 | Voices | Tusse |  | Sweden at Eurovision 14th, Melodifestivalen 1st | in the catalogue |
+| 0 | 2021 | Every Minute | Eric Saade |  | Melodifestivalen 2nd | new |
+| 0 | 2021 | In the Middle | The Mamas |  | Melodifestivalen 3rd | new |
+| 0 | 2022 | Stefania | Kalush Orchestra |  | Eurovision 1st | new |
+| 0 | 2022 | Space Man | Sam Ryder |  | Eurovision 2nd | new |
+| 0 | 2022 | SloMo | Chanel |  | Eurovision 3rd | new |
+| 0 | 2022 | Hold Me Closer | Cornelia Jakobs |  | Sweden at Eurovision 4th, Melodifestivalen 1st | in the catalogue |
+| 0 | 2022 | Bigger Than The Universe | Anders Bagge |  | Melodifestivalen 2nd | new |
+| 0 | 2022 | In i dimman | Medina |  | Melodifestivalen 3rd | new |
+| 0 | 2023 | Cha Cha Cha | Käärijä |  | Eurovision 2nd | new |
+| 0 | 2023 | Unicorn | Noa Kirel |  | Eurovision 3rd | new |
+| 0 | 2023 | Tattoo | Loreen |  | Sweden at Eurovision 1st, Eurovision 1st, Melodifestivalen 1st | in the catalogue |
+| 0 | 2023 | Air | Marcus & Martinus |  | Melodifestivalen 2nd | new |
+| 0 | 2023 | Six Feet Under | Smash Into Pieces |  | Melodifestivalen 3rd | new |
+| 0 | 2024 | The Code | Nemo |  | Eurovision 1st | new |
+| 0 | 2024 | Rim Tim Tagi Dim | Baby Lasagna |  | Eurovision 2nd | new |
+| 0 | 2024 | Teresa & Maria | Alyona Alyona and Jerry Heil |  | Eurovision 3rd | new |
+| 0 | 2024 | Unforgettable | Marcus & Martinus |  | Sweden at Eurovision 9th, Melodifestivalen 1st | in the catalogue |
+| 0 | 2024 | Que Sera | Medina |  | Melodifestivalen 2nd | new |
+| 0 | 2024 | Heroes Are Calling | Smash Into Pieces |  | Melodifestivalen 3rd | new |
+| 0 | 2025 | Wasted Love | JJ |  | Eurovision 1st | new |
+| 0 | 2025 | New Day Will Rise | Yuval Raphael |  | Eurovision 2nd | new |
+| 0 | 2025 | Espresso Macchiato | Tommy Cash |  | Eurovision 3rd | new |
+| 0 | 2025 | Bara bada bastu | KAJ |  | Sweden at Eurovision 4th, Melodifestivalen 1st | in the catalogue |
+| 0 | 2025 | Revolution | Måns Zelmerlöw |  | Melodifestivalen 2nd | new |
+| 0 | 2025 | Believe Me | Greczula |  | Melodifestivalen 3rd | new |
+| 0 | 2026 | Bangaranga | Dara |  | Eurovision 1st | new |
+| 0 | 2026 | Michelle | Noam Bettan |  | Eurovision 2nd | new |
+| 0 | 2026 | Choke Me | Alexandra Căpitănescu |  | Eurovision 3rd | new |
+| 0 | 2026 | My System | Felicia |  | Sweden at Eurovision 20th, Melodifestivalen 1st | new |
+| 0 | 2026 | Half of Me | Greczula |  | Melodifestivalen 2nd | new |
+| 0 | 2026 | Viva L'amor | Medina |  | Melodifestivalen 3rd | new |
+
+## By year
+
+| Year | Eurovision top 3 | Sweden at Eurovision | Melodifestivalen top 3 |
+|---:|---|---|---|
+| 1956 | 1. Refrain – Lys Assia | – | – |
+| 1957 | 1. Net als toen – Corry Brokken<br>2. La Belle Amour – Paule Desjardins<br>3. Skibet skal sejle i nat – Birthe Wilke and Gustav Winckler | – | – |
+| 1958 | 1. Dors mon amour – André Claveau<br>2. Giorgio – Lys Assia<br>3. Nel blu, dipinto di blu – Domenico Modugno | Lilla stjärna – Alice Babs (4) | – |
+| 1959 | 1. Een beetje – Teddy Scholten<br>2. Sing Little Birdie – Pearl Carr and Teddy Johnson<br>3. Oui oui oui oui – Jean Philippe | Augustin – Brita Borg (9) | 1. Augustin – Siw Malmkvist<br>2. Dags igen att vara kära – Staffan Broms<br>3. Nya fågelsången – Britt Damberg |
+| 1960 | 1. Tom Pillibi – Jacqueline Boyer<br>2. Looking High, High, High – Bryan Johnson<br>3. Ce soir-là – François Deguelt | Alla andra får varann – Siw Malmkvist (10) | 1. Alla andra får varann – Östen Warnerbring<br>2. Underbar, så underbar – Inger Berggren<br>3. Alexander – Mona Grain |
+| 1961 | 1. Nous les amoureux – Jean-Claude Pascal<br>2. Are You Sure? – The Allisons<br>3. Nous aurons demain – Franca di Rienzo | April, april – Lill-Babs (14) | 1. April april – Siw Malmkvist<br>2. Spela på regnbågen – Lars Lönndahl<br>2. Vårvinter – Lill-Babs |
+| 1962 | 1. Un premier amour – Isabelle Aubret<br>2. Dis rien – François Deguelt<br>3. Petit bonhomme – Camillo Felgen | Sol och vår – Inger Berggren (7) | 1. Sol och vår – Inger Berggren<br>2. När min vän – Monica Zetterlund<br>3. Anneli – Carli Tornehave |
+| 1963 | 1. Dansevise – Grethe and Jørgen Ingmann<br>2. T'en va pas – Esther Ofarim<br>3. Uno per tutte – Emilio Pericoli | En gång i Stockholm – Monica Zetterlund (13 ◁) | 1. En gång i Stockholm – Monica Zetterlund<br>2. Storstadsmelodi – Gerd Söderberg<br>3. Twist till menuett – Carli Tornehave |
+| 1964 | 1. Non ho l'età – Gigliola Cinquetti<br>2. I Love the Little Things – Matt Monro<br>3. Où sont-elles passées ? – Romuald | – | – |
+| 1965 | 1. Poupée de cire, poupée de son – France Gall<br>2. I Belong – Kathy Kirby<br>3. N'avoue jamais – Guy Mardel | Absent Friend – Ingvar Wixell (10) | 1. Annorstädes vals – Ingvar Wixell |
+| 1966 | 1. Merci, Chérie – Udo Jürgens<br>2. Nygammal vals – Lill Lindfors and Svante Thuresson<br>3. Intet er nytt under solen – Åse Kleveland | Nygammal vals – Lill Lindfors and Svante Thuresson (2) | 1. Nygammal vals – Lill Lindfors & Svante Thuresson<br>2. Monte Carlo – Carli Tornehave<br>3. Vinterrosor – Gunnar Wiklund |
+| 1967 | 1. Puppet on a String – Sandie Shaw<br>2. If I Could Choose – Sean Dunphy<br>3. Il doit faire beau là-bas – Noëlle Cordier | Som en dröm – Östen Warnerbring (8) | 1. Som en dröm – Östen Warnerbring<br>2. En valsfan – Östen Warnerbring<br>3. Ren vals – Rolf Berg<br>3. Alla har glömt – Towa Carson |
+| 1968 | 1. La La La – Massiel<br>2. Congratulations – Cliff Richard<br>3. La Source – Isabelle Aubret | Det börjar verka kärlek, banne mej – Claes-Göran Hederström (5) | 1. Det börjar verka kärlek, banne mej – Claes-Göran Hederström<br>2. Du är en vårvind i april – Svante Thuresson<br>3. Du vet var jag finns – Towa Carson<br>3. Gå och göm dig, Åke Tråk – Mona Wessman |
+| 1969 | 1. Vivo cantando – Salomé<br>1. Boom Bang-a-Bang – Lulu<br>1. De troubadour – Lenny Kuhr<br>1. Un jour, un enfant – Frida Boccara | Judy, min vän – Tommy Körberg (9) | 1. Judy min vän – Tommy Körberg<br>2. Hej clown – Jan Malmsjö |
+| 1970 | 1. All Kinds of Everything – Dana<br>2. Knock, Knock (Who's There?) – Mary Hopkin<br>3. Wunder gibt es immer wieder – Katja Ebstein | – | – |
+| 1971 | 1. Un banc, un arbre, une rue – Séverine<br>2. En un mundo nuevo – Karina<br>3. Diese Welt – Katja Ebstein | Vita vidder – Family Four (6) | 1. Vita vidder – Family Four<br>2. Tjänare kärlek – Family Four<br>3. Heja mamma – Family Four |
+| 1972 | 1. Après toi – Vicky Leandros<br>2. Beg, Steal or Borrow – The New Seekers<br>3. Nur die Liebe läßt uns leben – Mary Roos | Härliga sommardag – Family Four (13) | 1. Härliga sommardag – Family Four<br>2. Sån e' du sån e' jag – Östen Warnerbring<br>3. Säg det med en sång – Lena Andersson |
+| 1973 | 1. Tu te reconnaîtras – Anne-Marie David<br>2. Eres tú – Mocedades<br>3. Power to All Our Friends – Cliff Richard | You're Summer – The Nova (5) | 1. Sommaren som aldrig säger nej – The Nova<br>2. I våran värld – Ann-Kristin Hedmark<br>3. Ring ring (bara du slog en signal) – Björn & Benny, Agnetha & Anni-Frid |
+| 1974 | 1. Waterloo – ABBA<br>2. Sì – Gigliola Cinquetti<br>3. I See a Star – Mouth and MacNeal | Waterloo – ABBA (1) | 1. Waterloo – Abba<br>2. Min kärlekssång till dig – Lasse Berghagen<br>3. En enda jord – Lena Ericsson |
+| 1975 | 1. Ding-a-dong – Teach-In<br>2. Let Me Be the One – The Shadows<br>3. Era – Wess and Dori Ghezzi | Jennie, Jennie – Lars Berghagen (8) | 1. Jennie, Jennie – Lasse Berghagen<br>2. Sången lär ha vingar – Gimmicks<br>3. Bang en boomerang – Svenne & Lotta |
+| 1976 | 1. Save Your Kisses for Me – Brotherhood of Man<br>2. Un, deux, trois – Catherine Ferry<br>3. Toi, la musique et moi – Mary Christy | – | – |
+| 1977 | 1. L'Oiseau et l'Enfant – Marie Myriam<br>2. Rock Bottom – Lynsey de Paul and Mike Moran<br>3. It's Nice to Be in Love Again – The Swarbriggs Plus Two | Beatles – Forbes (18 ◁) | 1. Beatles – Forbes<br>2. Johan B. Lund – Svante Thuresson<br>3. Sommaren -65 – Landslaget |
+| 1978 | 1. A-Ba-Ni-Bi – Izhar Cohen and the Alphabeta<br>2. L'amour ça fait chanter la vie – Jean Vallée<br>3. Il y aura toujours des violons – Joël Prévost | Det blir alltid värre framåt natten – Björn Skifs (14) | 1. Det blir alltid värre framåt natten – Björn Skifs<br>2. Miss Decibel – Kikki Danielsson, Lasse Holm & Wizex |
+| 1979 | 1. Hallelujah – Milk and Honey<br>2. Su canción – Betty Missiego<br>3. Je suis l'enfant soleil – Anne-Marie David | Satellit – Ted Gärdestad (17) | 1. Satellit – Ted Gärdestad<br>2. Det ligger i luften – Tomas Ledin<br>3. Det känns som jag vandrar fram – Ola+3<br>3. Om jag skriver en sång – Eva Dahlgren |
+| 1980 | 1. What's Another Year – Johnny Logan<br>2. Theater – Katja Ebstein<br>3. Love Enough for Two – Prima Donna | Just nu – Tomas Ledin (10) | 1. Just nu! – Tomas Ledin<br>2. Växeln hallå – Janne Lucas Persson<br>3. Hit men inte längre – Liza Öhman |
+| 1981 | 1. Making Your Mind Up – Bucks Fizz<br>2. Johnny Blue – Lena Valaitis<br>3. Humanahum – Jean Gabilou | Fångad i en dröm – Björn Skifs (10) | 1. Fångad i en dröm – Björn Skifs<br>2. God morgon – Sweets 'n Chips<br>3. Rocky Mountain – Janne Lucas |
+| 1982 | 1. Ein bißchen Frieden – Nicole<br>2. Hora – Avi Toledano<br>3. Amour on t'aime – Arlette Zola | Dag efter dag – Chips (8) | 1. Dag efter dag – Chips<br>2. Någonting har hänt – Lena Ericsson<br>3. Hey hi ho – Liza Öhman |
+| 1983 | 1. Si la vie est cadeau – Corinne Hermès<br>2. Chai – Ofra Haza<br>3. Främling – Carola Häggkvist | Främling – Carola Häggkvist (3) | 1. Främling – Carola Häggkvist<br>2. Varför är kärleken röd? – Kikki Danielsson<br>3. Se – Karin Glenmark |
+| 1984 | 1. Diggi-Loo Diggi-Ley – Herreys<br>2. Terminal 3 – Linda Martin<br>3. Lady, Lady – Bravo | Diggi-Loo Diggi-Ley – Herreys (1) | 1. Diggi loo diggi ley – Herreys<br>2. Sankta Cecilia – Göran Folkestad & Lotta Pedersen<br>3. Rendez-vous – John Ballard |
+| 1985 | 1. La det swinge – Bobbysocks<br>2. Für alle – Wind<br>3. Bra vibrationer – Kikki Danielsson | Bra vibrationer – Kikki Danielsson (3) | 1. Bra vibrationer – Kikki Danielsson<br>2. Ta min hand – Dan Tillberg<br>3. Eld och lågor – Göran Folkestad |
+| 1986 | 1. J'aime la vie – Sandra Kim<br>2. Pas pour moi – Daniela Simons<br>3. L'Amour de ma vie – Sherisse Laurence | E' de' det här du kallar kärlek – Lasse Holm and Monica Törnell (5) | 1. E' de' det här du kallar kärlek – Lasse Holm & Monica Törnell<br>2. Kärleken är evig – Lena Philipsson<br>3. Dover-Calais – Style |
+| 1987 | 1. Hold Me Now – Johnny Logan<br>2. Laß die Sonne in dein Herz – Wind<br>3. Gente di mare – Umberto Tozzi and Raf | Boogaloo – Lotta Engberg (12) | 1. Fyra Bugg & en Coca Cola – Lotta Engberg<br>2. Högt över havet – Arja Saijonmaa<br>3. När morgonstjärnan brinner – Cyndee Peters |
+| 1988 | 1. Ne partez pas sans moi – Céline Dion<br>2. Go – Scott Fitzgerald<br>3. Ka' du se hva' jeg sa' – Hot Eyes | Stad i ljus – Tommy Körberg (12) | 1. Stad i ljus – Tommy Körberg<br>2. Om igen – Lena Philipsson<br>3. 100% – Lotta Engberg & Triple & Touch |
+| 1989 | 1. Rock Me – Riva<br>2. Why Do I Always Get It Wrong – Live Report<br>3. Vi maler byen rød – Birthe Kjær | En dag – Tommy Nilsson (4) | 1. En dag – Tommy Nilsson<br>2. Upp över mina öron – Eriksson-Glenmark<br>3. Mitt ibland änglar – Fingerprints |
+| 1990 | 1. Insieme: 1992 – Toto Cutugno<br>2. White and Black Blues – Joëlle Ursull<br>2. Somewhere in Europe – Liam Reilly | Som en vind – Edin-Ådahl (16) | 1. Som en vind – Edin-Ådahl<br>2. Mitt i ett äventyr – Carola Häggkvist<br>3. Varje natt – Lisbet Jagedal |
+| 1991 | 1. Fångad av en stormvind – Carola<br>2. C'est le dernier qui a parlé qui a raison – Amina<br>3. Kan – Duo Datz | Fångad av en stormvind – Carola (1) | 1. Fångad av en stormvind – Carola<br>2. Ett liv med dej – Towe Jaarnek |
+| 1992 | 1. Why Me – Linda Martin<br>2. One Step Out of Time – Michael Ball<br>3. Little Child – Mary Spiteri | I morgon är en annan dag – Christer Björkman (22) | 1. I morgon är en annan dag – Christer Björkman<br>2. Som om himlen brann – Lizette Pålsson & Bizazz<br>3. Vad som än händer – Maria Rådsten |
+| 1993 | 1. In Your Eyes – Niamh Kavanagh<br>2. Better the Devil You Know – Sonia<br>3. Moi, tout simplement – Annie Cotton | Eloise – Arvingarna (7) | 1. Eloise – Arvingarna<br>2. We Are All the Winners – Nick Borgen<br>3. I dina ögon – Pernilla Emme |
+| 1994 | 1. Rock 'n' Roll Kids – Paul Harrington and Charlie McGettigan<br>2. To nie ja! – Edyta Górniak<br>3. Wir geben 'ne Party – Mekado | Stjärnorna – Marie Bergman and Roger Pontare (13) | 1. Stjärnorna – Marie Bergman & Roger Pontare<br>2. Det vackraste jag vet – Gladys del Pilar<br>3. Stanna hos mig – Cayenne |
+| 1995 | 1. Nocturne – Secret Garden<br>2. Vuelve conmigo – Anabel Conde<br>3. Se på mej – Jan Johansen | Se på mig – Jan Johansen (3) | 1. Se på mig – Jan Johansen<br>2. Det vackraste – Cecilia Vennersten<br>3. Jag ger dig allt – Jessica G. Pilnäs |
+| 1996 | 1. Den vilda – One More Time<br>2. The Voice – Eimear Quinn<br>3. Ooh Aah... Just a Little Bit – Gina G | Den vilda – One More Time (3) | 1. Den vilda – One More Time<br>2. Driver dagg faller regn – Andreas Lundstedt<br>3. Juliette & Jonathan – Lotta Engberg |
+| 1997 | 1. Love Shine a Light – Katrina and the Waves<br>2. Mysterious Woman – Marc Roberts<br>3. Dinle – Şebnem Paker and Grup Ethnic | Bara hon älskar mig – Blond (14) | 1. Bara hon älskar mig – Blond<br>2. Där en ängel hälsat på – N-Mix<br>3. Missarna – Wille Crafoord |
+| 1998 | 1. Diva – Dana International<br>2. Where Are You? – Imaani<br>3. The One That I Love – Chiara | Kärleken är – Jill Johnson (10) | 1. Kärleken är – Jill Johnson<br>2. Ingen annan väg – B.I.G.<br>3. Julia – Myrra Malmberg |
+| 1999 | 1. Take Me to Your Heaven – Charlotte Nilsson<br>2. All Out of Luck – Selma<br>3. Journey to Jerusalem – Kudüs'e Seyahat – Sürpriz | Take Me to Your Heaven – Charlotte Nilsson (1) | 1. Tusen och en natt – Charlotte Nilsson<br>2. Stjärna på himmelen – Drömhus<br>3. Det svär jag på – Arvingarna |
+| 2000 | 1. Fly on the Wings of Love – Olsen Brothers<br>2. Solo – Alsou<br>3. My Star – Brainstorm | When Spirits Are Calling My Name – Roger Pontare (7) | 1. När vindarna viskar mitt namn – Roger Pontare<br>2. Se mig – Barbados<br>2. När jag tänker på i morgon – Friends |
+| 2001 | 1. Everybody – Tanel Padar, Dave Benton and 2XL<br>2. Never Ever Let You Go – Rollo & King<br>3. Die for You – Antique | Listen to Your Heartbeat – Friends (5) | 1. Lyssna till ditt hjärta – Friends<br>2. Allt som jag ser – Barbados<br>3. I går, i dag – Sanna Nielsen |
+| 2002 | 1. I Wanna – Marie N<br>2. 7th Wonder – Ira Losco<br>3. Come Back – Jessica Garlick<br>3. Runaway – Sahlene | Never Let It Go – Afro-dite (8) | 1. Never Let It Go – Afro-Dite<br>2. Adrenaline – Méndez<br>3. Vem é dé du vill ha – Kikki, Bettan & Lotta |
+| 2003 | 1. Everyway That I Can – Sertab Erener<br>2. Sanomi – Urban Trad<br>3. Ne ver', ne boisia – t.A.T.u. | Give Me Your Love – Fame (5) | 1. Give Me Your Love – Fame<br>2. Let Your Spirit Fly – Jan Johansen & Pernilla Wahlgren<br>3. Not a Sinner Nor a Saint – Alcazar |
+| 2004 | 1. Wild Dances – Ruslana<br>2. Lane moje – Željko Joksimović and Ad-Hoc Orchestra<br>3. Shake It – Sakis Rouvas | It Hurts – Lena Philipsson (5) | 1. Det gör ont – Lena Philipsson<br>2. Min kärlek – Shirley Clamp<br>3. La dolce vita – After Dark |
+| 2005 | 1. Let Me Try – Luminița Anghel and Sistem<br>2. Boonika bate doba – Zdob și Zdub<br>3. Talking to You – Jakob Sveistrup | Las Vegas – Martin Stenmarck (19) | 1. Las Vegas – Martin Stenmarck<br>2. Håll om mig – Nanne Grönvall<br>3. Alcastar – Alcazar |
+| 2006 | 1. Hard Rock Hallelujah – Lordi<br>2. Never Let You Go – Dima Bilan<br>3. Lejla – Hari Mata Hari | Invincible – Carola (5) | 1. Evighet – Carola<br>2. Temple of Love – BWO<br>3. Sing for Me – Andreas Johnson |
+| 2007 | 1. Molitva – Marija Šerifović<br>2. Unsubstantial Blues – Magdi Rúzsa<br>3. Shake It Up Şekerim – Kenan Doğulu | The Worrying Kind – The Ark (18) | 1. The Worrying Kind – The Ark<br>2. A Little Bit of Love – Andreas Johnson<br>3. Cara Mia – Måns Zelmerlöw |
+| 2008 | 1. Believe – Dima Bilan<br>2. Shady Lady – Ani Lorak<br>3. Secret Combination – Kalomira | Hero – Charlotte Perrelli (18) | 1. Hero – Charlotte Perrelli<br>2. Empty Room – Sanna Nielsen<br>3. Lay Your Love On Me – BWO |
+| 2009 | 1. Fairytale – Alexander Rybak<br>2. Is It True? – Yohanna<br>3. Always – Aysel and Arash | La voix – Malena Ernman (21) | 1. La voix – Malena Ernman<br>2. Snälla, snälla – Caroline af Ugglas<br>3. Baby Goodbye – E.M.D. |
+| 2010 | 1. Satellite – Lena<br>2. We Could Be the Same – Manga<br>3. Playing with Fire – Paula Seling and Ovi | This Is My Life – Anna Bergendahl (Failed to qualify) | 1. This Is My Life – Anna Bergendahl<br>2. Keep On Walking – Salem Al Fakir<br>3. Manboy – Eric Saade |
+| 2011 | 1. Running Scared – Ell and Nikki<br>2. Madness of Love – Raphael Gualazzi<br>3. Popular – Eric Saade | Popular – Eric Saade (3) | 1. Popular – Eric Saade<br>2. In the Club – Danny Saucedo<br>3. Oh My God! – The Moniker |
+| 2012 | 1. Euphoria – Loreen<br>2. Party for Everybody – Buranovskiye Babushki<br>3. Nije ljubav stvar – Željko Joksimović | Euphoria – Loreen (1) | 1. Euphoria – Loreen<br>2. Amazing – Danny Saucedo<br>3. Soldiers – Ulrik Munther |
+| 2013 | 1. Only Teardrops – Emmelie de Forest<br>2. Hold Me – Farid Mammadov<br>3. Gravity – Zlata Ognevich | You – Robin Stjernberg (14) | 1. You – Robin Stjernberg<br>2. Heartbreak Hotel – Yohio<br>3. Tell the World I'm Here – Ulrik Munther |
+| 2014 | 1. Rise Like a Phoenix – Conchita Wurst<br>2. Calm After the Storm – The Common Linnets<br>3. Undo – Sanna Nielsen | Undo – Sanna Nielsen (3) | 1. Undo – Sanna Nielsen<br>2. Busy Doin’ Nothin’ – Ace Wilder<br>3. Blame It on the Disco – Alcazar |
+| 2015 | 1. Heroes – Måns Zelmerlöw<br>2. A Million Voices – Polina Gagarina<br>3. Grande amore – Il Volo | Heroes – Måns Zelmerlöw (1) | 1. Heroes – Måns Zelmerlöw<br>2. Jag är fri (Manne Leam Frijje) – Jon Henrik Fjällgren<br>3. Don't Stop Believing – Mariette |
+| 2016 | 1. 1944 – Jamala<br>2. Sound of Silence – Dami Im<br>3. You Are the Only One – Sergey Lazarev | If I Were Sorry – Frans (5) | 1. If I Were Sorry – Frans<br>2. Human – Oscar Zia<br>3. Don't Worry – Ace Wilder |
+| 2017 | 1. Amar pelos dois – Salvador Sobral<br>2. Beautiful Mess – Kristian Kostov<br>3. Hey Mamma – SunStroke Project | I Can't Go On – Robin Bengtsson (5) | 1. I Can't Go On – Robin Bengtsson<br>2. Hold On – Nano<br>3. En värld full av strider (Eatneme gusnie jeenh dåaroeh) – Jon Henrik Fjällgren feat. Aninia |
+| 2018 | 1. Toy – Netta<br>2. Fuego – Eleni Foureira<br>3. Nobody but You – Cesár Sampson | Dance You Off – Benjamin Ingrosso (7) | 1. Dance You Off – Benjamin Ingrosso<br>2. Every Single Day – Felix Sandman<br>3. My Turn – John Lundvik |
+| 2019 | 1. Arcade – Duncan Laurence<br>2. Soldi – Mahmood<br>3. Scream – Sergey Lazarev | Too Late for Love – John Lundvik (5) | 1. Too Late for Love – John Lundvik<br>2. On My Own – Bishara<br>3. Hold You – Hanna Ferm & LIAMOO |
+| 2020 | – | Move – The Mamas (Contest cancelled) | 1. Move – The Mamas<br>2. Bulletproof – Dotter<br>3. Kingdom Come – Anna Bergendahl |
+| 2021 | 1. Zitti e buoni – Måneskin<br>2. Voilà – Barbara Pravi<br>3. Tout l'univers – Gjon's Tears | Voices – Tusse (14) | 1. Voices – Tusse<br>2. Every Minute – Eric Saade<br>3. In the Middle – The Mamas |
+| 2022 | 1. Stefania – Kalush Orchestra<br>2. Space Man – Sam Ryder<br>3. SloMo – Chanel | Hold Me Closer – Cornelia Jakobs (4) | 1. Hold Me Closer – Cornelia Jakobs<br>2. Bigger Than The Universe – Anders Bagge<br>3. In i dimman – Medina |
+| 2023 | 1. Tattoo – Loreen<br>2. Cha Cha Cha – Käärijä<br>3. Unicorn – Noa Kirel | Tattoo – Loreen (1) | 1. Tattoo – Loreen<br>2. Air – Marcus & Martinus<br>3. Six Feet Under – Smash Into Pieces |
+| 2024 | 1. The Code – Nemo<br>2. Rim Tim Tagi Dim – Baby Lasagna<br>3. Teresa & Maria – Alyona Alyona and Jerry Heil | Unforgettable – Marcus & Martinus (9) | 1. Unforgettable – Marcus & Martinus<br>2. Que Sera – Medina<br>3. Heroes Are Calling – Smash Into Pieces |
+| 2025 | 1. Wasted Love – JJ<br>2. New Day Will Rise – Yuval Raphael<br>3. Espresso Macchiato – Tommy Cash | Bara bada bastu – KAJ (4) | 1. Bara bada bastu – KAJ<br>2. Revolution – Måns Zelmerlöw<br>3. Believe Me – Greczula |
+| 2026 | 1. Bangaranga – Dara<br>2. Michelle – Noam Bettan<br>3. Choke Me – Alexandra Căpitănescu | My System – Felicia (20) | 1. My System – Felicia<br>2. Half of Me – Greczula<br>3. Viva L'amor – Medina |
