@@ -588,6 +588,7 @@
  {"id":"2DlHlPMa4M17kufBvI2lEN","title":"Chop Suey!","artist":"System of a Down","year":2001,"genres":["rock","metal"]},
  {"id":"7kzKAuUzOITUauHAhoMoxA","title":"Last Nite","artist":"The Strokes","year":2001,"genres":["rock","indie"]},
  {"title":"Starlight","artist":"The Supermen Lovers","year":2001,"genres":["dance"],"id":"6YsLTpkcQU8Ec0Ym74qfEx"},
+ {"title":"Never Let It Go","artist":"Afro-dite","year":2002,"genres":["schlager"],"id":"28ihA2Fp5zRmcmi8hpfWiC"},
  {"id":"23JW248k0ExN0ZLDfnl80A","title":"Lassie","artist":"Ainbusk","year":2002,"genres":["schlager"]},
  {"title":"Foolish","artist":"Ashanti","year":2002,"genres":["rnb"],"id":"6zMUIb4uce1CzpbjR3vMdN"},
  {"id":"0lwyzp7GppQxv0Eu6wRkUo","title":"Satisfaction","artist":"Benny Benassi","year":2002,"genres":["dance"]},
@@ -828,9 +829,10 @@
  {"id":"7wLShogStyDeZvL0a6daN5","title":"Texas Hold 'Em","artist":"Beyoncé","year":2024,"genres":["pop","country"]},
  {"id":"6AI3ezQ4o3HUoP6Dhudph3","title":"Not Like Us","artist":"Kendrick Lamar","year":2024,"genres":["hiphop"]},
  {"id":"2plbrEY59IikOBgBGLjaoe","title":"Die With A Smile","artist":"Lady Gaga & Bruno Mars","year":2024,"genres":["pop","rock"]},
- {"title":"Unforgettable","artist":"Marcus & Martinus","year":2024,"genres":["schlager"],"id":"5L8C1PZGCpZf8STcN79H5j"},
+ {"title":"Unforgettable","artist":"Marcus & Martinus","year":2024,"genres":["pop","schlager"],"id":"5L8C1PZGCpZf8STcN79H5j"},
  {"id":"5IZXB5IKAD2qlvTPJYDCFB","title":"I Had Some Help","artist":"Post Malone","year":2024,"genres":["pop","country"]},
  {"id":"4wJ5Qq0jBN4ajy7ouZIV1c","title":"APT.","artist":"ROSÉ & Bruno Mars","year":2024,"genres":["pop"]},
  {"id":"1vLqigPHwiFnXsfrLMehV1","title":"Espresso","artist":"Sabrina Carpenter","year":2024,"genres":["pop"]},
- {"id":"2FQrifJ1N335Ljm3TjTVVf","title":"A Bar Song (Tipsy)","artist":"Shaboozey","year":2024,"genres":["country"]}
+ {"id":"2FQrifJ1N335Ljm3TjTVVf","title":"A Bar Song (Tipsy)","artist":"Shaboozey","year":2024,"genres":["country"]},
+ {"title":"Bara bada bastu","artist":"KAJ","year":2025,"genres":["schlager"],"id":"2gThkoApt6B7ajBWZRLAVv"}
 ]
