@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createGame, placeCurrent, type GameState, type Song } from '../game/engine';
+import { applyPower, createGame, placeCurrent, type GameState, type Song } from '../game/engine';
 import {
   AVATARS,
   HOST_ID,
@@ -25,6 +25,8 @@ import {
   roomView,
   setConnected,
   teamDecision,
+  powerRequest,
+  betRequest,
   votesBySlot,
   type Room,
 } from './protocol';
@@ -77,7 +79,7 @@ describe('votes', () => {
     expect(teamDecision(room, g)).toEqual({ kind: 'waiting', locked: 2, total: 3 });
     room = applyMessage(room, g, 'cid', { type: 'vote', slot: 0 });
     room = applyMessage(room, g, 'cid', { type: 'lock', locked: true });
-    expect(teamDecision(room, g)).toEqual({ kind: 'place', slot: 1 });
+    expect(teamDecision(room, g)).toEqual({ kind: 'place', slot: 1, answer: null });
   });
 
   it('reports a split vote instead of guessing', () => {
@@ -100,7 +102,7 @@ describe('votes', () => {
     room = applyMessage(room, g, 'ann', { type: 'vote', slot: 1 });
     room = applyMessage(room, g, 'ann', { type: 'lock', locked: true });
     room = setConnected(room, 'bob', false);
-    expect(teamDecision(room, g)).toEqual({ kind: 'place', slot: 1 });
+    expect(teamDecision(room, g)).toEqual({ kind: 'place', slot: 1, answer: null });
     expect(votesBySlot(room.members).get(1)).toEqual([`${room.members[0].emoji} ann`]);
   });
 
@@ -240,5 +242,96 @@ describe('moving on after the reveal', () => {
     room = setConnected(voteNext(room, 'a', turnOf(g)), 'b', false);
     expect(majorityWantsNext(room, g)).toBe(true);
     expect(clearVotes(room).members.every((m) => m.next === undefined)).toBe(true);
+  });
+});
+
+describe('bonus question votes', () => {
+  const bands: Song[] = Array.from({ length: 20 }, (_, i) => ({ id: `s${i}`, title: `Song ${i}`, artist: `Band ${i}`, year: 1960 + i * 3 }));
+  const bonusGame = () => createGame({ playerNames: ['Red', 'Blue'], targetCards: 5, songs: bands, mode: 'bonus' });
+
+  it('shows phones the question but not the answer', () => {
+    const g = bonusGame();
+    const view = gameView(g)!;
+    expect(view.question?.choices).toEqual(g.question!.choices);
+    expect(view.question).not.toHaveProperty('answer');
+  });
+
+  it('needs a spot and an answer to lock in, then places both', () => {
+    const g = bonusGame();
+    let room = roomWith(g, ['ann', 'p1'], ['bob', 'p1']);
+    room = applyMessage(room, g, 'ann', { type: 'vote', slot: 1 });
+    room = applyMessage(room, g, 'ann', { type: 'lock', locked: true });
+    expect(room.members[0].locked).toBe(false);
+    room = applyMessage(room, g, 'ann', { type: 'answer', choice: 2 });
+    room = applyMessage(room, g, 'ann', { type: 'lock', locked: true });
+    room = applyMessage(room, g, 'bob', { type: 'vote', slot: 1 });
+    room = applyMessage(room, g, 'bob', { type: 'answer', choice: 2 });
+    room = applyMessage(room, g, 'bob', { type: 'lock', locked: true });
+    expect(teamDecision(room, g)).toEqual({ kind: 'place', slot: 1, answer: 2 });
+  });
+
+  it('rejects answers that are not among the choices, and splits on a tie', () => {
+    const g = bonusGame();
+    let room = roomWith(g, ['ann', 'p1'], ['bob', 'p1']);
+    room = applyMessage(room, g, 'ann', { type: 'answer', choice: 9 });
+    expect(room.members[0].answer ?? null).toBeNull();
+    for (const [id, choice] of [['ann', 0], ['bob', 1]] as const) {
+      room = applyMessage(room, g, id, { type: 'vote', slot: 0 });
+      room = applyMessage(room, g, id, { type: 'answer', choice });
+      room = applyMessage(room, g, id, { type: 'lock', locked: true });
+    }
+    expect(teamDecision(room, g)).toEqual({ kind: 'split' });
+    // Changing the answer unlocks.
+    room = applyMessage(room, g, 'bob', { type: 'answer', choice: 0 });
+    expect(room.members[1].locked).toBe(false);
+  });
+
+  it('ignores answers in classic', () => {
+    const g = game();
+    const room = applyMessage(roomWith(g, ['ann', 'p1']), g, 'ann', { type: 'answer', choice: 0 });
+    expect(room.members[0].answer ?? null).toBeNull();
+  });
+});
+
+describe('power-ups from phones', () => {
+  const pg = () => createGame({ playerNames: ['Red', 'Blue'], targetCards: 5, songs, mode: 'powerups' });
+
+  it('lets only the team whose turn it is use a known power-up', () => {
+    const g = pg();
+    const room = roomWith(g, ['ann', 'p1'], ['bob', 'p2']);
+    expect(powerRequest(room, g, 'ann', { type: 'power', power: 'hint' })).toEqual({ power: 'hint' });
+    expect(powerRequest(room, g, 'ann', { type: 'power', power: 'freeze', target: 'p2' })).toEqual({ power: 'freeze', target: 'p2' });
+    expect(powerRequest(room, g, 'bob', { type: 'power', power: 'hint' })).toBeNull();
+    expect(powerRequest(room, g, 'ann', { type: 'power', power: 'nuke' })).toBeNull();
+    expect(powerRequest(room, game(), 'ann', { type: 'power', power: 'hint' })).toBeNull();
+  });
+
+  it('shows phones the hint decade only once bought', () => {
+    const g = pg();
+    expect(gameView(g)!.powers).toBeUndefined();
+    const hinted = applyPower(g, 'hint');
+    expect(gameView(hinted)!.powers?.hintDecade).toBe(Math.floor(g.current!.year / 10) * 10);
+  });
+});
+
+describe('betting, speed and intro on phones', () => {
+  it('takes bets only from the team whose turn it is', () => {
+    const g = createGame({ playerNames: ['Red', 'Blue'], targetCards: 5, songs, mode: 'betting' });
+    const room = roomWith(g, ['ann', 'p1'], ['bob', 'p2']);
+    expect(betRequest(room, g, 'ann', { type: 'bet', amount: 2 })).toBe(2);
+    expect(betRequest(room, g, 'bob', { type: 'bet', amount: 2 })).toBeNull();
+    expect(betRequest(room, g, 'ann', { type: 'bet', amount: 'lots' })).toBeNull();
+    expect(gameView(g)!.bet).toBe(0);
+  });
+
+  it('sends the time left rather than the host clock', () => {
+    const g = { ...createGame({ playerNames: ['Red'], targetCards: 5, songs, mode: 'speed' }), deadline: 50_000 };
+    expect(gameView(g, 40_000)!.timeLeftMs).toBe(10_000);
+    expect(gameView(g, 60_000)!.timeLeftMs).toBe(0);
+  });
+
+  it('shows the clip length in the intro challenge', () => {
+    const g = createGame({ playerNames: ['Red'], targetCards: 5, songs, mode: 'intro' });
+    expect(gameView(g)!.clipMs).toBe(2000);
   });
 });

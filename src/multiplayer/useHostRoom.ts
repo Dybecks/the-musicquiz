@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from 'react';
-import { addSongs, placeCurrent, type GameState, type Song } from '../game/engine';
+import { addSongs, applyPower, placeCurrent, setBet, type GameState, type Song } from '../game/engine';
 import { mergeSongs } from '../spotify/personalDeck';
 import { openHost, type HostLink, type HostStatus } from './connection';
 import {
@@ -25,6 +25,8 @@ import {
   setConnected,
   cleanTeamName,
   teamDecision,
+  powerRequest,
+  betRequest,
   teamRename,
   teamsOf,
   type ClientMessage,
@@ -172,6 +174,18 @@ export function useHostRoom(
           commandHandler.current?.(msg, memberId);
           return;
         }
+        if (msg.type === 'bet') {
+          const r = latest.current.room;
+          const amount = r ? betRequest(r, latest.current.game, memberId, msg) : null;
+          if (amount !== null) setGame((g) => (g ? setBet(g, amount) : g));
+          return;
+        }
+        if (msg.type === 'power') {
+          const r = latest.current.room;
+          const req = r && powerRequest(r, latest.current.game, memberId, msg);
+          if (req) setGame((g) => (g ? applyPower(g, req.power, req.target) : g));
+          return;
+        }
         if (msg.type === 'team-name') {
           const { room: r, teams: t } = latest.current;
           const rename = r && teamRename(r, t, memberId, msg.name);
@@ -200,7 +214,10 @@ export function useHostRoom(
   }, [teams]);
 
   // A new song, turn or game: everyone votes afresh.
-  const turnKey = game ? `${game.round}:${game.currentPlayerIndex}:${game.phase}:${game.current?.id ?? ''}` : 'lobby';
+  // A second try (power-up 'retry') is a fresh vote too.
+  const turnKey = game
+    ? `${game.round}:${game.currentPlayerIndex}:${game.phase}:${game.current?.id ?? ''}:${game.powers?.missedSlot ?? ''}`
+    : 'lobby';
   const lastTurn = useRef(turnKey);
   useEffect(() => {
     if (lastTurn.current === turnKey) return;
@@ -219,10 +236,11 @@ export function useHostRoom(
 
   // The whole team locked in: that's the guess.
   const placeSlot = decision.kind === 'place' ? decision.slot : null;
+  const placeAnswer = decision.kind === 'place' ? decision.answer : null;
   useEffect(() => {
     if (placeSlot === null) return;
-    setGame((g) => (g && g.phase === 'guessing' ? placeCurrent(g, placeSlot) : g));
-  }, [placeSlot, turnKey, setGame]);
+    setGame((g) => (g && g.phase === 'guessing' ? placeCurrent(g, placeSlot, placeAnswer) : g));
+  }, [placeSlot, placeAnswer, turnKey, setGame]);
 
   // Every change goes to every phone right away.
   useEffect(() => {

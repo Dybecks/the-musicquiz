@@ -11,6 +11,8 @@ import {
   label,
   normalizeCode,
   votesBySlot,
+  votesByAnswer,
+  readyToLock,
   type ClientMessage,
   type Member,
   type RoomView,
@@ -19,6 +21,10 @@ import type { SpotifyProfile } from '../spotify/api';
 import { AddMyMusic } from './AddMyMusic';
 import { Finished, Reveal, Scoreboard } from './Game';
 import { Timeline } from './Timeline';
+import { BonusQuestion } from './BonusQuestion';
+import { scoreOf, upNext } from '../game/engine';
+import { PowerUps } from './PowerUps';
+import { BetPicker, IntroInfo, SpeedClock } from './TurnExtras';
 import { msg, useT } from '../i18n';
 import { Rich } from '../i18n/Rich';
 
@@ -187,6 +193,8 @@ function Joined({
   const t = tt.remote;
   const [status, setStatus] = useState<ClientStatus>({ kind: 'connecting' });
   const [view, setView] = useState<RoomView | null>(null);
+  /** When the last view arrived here, to count down the speed round's clock on this device. */
+  const [viewAt, setViewAt] = useState(0);
   const [added, setAdded] = useState<number | null>(null);
   const link = useRef<ClientLink | null>(null);
   const me = useRef(memberId()).current;
@@ -198,7 +206,10 @@ function Joined({
         if (s.kind === 'not-found') onNotFound();
         if (s.kind === 'closed') localStorage.removeItem(REMOTE_KEY);
       },
-      onView: setView,
+      onView: (v) => {
+        setView(v);
+        setViewAt(Date.now());
+      },
       onSongsAdded: setAdded,
     });
     link.current = l;
@@ -335,6 +346,8 @@ function Joined({
   const teamMembers = view.members.filter((m) => m.teamId === active.id && m.connected);
   const myTurn = myTeam.id === active.id && game.phase === 'guessing';
   const host = view.members.find((m) => m.id === HOST_ID);
+  const question = game.phase === 'guessing' ? game.question ?? null : null;
+  const speedDeadline = game.timeLeftMs !== undefined ? viewAt + game.timeLeftMs : null;
 
   // The votes, plus the spot the host has tapped (when the host isn't voting on this team).
   const votes = game.phase === 'guessing' ? votesBySlot(teamMembers) : undefined;
@@ -357,7 +370,7 @@ function Joined({
             </h1>
             {game.phase === 'revealed' && game.lastGuess ? (
               <>
-                <Reveal correct={game.lastGuess.correct} song={game.lastGuess.song} />
+                <Reveal guess={game.lastGuess} players={game.players} />
                 <NextSong view={view} me={me} send={send} />
               </>
             ) : (
@@ -378,6 +391,24 @@ function Joined({
                 ) : (
                   <p className="hint">{t.otherVoting(active.name)}</p>
                 )}
+                {game.stealing && <p className="steal-banner">{tt.modes.stealBanner}</p>}
+                {game.mode === 'betting' && game.bet !== undefined && (
+                  <BetPicker bet={game.bet} onSet={myTurn ? (amount) => send({ type: 'bet', amount }) : undefined} />
+                )}
+                {game.mode === 'speed' && <SpeedClock deadline={speedDeadline} />}
+                {game.mode === 'intro' && game.clipMs !== undefined && <IntroInfo clipMs={game.clipMs} />}
+                {game.mode === 'powerups' && (
+                  <PowerUps game={game} onUse={myTurn ? (power, target) => send({ type: 'power', power, ...(target ? { target } : {}) }) : undefined} />
+                )}
+                {question && (
+                  <BonusQuestion
+                    kind={question.kind}
+                    choices={question.choices}
+                    selected={myTurn ? (mine.answer ?? null) : null}
+                    onSelect={myTurn ? (choice) => send({ type: 'answer', choice }) : undefined}
+                    votes={votesByAnswer(teamMembers)}
+                  />
+                )}
                 <ul className="voters">
                   {teamMembers.map((m) => (
                     <li key={m.id} className={m.locked ? 'locked' : m.vote !== null ? 'voted' : ''}>
@@ -386,7 +417,7 @@ function Joined({
                     </li>
                   ))}
                 </ul>
-                {view.split && <p className="warn">{tt.game.split}</p>}
+                {view.split && <p className="warn">{question ? tt.modes.split : tt.game.split}</p>}
               </>
             )}
           </section>
@@ -398,8 +429,8 @@ function Joined({
                   {tt.game.lockedTapToChange}
                 </button>
               ) : (
-                <button className="primary big" disabled={mine.vote === null} onClick={() => send({ type: 'lock', locked: true })}>
-                  {mine.vote === null ? tt.game.tapToVote : tt.game.lockMyVote}
+                <button className="primary big" disabled={!readyToLock(mine, !!question)} onClick={() => send({ type: 'lock', locked: true })}>
+                  {readyToLock(mine, !!question) ? tt.game.lockMyVote : question ? tt.modes.tapToVoteBoth : tt.game.tapToVote}
                 </button>
               )}
             </div>
@@ -410,7 +441,7 @@ function Joined({
           <h2>
             {tt.game.timeline(active.name)}{' '}
             <span className="muted">
-              ({active.timeline.length}/{game.targetCards})
+              ({scoreOf(active)}/{game.targetCards})
             </span>
           </h2>
           <Timeline
@@ -505,8 +536,12 @@ function NextSong({ view, me, send }: { view: RoomView; me: string; send: (msg: 
   const t = tt.remote;
   const game = view.game!;
   const turn = turnOf(game);
-  const nextTeam = game.players[(game.currentPlayerIndex + 1) % game.players.length];
-  const label = game.winnerIds.length ? tt.game.seeWinner : t.nextSong(nextTeam.name);
+  const nextTeam = upNext(game);
+  const label = game.winnerIds.length
+    ? tt.game.seeWinner
+    : game.lastGuess?.stealNext
+      ? tt.modes.nextSteal(nextTeam.name)
+      : t.nextSong(nextTeam.name);
   if (view.nextRule === 'host') return <p className="hint center">{t.hostStartsNext}</p>;
   if (view.nextRule === 'anyone')
     return (

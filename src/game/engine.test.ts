@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { addSongs, createGame, insertSorted, isCorrectPlacement, nextTurn, placeCurrent, skipSong, spreadByDecade, type Song } from './engine';
+import { addSongs, applyPower, canUsePower, clipMs, createGame, currentPlayer, decadeQuestion, insertSorted, isCorrectPlacement, longerClip, makeQuestion, nextTurn, placeCurrent, scoreOf, setBet, skipSong, spreadByDecade, startClock, SPEED_MS, timeUp, type GameState, type Song } from './engine';
 
 const song = (year: number, id = `s${year}`): Song => ({ id, title: `Song ${year}`, artist: 'Artist', year });
 const songs = [1960, 1970, 1980, 1990, 2000, 2010, 2020].map((y) => song(y));
@@ -130,5 +130,280 @@ describe('addSongs', () => {
     const first = g.current!;
     g = skipSong(g);
     expect(addSongs(g, [first], undefined).deck).toHaveLength(g.deck.length);
+  });
+});
+
+describe('bonus questions', () => {
+  const band = (year: number, i: number): Song => ({ id: `b${i}`, title: `Title ${i}`, artist: `Band ${i}`, year });
+  const many = Array.from({ length: 12 }, (_, i) => band(1960 + i * 5, i));
+
+  it('asks with the right answer and three different wrong ones', () => {
+    const q = makeQuestion(many[0], many)!;
+    expect(q.choices).toHaveLength(4);
+    expect(new Set(q.choices).size).toBe(4);
+    const right = q.kind === 'artist' ? many[0].artist : many[0].title;
+    expect(q.choices[q.answer]).toBe(right);
+  });
+
+  it('never offers the same artist as a wrong answer', () => {
+    const pool = [...many, { ...many[1], id: 'x', artist: 'Band 0' }];
+    for (let i = 0; i < 20; i++) {
+      const q = makeQuestion(many[0], pool)!;
+      expect(q.choices.filter((c) => c === 'Band 0').length).toBeLessThanOrEqual(1);
+    }
+  });
+
+  it('asks where a soundtrack song is from', () => {
+    const films = many.map((s, i) => ({ ...s, from: `Film ${i}` }));
+    const q = makeQuestion(films[3], films)!;
+    expect(q.kind).toBe('from');
+    expect(q.choices[q.answer]).toBe('Film 3');
+  });
+
+  it('gives up when there are too few different answers', () => {
+    expect(makeQuestion(many[0], many.slice(0, 2))).toBeNull();
+  });
+
+  it('gives a star for the right answer, and stars count toward the target', () => {
+    let g = createGame({ playerNames: ['A', 'B'], targetCards: 3, songs: many, mode: 'bonus' });
+    expect(g.question).toBeTruthy();
+    const q = g.question!;
+    g = placeCurrent(g, 0, q.answer);
+    expect(g.players[0].stars).toBe(1);
+    expect(g.lastGuess?.bonus).toMatchObject({ pick: q.answer, correct: true });
+    expect(scoreOf(g.players[0])).toBe(g.players[0].timeline.length + 1);
+  });
+
+  it('gives no star for a wrong or missing answer', () => {
+    let g = createGame({ playerNames: ['A'], targetCards: 5, songs: many, mode: 'bonus' });
+    g = placeCurrent(g, 0, (g.question!.answer + 1) % g.question!.choices.length);
+    expect(g.players[0].stars ?? 0).toBe(0);
+    g = nextTurn(g);
+    expect(g.question).toBeTruthy();
+    g = placeCurrent(g, 0, null);
+    expect(g.players[0].stars ?? 0).toBe(0);
+    expect(g.lastGuess?.bonus?.pick).toBeNull();
+  });
+
+  it('wins on cards plus stars', () => {
+    let g = createGame({ playerNames: ['A', 'B'], targetCards: 2, songs: many, mode: 'bonus' });
+    // A wrong spot but the right answer: 1 card + 1 star.
+    const year = g.current!.year;
+    const start = g.players[0].timeline[0].year;
+    const wrongSlot = year >= start ? 0 : 1;
+    g = placeCurrent(g, year === start ? 99 : wrongSlot, g.question!.answer);
+    expect(g.winnerIds).toEqual(['p1']);
+  });
+
+  it('asks nothing in classic', () => {
+    const g = createGame({ playerNames: ['A'], targetCards: 3, songs: many });
+    expect(g.question).toBeUndefined();
+    expect(placeCurrent(g, 0, 0).lastGuess?.bonus).toBeUndefined();
+  });
+
+  it('asks a new question for a skipped song', () => {
+    const g = createGame({ playerNames: ['A'], targetCards: 3, songs: many, mode: 'bonus' });
+    const s = skipSong(g);
+    expect(s.current?.id).not.toBe(g.current?.id);
+    const q = s.question!;
+    const right = q.kind === 'artist' ? s.current!.artist : s.current!.title;
+    expect(q.choices[q.answer]).toBe(right);
+  });
+});
+
+describe('steal', () => {
+  const many = Array.from({ length: 20 }, (_, i): Song => ({ id: `t${i}`, title: `T${i}`, artist: `A${i}`, year: 1950 + i * 3 }));
+  /** A slot that is wrong for the current song on the current timeline. */
+  const wrongSlot = (g: GameState) => {
+    const tl = currentPlayer(g).timeline;
+    for (let i = 0; i <= tl.length; i++) if (!isCorrectPlacement(tl, i, g.current!.year)) return i;
+    return 99;
+  };
+  const rightSlot = (g: GameState) => {
+    const tl = currentPlayer(g).timeline;
+    for (let i = 0; i <= tl.length; i++) if (isCorrectPlacement(tl, i, g.current!.year)) return i;
+    return 0;
+  };
+
+  it('gives a missed song to the next team, who then plays its own turn', () => {
+    let g = createGame({ playerNames: ['A', 'B', 'C'], targetCards: 9, songs: many, mode: 'steal' });
+    const song = g.current!;
+    g = placeCurrent(g, wrongSlot(g));
+    expect(g.lastGuess?.stealNext).toBe('p2');
+    g = nextTurn(g);
+    expect(g.stealing).toBe(true);
+    expect(g.currentPlayerIndex).toBe(1);
+    expect(g.current).toBe(song);
+    g = placeCurrent(g, rightSlot(g));
+    expect(g.lastGuess).toMatchObject({ steal: true, correct: true });
+    expect(g.players[1].timeline).toContain(song);
+    g = nextTurn(g);
+    // B's own turn, with a new song.
+    expect(g.currentPlayerIndex).toBe(1);
+    expect(g.stealing).toBe(false);
+    expect(g.current).not.toBe(song);
+  });
+
+  it('offers no steal of a missed steal', () => {
+    let g = createGame({ playerNames: ['A', 'B'], targetCards: 9, songs: many, mode: 'steal' });
+    g = nextTurn(placeCurrent(g, wrongSlot(g)));
+    g = placeCurrent(g, wrongSlot(g));
+    expect(g.lastGuess?.stealNext).toBeUndefined();
+  });
+
+  it('offers no steal in classic', () => {
+    const g = createGame({ playerNames: ['A', 'B'], targetCards: 9, songs: many });
+    expect(placeCurrent(g, wrongSlot(g)).lastGuess?.stealNext).toBeUndefined();
+  });
+
+  describe('sudden death', () => {
+    it('puts a team out on a miss and skips it', () => {
+      let g = createGame({ playerNames: ['A', 'B', 'C'], targetCards: 9, songs: many, mode: 'sudden' });
+      g = placeCurrent(g, wrongSlot(g));
+      expect(g.players[0].out).toBe(true);
+      expect(g.lastGuess?.eliminated).toBe(true);
+      g = nextTurn(g); // B
+      g = nextTurn(placeCurrent(g, rightSlot(g))); // C
+      g = nextTurn(placeCurrent(g, rightSlot(g)));
+      expect(currentPlayer(g).name).toBe('B'); // A is passed over
+    });
+
+    it('ends when one team is left', () => {
+      let g = createGame({ playerNames: ['A', 'B'], targetCards: 9, songs: many, mode: 'sudden' });
+      g = placeCurrent(g, wrongSlot(g));
+      expect(g.winnerIds).toEqual(['p2']);
+      expect(nextTurn(g).phase).toBe('finished');
+    });
+  });
+
+  describe('power-ups', () => {
+    const game = () => createGame({ playerNames: ['A', 'B'], targetCards: 9, songs: many, mode: 'powerups' });
+
+    it('starts with a coin and earns one per right placement', () => {
+      let g = game();
+      expect(g.players.map((p) => p.coins)).toEqual([1, 1]);
+      g = placeCurrent(g, rightSlot(g));
+      expect(g.players[0].coins).toBe(2);
+      expect(g.lastGuess?.coin).toBe(true);
+    });
+
+    it('pays for a hint, once a turn, and not without coins', () => {
+      let g = applyPower(game(), 'hint');
+      expect(g.powers?.hint).toBe(true);
+      expect(g.players[0].coins).toBe(0);
+      expect(applyPower(g, 'hint')).toBe(g);
+      expect(applyPower(g, 'retry')).toBe(g);
+    });
+
+    it('gives a second try with retry', () => {
+      let g = game();
+      g = { ...g, players: g.players.map((p) => ({ ...p, coins: 5 })) };
+      g = applyPower(g, 'retry');
+      const wrong = wrongSlot(g);
+      g = placeCurrent(g, wrong);
+      expect(g.phase).toBe('guessing');
+      expect(g.powers?.missedSlot).toBe(wrong);
+      g = placeCurrent(g, wrong);
+      expect(g.phase).toBe('revealed');
+    });
+
+    it('freezes another team, who misses one turn', () => {
+      let g = createGame({ playerNames: ['A', 'B', 'C'], targetCards: 9, songs: many, mode: 'powerups' });
+      g = { ...g, players: g.players.map((p) => ({ ...p, coins: 5 })) };
+      expect(applyPower(g, 'freeze', 'p1')).toBe(g); // not yourself
+      g = applyPower(g, 'freeze', 'p2');
+      expect(g.players[1].frozen).toBe(true);
+      expect(g.players[0].coins).toBe(3);
+      g = nextTurn(placeCurrent(g, 0));
+      expect(currentPlayer(g).name).toBe('C');
+      expect(g.players[1].frozen).toBe(false);
+      g = nextTurn(placeCurrent(g, 0));
+      g = nextTurn(placeCurrent(g, 0));
+      expect(currentPlayer(g).name).toBe('B');
+    });
+
+    it('grabs a card from another team, who keeps at least one', () => {
+      let g = game();
+      g = { ...g, players: g.players.map((p) => ({ ...p, coins: 5 })) };
+      expect(applyPower(g, 'grab', 'p2')).toBe(g); // B has one card
+      const extra = many.find((x) => !g.players.some((p) => p.timeline.includes(x)))!;
+      g = { ...g, players: g.players.map((p) => (p.id === 'p2' ? { ...p, timeline: insertSorted(p.timeline, extra) } : p)) };
+      g = applyPower(g, 'grab', 'p2');
+      expect(g.players[0].timeline).toHaveLength(2);
+      expect(g.players[1].timeline).toHaveLength(1);
+      expect(g.players[0].coins).toBe(2);
+      // One attack a turn.
+      expect(canUsePower(g, 'freeze')).toBe(false);
+    });
+  });
+});
+
+describe('decades, betting, speed and intro', () => {
+  const many = Array.from({ length: 20 }, (_, i): Song => ({ id: `u${i}`, title: `U${i}`, artist: `B${i}`, year: 1950 + i * 3 }));
+  const rightSlot = (g: GameState) => {
+    const tl = currentPlayer(g).timeline;
+    for (let i = 0; i <= tl.length; i++) if (isCorrectPlacement(tl, i, g.current!.year)) return i;
+    return 0;
+  };
+  const wrongSlot = (g: GameState) => {
+    const tl = currentPlayer(g).timeline;
+    for (let i = 0; i <= tl.length; i++) if (!isCorrectPlacement(tl, i, g.current!.year)) return i;
+    return 99;
+  };
+  const make = (mode: GameState['mode']) => createGame({ playerNames: ['A', 'B'], targetCards: 20, songs: many, mode });
+
+  it('asks for the decade among four in a row', () => {
+    for (const year of [1903, 1955, 1987, 2024]) {
+      for (let i = 0; i < 10; i++) {
+        const q = decadeQuestion(year, Math.random, 2026);
+        expect(q.choices[q.answer]).toBe(String(Math.floor(year / 10) * 10));
+        expect(q.choices.map(Number)).toEqual([0, 1, 2, 3].map((k) => Number(q.choices[0]) + 10 * k));
+        expect(Number(q.choices[3])).toBeLessThanOrEqual(2020);
+        expect(Number(q.choices[0])).toBeGreaterThanOrEqual(1900);
+      }
+    }
+  });
+
+  it('gives a star for the right decade', () => {
+    let g = make('decades');
+    expect(g.question?.kind).toBe('decade');
+    g = placeCurrent(g, 0, g.question!.answer);
+    expect(g.players[0].stars).toBe(1);
+  });
+
+  it('wins or loses the bet', () => {
+    let g = setBet(make('betting'), 2);
+    expect(setBet(g, 9).bet).toBe(3);
+    g = placeCurrent(g, rightSlot(g));
+    expect(g.players[0].stars).toBe(2);
+    g = nextTurn(g);
+    expect(g.bet).toBeUndefined();
+    g = placeCurrent(setBet(g, 3), wrongSlot(g));
+    expect(g.players[1].stars).toBe(-3);
+    expect(g.lastGuess?.stars).toBe(-3);
+  });
+
+  it('gives a star for a fast right answer, and loses the turn when time runs out', () => {
+    let g = startClock(make('speed'), 1000);
+    expect(g.deadline).toBe(1000 + SPEED_MS);
+    expect(startClock(g, 5000)).toBe(g);
+    const fast = placeCurrent(g, rightSlot(g), null, 2000);
+    expect(fast.lastGuess).toMatchObject({ fast: true, stars: 1 });
+    const slow = placeCurrent(g, rightSlot(g), null, 1000 + SPEED_MS - 1000);
+    expect(slow.lastGuess?.fast).toBeUndefined();
+    expect(timeUp(g, 2000)).toBe(g);
+    const late = timeUp(g, 1000 + SPEED_MS);
+    expect(late.lastGuess).toMatchObject({ correct: false, timeout: true });
+    expect(nextTurn(late).deadline).toBeUndefined();
+  });
+
+  it('gives fewer stars for a longer intro', () => {
+    let g = make('intro');
+    expect(clipMs(g)).toBe(2000);
+    const short = placeCurrent(g, rightSlot(g));
+    expect(short.players[0].stars).toBe(2);
+    g = longerClip(longerClip(longerClip(g)));
+    expect(clipMs(g)).toBe(10_000);
+    expect(placeCurrent(g, rightSlot(g)).players[0].stars ?? 0).toBe(0);
   });
 });

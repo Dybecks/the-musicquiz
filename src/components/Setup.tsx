@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import type { Song } from '../game/engine';
+import { GAME_MODES, usesStars, type GameMode, type Song } from '../game/engine';
 import { onSpotifyWait, spotifyBlockedUntil, type SpotifyProfile } from '../spotify/api';
 import { BUILT_IN_CLIENT_ID, getClientIdOverride, hasScopes, redirectUri, setClientId } from '../spotify/auth';
 import type { PlaybackKind } from '../spotify/playback';
@@ -24,6 +24,8 @@ import { Rich } from '../i18n/Rich';
 export interface SetupValues {
   players: string[];
   targetCards: number;
+  /** Classic, or with bonus questions. */
+  gameMode: GameMode;
   mode: PlaybackKind;
   songs: Song[];
   /** Spread the songs over the decades (no year span was chosen). */
@@ -63,6 +65,7 @@ type Step = 'account' | 'source' | 'ready' | 'own' | 'genres' | 'playlists' | 'b
 
 const PLAYERS_KEY = 'mq.players';
 const TARGET_KEY = 'mq.target';
+const GAME_MODE_KEY = 'mq.gameMode';
 const DECK_KEY = 'mq.deck';
 const ACCOUNT_KEY = 'mq.account';
 const SOURCE_KEY = 'mq.source';
@@ -110,6 +113,7 @@ export function Setup(props: Props) {
   const [step, setStep] = useState<Step>(() => (props.returnedFromLogin && loadAccount() === 'login' ? 'source' : 'account'));
   const [players, setPlayers] = useState<string[]>(() => loadJson(PLAYERS_KEY, [msg().app.defaultTeam(1), msg().app.defaultTeam(2)], (v) => Array.isArray(v) && v.length > 0));
   const [target, setTarget] = useState<number>(() => Number(localStorage.getItem(TARGET_KEY)) || 10);
+  const [gameMode, setGameMode] = useState<GameMode>(() => loadJson<GameMode>(GAME_MODE_KEY, 'classic', (v) => GAME_MODES.includes(v as GameMode)));
   const [clientIdOverride, setClientIdOverride] = useState(getClientIdOverride);
   const clientId = clientIdOverride.trim() || BUILT_IN_CLIENT_ID;
   const [error, setError] = useState<string | null>(null);
@@ -158,6 +162,7 @@ export function Setup(props: Props) {
     setPlayers((cur) => (cur.join('\n') === props.players.join('\n') ? cur : props.players));
   }, [props.players]);
   useEffect(() => localStorage.setItem(TARGET_KEY, String(target)), [target]);
+  useEffect(() => saveJson(GAME_MODE_KEY, gameMode), [gameMode]);
 
   useEffect(() => {
     if (props.returnedFromLogin) props.onReturnHandled();
@@ -333,6 +338,7 @@ export function Setup(props: Props) {
     props.onStart({
       players: names,
       targetCards: target,
+      gameMode,
       mode,
       songs,
       spreadDecades: true,
@@ -748,6 +754,21 @@ export function Setup(props: Props) {
       )}
 
       <section className="panel">
+        <h2>{t.modes.title}</h2>
+        <div className="mode-options" role="radiogroup" aria-label={t.modes.title}>
+          <ModeOption value="classic" current={gameMode} onSelect={setGameMode} title={t.modes.classic} detail={t.modes.classicDetail} />
+          <ModeOption value="bonus" current={gameMode} onSelect={setGameMode} title={`⭐ ${t.modes.bonus}`} detail={t.modes.bonusDetail} />
+          <ModeOption value="steal" current={gameMode} onSelect={setGameMode} title={`🕵️ ${t.modes.steal}`} detail={t.modes.stealDetail} />
+          <ModeOption value="powerups" current={gameMode} onSelect={setGameMode} title={`🪙 ${t.modes.powerups}`} detail={t.modes.powerupsDetail} />
+          <ModeOption value="sudden" current={gameMode} onSelect={setGameMode} title={`💀 ${t.modes.sudden}`} detail={t.modes.suddenDetail} />
+          <ModeOption value="decades" current={gameMode} onSelect={setGameMode} title={`📅 ${t.modes.decades}`} detail={t.modes.decadesDetail} />
+          <ModeOption value="betting" current={gameMode} onSelect={setGameMode} title={`🎲 ${t.modes.betting}`} detail={t.modes.bettingDetail} />
+          <ModeOption value="speed" current={gameMode} onSelect={setGameMode} title={`⚡ ${t.modes.speed}`} detail={t.modes.speedDetail} />
+          <ModeOption value="intro" current={gameMode} onSelect={setGameMode} title={`🎧 ${t.modes.intro}`} detail={t.modes.introDetail} />
+        </div>
+      </section>
+
+      <section className="panel">
         <h2>{ts.playersOrTeams}</h2>
         <ul className="player-list">
           {players.map((name, i) => (
@@ -773,7 +794,7 @@ export function Setup(props: Props) {
         )}
 
         <label className="field">
-          <span>{ts.cardsToWin}</span>
+          <span>{usesStars(gameMode) ? t.modes.pointsToWin : ts.cardsToWin}</span>
           <input type="number" min={3} max={30} value={target} onChange={(e) => setTarget(Math.max(3, Math.min(30, Number(e.target.value) || 10)))} />
         </label>
         <p className="hint">
