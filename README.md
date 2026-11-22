@@ -148,6 +148,11 @@ shared by every app on the developer account, so a run makes at most 300 request
 for a long pause. Running it again carries on where it stopped, and once everything is
 looked up it makes no requests at all.
 
+New songs for a genre come from Wikidata rather than by hand: `GENRE=schlager npm run source-songs`
+lists the genre's best-known songs (by how many Wikipedia languages have an article;
+for schlager also every Melodifestivalen entry) in `scripts/sources/schlager.md`, and
+`APPLY=1` adds the new ones to `scripts/candidates.json` (`TOP=…`, default 150).
+
 To fill and check one genre at a time, run `GENRE=schlager npm run spotify-data`
 (any of the 16 genre ids). Only that genre's songs are looked up and tagged, and
 `REVIEW.md` then lists every song in the genre, oldest first, with a Spotify link.

@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "spotify-data": "vite-node scripts/spotify-precompute.ts"
+    "spotify-data": "vite-node scripts/spotify-precompute.ts",
+    "source-songs": "vite-node scripts/source-candidates.ts"
   },
   "dependencies": {
     "peerjs": "^1.5.5",
