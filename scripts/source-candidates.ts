@@ -1,7 +1,8 @@
 /**
  * Finds candidate songs for one genre from a real source instead of by hand:
  * Wikidata, the data behind Wikipedia. Songs are taken from Wikidata's genre
- * field (and, for schlager, every Melodifestivalen entry), and ranked by how
+ * field (for schlager instead: every Melodifestivalen and Eurovision entry,
+ * and nothing else), and ranked by how
  * many Wikipedia languages have an article about them, which is a good
  * measure of how well known a song is. It costs no Spotify requests.
  *
@@ -100,7 +101,7 @@ function songQuery(where: string, withSubGenres: boolean, contest = false): stri
   ${swedish ? `{ ?song wdt:P495 wd:${SWEDEN}. } UNION { ?perf wdt:P27 wd:${SWEDEN}. } UNION { ?perf wdt:P495 wd:${SWEDEN}. }` : ''}
   ?perf rdfs:label ?perfLabel. FILTER(LANG(?perfLabel) IN ("en", "sv"))
   SERVICE wikibase:label { bd:serviceParam wikibase:language "en,sv". }
-} GROUP BY ?song ?songLabel ORDER BY DESC(?fame) LIMIT ${Math.max(TOP * 3, 300)}`;
+} GROUP BY ?song ?songLabel ORDER BY DESC(?fame) LIMIT ${contest ? 5000 : Math.max(TOP * 3, 300)}`;
 }
 
 /** Items' entity data from the Wikidata API, 50 at a time. */
@@ -165,7 +166,8 @@ async function songsFor(where: string, via: string, contest = false): Promise<Fo
 
 async function main(): Promise<void> {
   const items: string[] = [];
-  for (const label of WIKIDATA_GENRES[GENRE]) {
+  // Schlager means a song that took part in Melodifestivalen or Eurovision, nothing else (Markus, 2026-11-22).
+  for (const label of GENRE === 'schlager' ? [] : WIKIDATA_GENRES[GENRE]) {
     const id = await genreItem(label);
     console.log(`Genre "${label}": ${id ?? 'not found on Wikidata'}`);
     if (id && !items.includes(id)) items.push(id);
@@ -176,10 +178,15 @@ async function main(): Promise<void> {
     found.push(...(await songsFor(`VALUES ?g { ${items.map((i) => `wd:${i}`).join(' ')} } ?song GENRE_PATH ?g.`, 'genre')));
   }
   if (GENRE === 'schlager') {
-    // Every Melodifestivalen entry. Editions are in the series Melodifestivalen (P179 Q58884); a song
-    // "participated in" its edition (P1344), and some winners are only linked from the edition (P1346).
-    const melfest = `?edition wdt:P179 wd:Q58884. { ?song wdt:P1344 ?edition. } UNION { ?edition wdt:P1346 ?song. }`;
-    found.push(...(await songsFor(melfest, 'Melodifestivalen', true)));
+    // Every Melodifestivalen and Eurovision entry. Editions are in the contest's series (P179:
+    // Melodifestivalen Q58884, Eurovision Song Contest Q276); a song "participated in" its edition
+    // (P1344), and some winners are only linked from the edition (P1346).
+    for (const [series, via] of [['Q58884', 'Melodifestivalen'], ['Q276', 'Eurovision']]) {
+      const where = `?edition wdt:P179 wd:${series}. { ?song wdt:P1344 ?edition. } UNION { ?edition wdt:P1346 ?song. }`;
+      const songs = await songsFor(where, via, true);
+      console.log(`${via}: ${songs.length} entries`);
+      found.push(...songs);
+    }
   }
 
   // Wikidata often names artists in full ("Carola Häggkvist" for "Carola"), so a song matches
@@ -201,10 +208,13 @@ async function main(): Promise<void> {
   const candidates = JSON.parse(readFileSync(CANDIDATES_FILE, 'utf8')) as { title: string; artist: string; year: number; genres: string[] }[];
   const waiting = index(candidates);
 
-  // One row per song, the best-known first; a song found both ways keeps both reasons.
+  // One row per song, the best-known first; a song found both ways keeps both reasons. Contest
+  // songs with the same title and year are one song: early Melodifestivalen had each song sung
+  // by two artists, and a Melodifestivalen winner goes on to Eurovision.
+  const sameSong = (s: Found) => (s.via === 'genre' ? songKey(s.title, s.artist) : `${songKey(s.title, '').split('|')[0]}|${s.year}`);
   const byKey = new Map<string, Found>();
-  for (const s of found) {
-    const key = songKey(s.title, s.artist);
+  for (const s of [...found].sort((a, b) => b.fame - a.fame)) {
+    const key = s.via === 'genre' ? songKey(s.title, s.artist) : (byKey.has(songKey(s.title, s.artist)) ? songKey(s.title, s.artist) : sameSong(s));
     const had = byKey.get(key);
     if (!had) byKey.set(key, s);
     else if (!had.via.includes(s.via)) had.via += `, ${s.via}`;
@@ -229,9 +239,26 @@ async function main(): Promise<void> {
   console.log(`\n${ranked.length} songs: ${ranked.filter((s) => status(s) === 'in the catalogue').length} in the catalogue, ${ranked.filter((s) => status(s) === 'already a candidate').length} already candidates, ${ranked.filter((s) => status(s) === 'new').length} new.`);
   console.log(`Wrote scripts/sources/${GENRE}.md.`);
 
-  if (process.env.APPLY === '1' && fresh.length) {
+  // Schlager is contest songs only: other songs tagged schlager lose the tag (Swedish pop if nothing is left).
+  const contestTitles = new Set(found.filter((s) => s.via !== 'genre').map((s) => songKey(s.title, '').split('|')[0]));
+  const notContest = (r: { title: string; genres: string[] }) => GENRE === 'schlager' && r.genres.includes('schlager') && !contestTitles.has(songKey(r.title, '').split('|')[0]);
+  const songs = JSON.parse(readFileSync(SONGS_FILE, 'utf8')) as { title: string; artist: string; genres: string[] }[];
+  const retag = [...songs, ...candidates].filter(notContest);
+  if (retag.length) {
+    console.log(`\n${retag.length} songs tagged schlager were not in Melodifestivalen or Eurovision${process.env.APPLY === '1' ? ' and lose the tag' : ' (APPLY=1 takes the tag away)'}:`);
+    for (const r of retag) console.log(`  ${r.title} – ${r.artist}`);
+  }
+
+  if (process.env.APPLY === '1') {
+    const untag = (r: { genres: string[] }) => {
+      r.genres = r.genres.filter((g) => g !== 'schlager');
+      if (!r.genres.length) r.genres = ['swedishpop'];
+    };
+    for (const r of retag) untag(r);
     candidates.push(...fresh.map((s) => ({ title: s.title, artist: s.artist, year: s.year, genres: [GENRE] })));
-    writeFileSync(CANDIDATES_FILE, '[\n' + candidates.map((r) => ' ' + JSON.stringify(r)).join(',\n') + '\n]\n');
+    const lines = (list: object[]) => '[\n' + list.map((r) => ' ' + JSON.stringify(r)).join(',\n') + '\n]\n';
+    writeFileSync(CANDIDATES_FILE, lines(candidates));
+    if (retag.some((r) => songs.includes(r as never))) writeFileSync(SONGS_FILE, lines(songs));
     console.log(`Added ${fresh.length} songs to scripts/candidates.json.`);
   }
 }
