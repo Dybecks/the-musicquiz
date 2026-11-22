@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { addSongs, currentPlayer, modeOf, nextTurn, placeCurrent, scoreOf, skipSong, type GameState, type LastGuess } from '../game/engine';
+import { addSongs, applyPower, currentPlayer, modeOf, nextTurn, placeCurrent, scoreOf, skipSong, upNext, type GameState, type LastGuess, type Player } from '../game/engine';
 import { fetchBatch, type RefillPlan } from '../spotify/listening';
 import {
   createEmbedPlayback,
@@ -12,8 +12,9 @@ import { hideNowPlaying, primeNowPlaying, showNowPlaying, unprimeNowPlaying } fr
 import { loadFact, type SongFact } from '../facts';
 import { Timeline } from './Timeline';
 import type { HostRoom } from '../multiplayer/useHostRoom';
-import { HOST_ID, activeVoters, hasQuestion, nextRuleOf, nextVotes, readyToLock, turnOf, votesByAnswer, votesBySlot } from '../multiplayer/protocol';
+import { HOST_ID, gameView, activeVoters, hasQuestion, nextRuleOf, nextVotes, readyToLock, turnOf, votesByAnswer, votesBySlot } from '../multiplayer/protocol';
 import { BonusOutcome, BonusQuestion } from './BonusQuestion';
+import { PowerUps } from './PowerUps';
 import { SharePanel } from './SharePanel';
 import { msg, useLang, useT } from '../i18n';
 import { SongNotFoundError } from '../spotify/playback';
@@ -237,7 +238,7 @@ export function Game({ state, mode, onModeChange, onChange, onQuit, host }: Prop
   useEffect(() => () => setLive({ playing: false, hostPick: null }), [setLive]);
 
   // A new turn starts with nothing picked.
-  const turn = `${state.round}:${state.currentPlayerIndex}:${state.current?.id ?? ''}`;
+  const turn = `${state.round}:${state.currentPlayerIndex}:${state.current?.id ?? ''}:${state.stealing ? 's' : ''}:${state.powers?.missedSlot ?? ''}`;
   useEffect(() => {
     setSelectedSlot(null);
     setSelectedAnswer(null);
@@ -292,7 +293,7 @@ export function Game({ state, mode, onModeChange, onChange, onQuit, host }: Prop
     }
   };
 
-  const nextPlayer = state.players[(state.currentPlayerIndex + 1) % state.players.length];
+  const nextPlayer = upNext(state);
   // With phones in the room: who else can move on.
   const phones = host.room?.members.filter((m) => m.id !== HOST_ID && m.connected).length ?? 0;
   const rule = nextRuleOf(host.room);
@@ -332,6 +333,10 @@ export function Game({ state, mode, onModeChange, onChange, onQuit, host }: Prop
                     </div>
                   )}
                   {songError && <p className="warn">{songError}</p>}
+                  {state.stealing && <p className="steal-banner">{t.modes.stealBanner}</p>}
+                  {modeOf(state) === 'powerups' && (
+                    <PowerUps game={gameView(state)!} onUse={(power, target) => onChange(applyPower(state, power, target))} />
+                  )}
                   {question && (
                     <BonusQuestion
                       kind={question.kind}
@@ -350,7 +355,7 @@ export function Game({ state, mode, onModeChange, onChange, onQuit, host }: Prop
                   )}
                 </div>
               ) : (
-                state.lastGuess && <Reveal correct={state.lastGuess.correct} song={state.lastGuess.song} bonus={state.lastGuess.bonus} />
+                state.lastGuess && <Reveal guess={state.lastGuess} players={state.players} />
               )}
             </section>
 
@@ -402,7 +407,11 @@ export function Game({ state, mode, onModeChange, onChange, onQuit, host }: Prop
               ) : (
                 <>
                   <button className="primary big" onClick={next}>
-                    {state.winnerIds.length ? tg.seeWinner : tg.next(nextPlayer.name)}
+                    {state.winnerIds.length
+                      ? tg.seeWinner
+                      : state.lastGuess?.stealNext
+                        ? t.modes.nextSteal(nextPlayer.name)
+                        : tg.next(nextPlayer.name)}
                   </button>
                   {nextStatus && <p className="hint center vote-status">{nextStatus}</p>}
                 </>
@@ -509,14 +518,23 @@ export function Scoreboard({ state }: { state: Pick<GameState, 'players' | 'curr
   return (
     <ol className="scoreboard">
       {state.players.map((p, i) => (
-        <li key={p.id} className={i === state.currentPlayerIndex && state.phase !== 'finished' ? 'active' : ''}>
-          <span className="name">{p.name}</span>
+        <li key={p.id} className={`${i === state.currentPlayerIndex && state.phase !== 'finished' ? 'active' : ''} ${p.out ? 'out' : ''}`}>
+          <span className="name">
+            {p.name}
+            {p.out && <span className="badge">💀 {t.modes.outTag}</span>}
+            {p.frozen && <span className="badge">🧊 {t.modes.frozenTag}</span>}
+          </span>
           <span className="count">
             {scoreOf(p)}
             <span className="muted">/{state.targetCards}</span>
             {!!p.stars && (
               <span className="stars" title={t.modes.stars(p.stars)} aria-label={t.modes.stars(p.stars)}>
                 {' '}⭐{p.stars}
+              </span>
+            )}
+            {p.coins !== undefined && (
+              <span className="stars" title={t.modes.coins(p.coins)} aria-label={t.modes.coins(p.coins)}>
+                {' '}🪙{p.coins}
               </span>
             )}
           </span>
@@ -526,12 +544,20 @@ export function Scoreboard({ state }: { state: Pick<GameState, 'players' | 'curr
   );
 }
 
-export function Reveal({ correct, song, bonus }: { correct: boolean; song: GameState['deck'][number]; bonus?: LastGuess['bonus'] }) {
+export function Reveal({ guess, players }: { guess: LastGuess; players: readonly Player[] }) {
   const t = useT();
+  const tm = t.modes;
+  const { correct, song, bonus } = guess;
+  const nameOf = (id: string) => players.find((p) => p.id === id)?.name ?? '';
   return (
     <div className={`reveal ${correct ? 'right' : 'wrong'}`}>
-      <p className="verdict">{correct ? t.game.correct : t.game.wrong}</p>
+      <p className="verdict">
+        {guess.steal ? (correct ? tm.stolen : tm.stealMissed) : correct ? t.game.correct : t.game.wrong}
+      </p>
       {bonus && <BonusOutcome result={bonus} />}
+      {guess.coin && <p className="mode-note">{tm.coinEarned}</p>}
+      {guess.stealNext && <p className="mode-note">{tm.stealNext(nameOf(guess.stealNext))}</p>}
+      {guess.eliminated && <p className="mode-note out">{tm.eliminated(nameOf(guess.playerId))}</p>}
       <div className="song-card big-card">
         <span className="year">{song.year}</span>
         <span className="title">{song.title}</span>

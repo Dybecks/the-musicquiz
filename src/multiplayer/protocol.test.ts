@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createGame, placeCurrent, type GameState, type Song } from '../game/engine';
+import { applyPower, createGame, placeCurrent, type GameState, type Song } from '../game/engine';
 import {
   AVATARS,
   HOST_ID,
@@ -25,6 +25,7 @@ import {
   roomView,
   setConnected,
   teamDecision,
+  powerRequest,
   votesBySlot,
   type Room,
 } from './protocol';
@@ -288,5 +289,26 @@ describe('bonus question votes', () => {
     const g = game();
     const room = applyMessage(roomWith(g, ['ann', 'p1']), g, 'ann', { type: 'answer', choice: 0 });
     expect(room.members[0].answer ?? null).toBeNull();
+  });
+});
+
+describe('power-ups from phones', () => {
+  const pg = () => createGame({ playerNames: ['Red', 'Blue'], targetCards: 5, songs, mode: 'powerups' });
+
+  it('lets only the team whose turn it is use a known power-up', () => {
+    const g = pg();
+    const room = roomWith(g, ['ann', 'p1'], ['bob', 'p2']);
+    expect(powerRequest(room, g, 'ann', { type: 'power', power: 'hint' })).toEqual({ power: 'hint' });
+    expect(powerRequest(room, g, 'ann', { type: 'power', power: 'freeze', target: 'p2' })).toEqual({ power: 'freeze', target: 'p2' });
+    expect(powerRequest(room, g, 'bob', { type: 'power', power: 'hint' })).toBeNull();
+    expect(powerRequest(room, g, 'ann', { type: 'power', power: 'nuke' })).toBeNull();
+    expect(powerRequest(room, game(), 'ann', { type: 'power', power: 'hint' })).toBeNull();
+  });
+
+  it('shows phones the hint decade only once bought', () => {
+    const g = pg();
+    expect(gameView(g)!.powers).toBeUndefined();
+    const hinted = applyPower(g, 'hint');
+    expect(gameView(hinted)!.powers?.hintDecade).toBe(Math.floor(g.current!.year / 10) * 10);
   });
 });

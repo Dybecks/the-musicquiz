@@ -400,3 +400,19 @@ html:has(.player-bar) { scroll-padding-bottom: calc(var(--player-h) + var(--play
 .bonus-outcome.wrong { color: var(--muted); font-weight: 400; }
 .scoreboard .stars { font-size: 0.85rem; font-weight: 700; color: var(--accent-2); }
 @media (max-width: 380px) { .bonus-choices { grid-template-columns: 1fr; } }
+
+/* Steal, power-ups and sudden death */
+.steal-banner { margin: 10px 0; padding: 10px 12px; border-radius: 12px; background: #3a2f17; color: var(--accent-2); font-weight: 700; }
+.mode-note { margin: 0 0 10px; font-weight: 700; color: var(--accent-2); }
+.mode-note.out { color: var(--bad); }
+.powerups { margin: 12px 0 4px; text-align: left; }
+.power-note { margin: 4px 0 8px; font-weight: 700; color: var(--accent-2); }
+.power-targets p { margin: 4px 0 8px; font-weight: 700; }
+.power-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.power { display: grid; gap: 2px; text-align: left; padding: 10px 12px; border-radius: 12px; border: 2px solid #4a4466; }
+.power span { color: var(--muted); font-size: 0.85rem; font-weight: 400; }
+.power .cost { color: var(--accent-2); font-weight: 700; }
+.power:disabled { opacity: 0.45; }
+.scoreboard li.out { opacity: 0.55; }
+.scoreboard .badge { margin-left: 6px; font-size: 0.75rem; }
+@media (max-width: 380px) { .power-grid { grid-template-columns: 1fr; } }

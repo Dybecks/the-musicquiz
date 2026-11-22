@@ -34,8 +34,17 @@ On the **Players & play** screen the host picks a game mode:
   wrong answers are other songs' artists, titles or works, preferably from nearby years, so
   every deck works without writing questions by hand. With phones, every team member votes
   for an answer as well as a spot, and the answer with the most votes counts.
+- **Steal**: a song placed wrong goes to the next team, who can steal it by placing it right
+  on their own timeline. Then they play their own turn as usual.
+- **Power-ups**: every team starts with one 🪙 coin and earns one per right placement. On
+  their turn, before locking in, they can buy a 💡 hint (the song's decade, 1 coin), a 🔁
+  second chance (one more try after a miss, 2), or one attack: 🧊 freeze another team so it
+  misses its next turn (2), or 🫳 grab a random card from another team's timeline (3; they
+  keep at least one). Phones on the team whose turn it is can buy them too.
+- **Sudden death**: one wrong placement and the team is out. The last team left wins, or the
+  first to reach the target.
 
-The rules are in `src/game/engine.ts` (`GameMode`, `makeQuestion`, `scoreOf`).
+The rules are in `src/game/engine.ts` (`GameMode`, `makeQuestion`, `scoreOf`, `applyPower`, `nextTurn`).
 
 ## Playing together on phones
 

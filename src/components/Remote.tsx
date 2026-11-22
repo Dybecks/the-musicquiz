@@ -22,7 +22,8 @@ import { AddMyMusic } from './AddMyMusic';
 import { Finished, Reveal, Scoreboard } from './Game';
 import { Timeline } from './Timeline';
 import { BonusQuestion } from './BonusQuestion';
-import { scoreOf } from '../game/engine';
+import { scoreOf, upNext } from '../game/engine';
+import { PowerUps } from './PowerUps';
 import { msg, useT } from '../i18n';
 import { Rich } from '../i18n/Rich';
 
@@ -362,7 +363,7 @@ function Joined({
             </h1>
             {game.phase === 'revealed' && game.lastGuess ? (
               <>
-                <Reveal correct={game.lastGuess.correct} song={game.lastGuess.song} bonus={game.lastGuess.bonus} />
+                <Reveal guess={game.lastGuess} players={game.players} />
                 <NextSong view={view} me={me} send={send} />
               </>
             ) : (
@@ -382,6 +383,10 @@ function Joined({
                   <p>{t.voteHint}</p>
                 ) : (
                   <p className="hint">{t.otherVoting(active.name)}</p>
+                )}
+                {game.stealing && <p className="steal-banner">{tt.modes.stealBanner}</p>}
+                {game.mode === 'powerups' && (
+                  <PowerUps game={game} onUse={myTurn ? (power, target) => send({ type: 'power', power, ...(target ? { target } : {}) }) : undefined} />
                 )}
                 {question && (
                   <BonusQuestion
@@ -519,8 +524,12 @@ function NextSong({ view, me, send }: { view: RoomView; me: string; send: (msg: 
   const t = tt.remote;
   const game = view.game!;
   const turn = turnOf(game);
-  const nextTeam = game.players[(game.currentPlayerIndex + 1) % game.players.length];
-  const label = game.winnerIds.length ? tt.game.seeWinner : t.nextSong(nextTeam.name);
+  const nextTeam = upNext(game);
+  const label = game.winnerIds.length
+    ? tt.game.seeWinner
+    : game.lastGuess?.stealNext
+      ? tt.modes.nextSteal(nextTeam.name)
+      : t.nextSong(nextTeam.name);
   if (view.nextRule === 'host') return <p className="hint center">{t.hostStartsNext}</p>;
   if (view.nextRule === 'anyone')
     return (

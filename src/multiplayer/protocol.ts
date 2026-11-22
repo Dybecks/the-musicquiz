@@ -1,4 +1,4 @@
-import { modeOf, type GameMode, type GameState, type LastGuess, type Phase, type Player, type QuestionKind, type Song } from '../game/engine';
+import { POWERS, decadeOf, modeOf, type GameMode, type Power, type GameState, type LastGuess, type Phase, type Player, type QuestionKind, type Song } from '../game/engine';
 
 /**
  * Shared play: the host device (the one that plays the music) opens a room
@@ -122,6 +122,10 @@ export interface GameView {
   mode?: GameMode;
   /** The bonus question while guessing, without its answer. */
   question?: PublicQuestion | null;
+  /** The team whose turn it is is stealing a song the previous team missed (mode 'steal'). */
+  stealing?: boolean;
+  /** Power-ups used this turn (mode 'powerups'), with the decade when a hint was bought. */
+  powers?: { hintDecade?: number; retry?: boolean; missedSlot?: number; attacked?: boolean };
 }
 
 /** A bonus question as phones see it: the right answer stays on the host until the reveal. */
@@ -160,6 +164,8 @@ export type ClientMessage =
   | { type: 'team'; teamId: string | null }
   | { type: 'vote'; slot: number | null }
   | { type: 'lock'; locked: boolean }
+  /** Use a power-up on the team's turn (mode 'powerups'); `target` is the team an attack is aimed at. */
+  | { type: 'power'; power: Power; target?: string }
   /** A vote for an answer to the bonus question (index into its choices). */
   | { type: 'answer'; choice: number | null }
   /** A new random emoji picture. */
@@ -180,7 +186,8 @@ export type ClientMessage =
 export type Command = Extract<ClientMessage, { type: 'next' } | { type: 'play' }>;
 
 /** Names one turn, for `next` messages. */
-export const turnOf = (game: Pick<GameState, 'round' | 'currentPlayerIndex'>) => `${game.round}:${game.currentPlayerIndex}`;
+export const turnOf = (game: Pick<GameState, 'round' | 'currentPlayerIndex' | 'stealing'>) =>
+  `${game.round}:${game.currentPlayerIndex}${game.stealing ? ':steal' : ''}`;
 
 /** Host → phone. */
 export type HostMessage =
@@ -194,7 +201,26 @@ export function gameView(game: GameState | null): GameView | null {
   const mode = modeOf(game);
   const q = mode === 'bonus' && phase === 'guessing' ? game.question : null;
   const question = q ? { kind: q.kind, choices: q.choices } : null;
-  return { players, currentPlayerIndex, phase, targetCards, lastGuess, winnerIds, round, mode, question };
+  const pw = phase === 'guessing' ? game.powers : undefined;
+  const powers = pw
+    ? {
+        ...(pw.hint && game.current ? { hintDecade: decadeOf(game.current.year) } : {}),
+        ...(pw.retry ? { retry: true } : {}),
+        ...(pw.missedSlot !== undefined ? { missedSlot: pw.missedSlot } : {}),
+        ...(pw.attacked ? { attacked: true } : {}),
+      }
+    : undefined;
+  return { players, currentPlayerIndex, phase, targetCards, lastGuess, winnerIds, round, mode, question, stealing: !!game.stealing, powers };
+}
+
+/** A power-up a member may use now: theirs is the team whose turn it is, and the message is well formed. */
+export function powerRequest(room: Room, game: GameState | null, memberId: string, msg: unknown): { power: Power; target?: string } | null {
+  if (!game || game.phase !== 'guessing' || modeOf(game) !== 'powerups' || !msg || typeof msg !== 'object') return null;
+  const { power, target } = msg as Record<string, unknown>;
+  if (typeof power !== 'string' || !POWERS.includes(power as Power)) return null;
+  const member = room.members.find((m) => m.id === memberId);
+  if (!member || member.teamId !== game.players[game.currentPlayerIndex]?.id) return null;
+  return { power: power as Power, ...(typeof target === 'string' ? { target } : {}) };
 }
 
 export function teamsOf(game: GameState | null, lobby: readonly Team[]): Team[] {
@@ -369,7 +395,7 @@ export function applyMessage(
     }
     return { ...room, members };
   }
-  if (i === -1 || msg.type === 'songs' || msg.type === 'team-name' || msg.type === 'next' || msg.type === 'play') return room;
+  if (i === -1 || msg.type === 'songs' || msg.type === 'team-name' || msg.type === 'next' || msg.type === 'play' || msg.type === 'power') return room;
   const m = members[i];
   if (msg.type === 'reroll') {
     members[i] = { ...m, emoji: pickAvatar(members, Math.random, m.emoji) };

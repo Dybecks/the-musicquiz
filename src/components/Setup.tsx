@@ -758,6 +758,9 @@ export function Setup(props: Props) {
         <div className="mode-options" role="radiogroup" aria-label={t.modes.title}>
           <ModeOption value="classic" current={gameMode} onSelect={setGameMode} title={t.modes.classic} detail={t.modes.classicDetail} />
           <ModeOption value="bonus" current={gameMode} onSelect={setGameMode} title={`⭐ ${t.modes.bonus}`} detail={t.modes.bonusDetail} />
+          <ModeOption value="steal" current={gameMode} onSelect={setGameMode} title={`🕵️ ${t.modes.steal}`} detail={t.modes.stealDetail} />
+          <ModeOption value="powerups" current={gameMode} onSelect={setGameMode} title={`🪙 ${t.modes.powerups}`} detail={t.modes.powerupsDetail} />
+          <ModeOption value="sudden" current={gameMode} onSelect={setGameMode} title={`💀 ${t.modes.sudden}`} detail={t.modes.suddenDetail} />
         </div>
       </section>
 

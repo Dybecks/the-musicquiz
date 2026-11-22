@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from 'react';
-import { addSongs, placeCurrent, type GameState, type Song } from '../game/engine';
+import { addSongs, applyPower, placeCurrent, type GameState, type Song } from '../game/engine';
 import { mergeSongs } from '../spotify/personalDeck';
 import { openHost, type HostLink, type HostStatus } from './connection';
 import {
@@ -25,6 +25,7 @@ import {
   setConnected,
   cleanTeamName,
   teamDecision,
+  powerRequest,
   teamRename,
   teamsOf,
   type ClientMessage,
@@ -172,6 +173,12 @@ export function useHostRoom(
           commandHandler.current?.(msg, memberId);
           return;
         }
+        if (msg.type === 'power') {
+          const r = latest.current.room;
+          const req = r && powerRequest(r, latest.current.game, memberId, msg);
+          if (req) setGame((g) => (g ? applyPower(g, req.power, req.target) : g));
+          return;
+        }
         if (msg.type === 'team-name') {
           const { room: r, teams: t } = latest.current;
           const rename = r && teamRename(r, t, memberId, msg.name);
@@ -200,7 +207,10 @@ export function useHostRoom(
   }, [teams]);
 
   // A new song, turn or game: everyone votes afresh.
-  const turnKey = game ? `${game.round}:${game.currentPlayerIndex}:${game.phase}:${game.current?.id ?? ''}` : 'lobby';
+  // A second try (power-up 'retry') is a fresh vote too.
+  const turnKey = game
+    ? `${game.round}:${game.currentPlayerIndex}:${game.phase}:${game.current?.id ?? ''}:${game.powers?.missedSlot ?? ''}`
+    : 'lobby';
   const lastTurn = useRef(turnKey);
   useEffect(() => {
     if (lastTurn.current === turnKey) return;

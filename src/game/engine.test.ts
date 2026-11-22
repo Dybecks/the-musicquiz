@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { addSongs, createGame, insertSorted, isCorrectPlacement, makeQuestion, nextTurn, placeCurrent, scoreOf, skipSong, spreadByDecade, type Song } from './engine';
+import { addSongs, applyPower, canUsePower, createGame, currentPlayer, insertSorted, isCorrectPlacement, makeQuestion, nextTurn, placeCurrent, scoreOf, skipSong, spreadByDecade, type GameState, type Song } from './engine';
 
 const song = (year: number, id = `s${year}`): Song => ({ id, title: `Song ${year}`, artist: 'Artist', year });
 const songs = [1960, 1970, 1980, 1990, 2000, 2010, 2020].map((y) => song(y));
@@ -208,5 +208,132 @@ describe('bonus questions', () => {
     const q = s.question!;
     const right = q.kind === 'artist' ? s.current!.artist : s.current!.title;
     expect(q.choices[q.answer]).toBe(right);
+  });
+});
+
+describe('steal', () => {
+  const many = Array.from({ length: 20 }, (_, i): Song => ({ id: `t${i}`, title: `T${i}`, artist: `A${i}`, year: 1950 + i * 3 }));
+  /** A slot that is wrong for the current song on the current timeline. */
+  const wrongSlot = (g: GameState) => {
+    const tl = currentPlayer(g).timeline;
+    for (let i = 0; i <= tl.length; i++) if (!isCorrectPlacement(tl, i, g.current!.year)) return i;
+    return 99;
+  };
+  const rightSlot = (g: GameState) => {
+    const tl = currentPlayer(g).timeline;
+    for (let i = 0; i <= tl.length; i++) if (isCorrectPlacement(tl, i, g.current!.year)) return i;
+    return 0;
+  };
+
+  it('gives a missed song to the next team, who then plays its own turn', () => {
+    let g = createGame({ playerNames: ['A', 'B', 'C'], targetCards: 9, songs: many, mode: 'steal' });
+    const song = g.current!;
+    g = placeCurrent(g, wrongSlot(g));
+    expect(g.lastGuess?.stealNext).toBe('p2');
+    g = nextTurn(g);
+    expect(g.stealing).toBe(true);
+    expect(g.currentPlayerIndex).toBe(1);
+    expect(g.current).toBe(song);
+    g = placeCurrent(g, rightSlot(g));
+    expect(g.lastGuess).toMatchObject({ steal: true, correct: true });
+    expect(g.players[1].timeline).toContain(song);
+    g = nextTurn(g);
+    // B's own turn, with a new song.
+    expect(g.currentPlayerIndex).toBe(1);
+    expect(g.stealing).toBe(false);
+    expect(g.current).not.toBe(song);
+  });
+
+  it('offers no steal of a missed steal', () => {
+    let g = createGame({ playerNames: ['A', 'B'], targetCards: 9, songs: many, mode: 'steal' });
+    g = nextTurn(placeCurrent(g, wrongSlot(g)));
+    g = placeCurrent(g, wrongSlot(g));
+    expect(g.lastGuess?.stealNext).toBeUndefined();
+  });
+
+  it('offers no steal in classic', () => {
+    const g = createGame({ playerNames: ['A', 'B'], targetCards: 9, songs: many });
+    expect(placeCurrent(g, wrongSlot(g)).lastGuess?.stealNext).toBeUndefined();
+  });
+
+  describe('sudden death', () => {
+    it('puts a team out on a miss and skips it', () => {
+      let g = createGame({ playerNames: ['A', 'B', 'C'], targetCards: 9, songs: many, mode: 'sudden' });
+      g = placeCurrent(g, wrongSlot(g));
+      expect(g.players[0].out).toBe(true);
+      expect(g.lastGuess?.eliminated).toBe(true);
+      g = nextTurn(g); // B
+      g = nextTurn(placeCurrent(g, rightSlot(g))); // C
+      g = nextTurn(placeCurrent(g, rightSlot(g)));
+      expect(currentPlayer(g).name).toBe('B'); // A is passed over
+    });
+
+    it('ends when one team is left', () => {
+      let g = createGame({ playerNames: ['A', 'B'], targetCards: 9, songs: many, mode: 'sudden' });
+      g = placeCurrent(g, wrongSlot(g));
+      expect(g.winnerIds).toEqual(['p2']);
+      expect(nextTurn(g).phase).toBe('finished');
+    });
+  });
+
+  describe('power-ups', () => {
+    const game = () => createGame({ playerNames: ['A', 'B'], targetCards: 9, songs: many, mode: 'powerups' });
+
+    it('starts with a coin and earns one per right placement', () => {
+      let g = game();
+      expect(g.players.map((p) => p.coins)).toEqual([1, 1]);
+      g = placeCurrent(g, rightSlot(g));
+      expect(g.players[0].coins).toBe(2);
+      expect(g.lastGuess?.coin).toBe(true);
+    });
+
+    it('pays for a hint, once a turn, and not without coins', () => {
+      let g = applyPower(game(), 'hint');
+      expect(g.powers?.hint).toBe(true);
+      expect(g.players[0].coins).toBe(0);
+      expect(applyPower(g, 'hint')).toBe(g);
+      expect(applyPower(g, 'retry')).toBe(g);
+    });
+
+    it('gives a second try with retry', () => {
+      let g = game();
+      g = { ...g, players: g.players.map((p) => ({ ...p, coins: 5 })) };
+      g = applyPower(g, 'retry');
+      const wrong = wrongSlot(g);
+      g = placeCurrent(g, wrong);
+      expect(g.phase).toBe('guessing');
+      expect(g.powers?.missedSlot).toBe(wrong);
+      g = placeCurrent(g, wrong);
+      expect(g.phase).toBe('revealed');
+    });
+
+    it('freezes another team, who misses one turn', () => {
+      let g = createGame({ playerNames: ['A', 'B', 'C'], targetCards: 9, songs: many, mode: 'powerups' });
+      g = { ...g, players: g.players.map((p) => ({ ...p, coins: 5 })) };
+      expect(applyPower(g, 'freeze', 'p1')).toBe(g); // not yourself
+      g = applyPower(g, 'freeze', 'p2');
+      expect(g.players[1].frozen).toBe(true);
+      expect(g.players[0].coins).toBe(3);
+      g = nextTurn(placeCurrent(g, 0));
+      expect(currentPlayer(g).name).toBe('C');
+      expect(g.players[1].frozen).toBe(false);
+      g = nextTurn(placeCurrent(g, 0));
+      g = nextTurn(placeCurrent(g, 0));
+      expect(currentPlayer(g).name).toBe('B');
+    });
+
+    it('grabs a card from another team, who keeps at least one', () => {
+      let g = game();
+      g = { ...g, players: g.players.map((p) => ({ ...p, coins: 5 })) };
+      expect(applyPower(g, 'grab', 'p2')).toBe(g); // B has one card
+      const extra = many[19];
+      g = { ...g, players: g.players.map((p) => (p.id === 'p2' ? { ...p, timeline: insertSorted(p.timeline, extra) } : p)) };
+      g = applyPower(g, 'grab', 'p2');
+      expect(g.players[0].timeline).toHaveLength(2);
+      expect(g.players[1].timeline).toHaveLength(1);
+      expect(g.players[0].coins).toBe(2);
+      // One attack a turn.
+      expect(canUsePower(g, 'freeze')).toBe(false);
+    });
   });
 });
