@@ -154,7 +154,7 @@ for schlager also every Melodifestivalen entry) in `scripts/sources/schlager.md`
 `APPLY=1` adds the new ones to `scripts/candidates.json` (`TOP=…`, default 150).
 
 To fill and check one genre at a time, run `GENRE=schlager npm run spotify-data`
-(any of the 16 genre ids). Only that genre's songs are looked up and tagged, and
+(any of the 16 genre ids). `RETRY=1` searches that genre's songs that weren't found before again. Only that genre's songs are looked up and tagged, and
 `REVIEW.md` then lists every song in the genre, oldest first, with a Spotify link.
 
 ## Setting up a game

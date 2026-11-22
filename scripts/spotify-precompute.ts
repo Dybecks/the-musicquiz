@@ -142,6 +142,24 @@ interface GenreEntry {
 const genreData = readJson<Record<string, GenreEntry>>(GENRES_FILE, {});
 
 const keyOf = (r: Pick<Row, 'title' | 'artist'>) => `${r.title}|${r.artist}`;
+
+// RETRY=1 searches songs that weren't found again (only GENRE's, when it is set), for example after
+// the title matching got looser. Their title, artist, year and genres are kept in the "not found" note.
+if (process.env.RETRY === '1') {
+  let again = 0;
+  for (const [key, note] of Object.entries(progress.unmatched!)) {
+    const m = note.match(/^(\d{4}), (.*?): /);
+    const [title, artist] = key.split('|');
+    if (!m || !artist) continue;
+    const genres = m[2] === 'no genre' ? [] : m[2].split(', ');
+    if (GENRE && !genres.includes(GENRE)) continue;
+    if (!rows.some((r) => songKey(r.title, r.artist) === songKey(title, artist))) rows.push({ title, artist, year: Number(m[1]), genres, id: null });
+    delete progress.unmatched![key];
+    delete progress.tried[key];
+    again++;
+  }
+  console.log(`Searching ${again} songs that weren't found before again.`);
+}
 const sortKeys = <T,>(o: Record<string, T>) => Object.fromEntries(Object.entries(o).sort(([a], [b]) => a.localeCompare(b)));
 const today = () => new Date().toISOString().slice(0, 10);
 
@@ -290,10 +308,21 @@ function sameArtist(track: SpotifyTrack, artist: string): boolean {
   });
 }
 
+/**
+ * A title with spelling differences taken out: spaces ("Imorgon" / "I morgon")
+ * and old Swedish spellings ("Se på mej" / "Se på mig"). Punctuation is
+ * already gone ("Mr. Hit" / "Mr Hit").
+ */
+export function looseTitle(title: string): string {
+  return normalizeKey(cleanTitle(title))
+    .replace(/\b(m|d|s)ej\b/g, '$1ig')
+    .replace(/ /g, '');
+}
+
 function sameTitle(track: SpotifyTrack, title: string): boolean {
   const t = normalizeKey(cleanTitle(track.name));
   const want = normalizeKey(cleanTitle(title));
-  return t === want || normalizeKey(track.name) === normalizeKey(title);
+  return t === want || normalizeKey(track.name) === normalizeKey(title) || looseTitle(track.name) === looseTitle(title);
 }
 
 /**
