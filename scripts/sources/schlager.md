@@ -1,7 +1,7 @@
 # schlager songs on Wikidata
 
 Written by `scripts/source-candidates.ts`. 391 songs, the best-known first (fame = Wikipedia languages with an article).
-318 new ones would be added (run with APPLY=1) to scripts/candidates.json.
+318 new ones were added to scripts/candidates.json.
 
 | Fame | Year | Song | Artist | Spotify id on Wikidata | Found via | Status |
 |---:|---:|---|---|---|---|---|
