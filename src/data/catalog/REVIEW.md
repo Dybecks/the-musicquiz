@@ -2,13 +2,910 @@
 
 Written by `scripts/spotify-precompute.ts` from `songs.json` and `decks.json`.
 
-Songs with a Spotify id: **654 of 654**. classic 160, movies 49, musicals 45, tv 33, games 38.
+Songs with a Spotify id: **831 of 1729**. classic 160, movies 49, musicals 45, tv 33, games 37.
 
 ## Not looked up yet
 
 These stay out of the game until `npm run spotify-data` finds them.
 
-None.
+- I Got a Woman – Ray Charles
+- Earth Angel – The Penguins
+- April in Paris – Count Basie
+- Every Day I Have the Blues – Count Basie
+- Folsom Prison Blues – Johnny Cash
+- Cry Me a River – Julie London
+- Cherry Pink and Apple Blossom White – Pérez Prado
+- Just a Gigolo / I Ain't Got Nobody – Louis Prima
+- Sing Sing Sing – Louis Prima
+- Hallelujah I Love Her So – Ray Charles
+- Lucille – Little Richard
+- Walkin' After Midnight – Patsy Cline
+- Autumn Leaves – Cannonball Adderley
+- Come Fly with Me – Frank Sinatra
+- Quizás, quizás, quizás – Nat King Cole
+- Fever – Peggy Lee
+- Patricia – Pérez Prado
+- He'll Have to Go – Jim Reeves
+- Är du kär i mej ännu Klas-Göran? – Lill-Babs
+- El Paso – Marty Robbins
+- Blue Rondo à la Turk – The Dave Brubeck Quartet
+- There Goes My Baby – The Drifters
+- Shout – The Isley Brothers
+- Giant Steps – John Coltrane
+- Moon River – Henry Mancini
+- My Favorite Things – John Coltrane
+- I Fall to Pieces – Patsy Cline
+- Hit the Road Jack – Ray Charles
+- Cupid – Sam Cooke
+- Green Onions – Booker T. & the M.G.'s
+- Ett litet rött paket – Lill-Babs
+- El Watusi – Ray Barretto
+- Bring It On Home to Me – Sam Cooke
+- Cry to Me – Solomon Burke
+- Desafinado – Stan Getz & Charlie Byrd
+- You've Really Got a Hold on Me – The Miracles
+- Act Naturally – Buck Owens
+- Dansevise – Grethe Ingmann
+- The Pink Panther Theme – Henry Mancini
+- Lush Life – John Coltrane & Johnny Hartman
+- Take It Easy My Brother Charlie – Jorge Ben
+- Säg inte nej, säg kanske – Sven-Ingvars
+- Te' dans med Karl-Erik – Sven-Ingvars
+- Oye cómo va – Tito Puente
+- Walk On By – Dionne Warwick
+- Sabor a mí – Eydie Gormé & Trío Los Panchos
+- The Way You Look Tonight – Frank Sinatra
+- The Sidewinder – Lee Morgan
+- Hello, Dolly! – Louis Armstrong
+- Dancing in the Street – Martha and the Vandellas
+- My Boy Lollipop – Millie Small
+- Corcovado (Quiet Nights of Quiet Stars) – Stan Getz
+- Fröken Fräken – Sven-Ingvars
+- Rescue Me – Fontella Bass
+- Papa's Got a Brand New Bag – James Brown
+- Ann-Caroline – Lasse Berghagen
+- L-O-V-E – Nat King Cole
+- I Put a Spell on You – Nina Simone
+- Sinnerman – Nina Simone
+- Strange Fruit – Nina Simone
+- Tracks of My Tears – Smokey Robinson & The Miracles
+- Ooo Baby Baby – The Miracles
+- Sunny – Bobby Hebb
+- Reach Out I'll Be There – Four Tops
+- Bang Bang – Joe Cuba Sextet
+- Teddybjörnen Fredriksson – Lars Berghagen
+- Gamle Svarten – Lasse Berghagen
+- You Ain't Woman Enough – Loretta Lynn
+- Hold On, I'm Comin' – Sam & Dave
+- Om du var min – Sven-Ingvars
+- Guantanamera – The Sandpipers
+- Ain't Too Proud to Beg – The Temptations
+- Footprints – Wayne Shorter
+- (You Make Me Feel Like) A Natural Woman – Aretha Franklin
+- Chain of Fools – Aretha Franklin
+- I Say a Little Prayer – Aretha Franklin
+- Shanty Town (007) – Desmond Dekker
+- Vid en sjö i Värmland – Sven-Ingvars
+- Ain't No Way – Aretha Franklin
+- Son of a Preacher Man – Dusty Springfield
+- Harper Valley PTA – Jeannie C. Riley
+- Hold Me Tight – Johnny Nash
+- Light My Fire – José Feliciano
+- Mama Tried – Merle Haggard
+- Red Red Wine – Neil Diamond
+- For Once in My Life – Stevie Wonder
+- Do the Reggay – Toots & the Maytals
+- Wonderful World, Beautiful People – Jimmy Cliff
+- A Boy Named Sue – Johnny Cash
+- Cupid – Johnny Nash
+- Ruby, Don't Take Your Love to Town – Kenny Rogers
+- Kick Out the Jams – MC5
+- Okie from Muskogee – Merle Haggard
+- Evil Ways – Santana
+- Sweet Sensation – The Melodians
+- I Wanna Be Your Dog – The Stooges
+- Return of Django – The Upsetters
+- Monkey Man – Toots & the Maytals
+- Black Sabbath – Black Sabbath
+- War Pigs – Black Sabbath
+- Move On Up – Curtis Mayfield
+- You Can Get It If You Really Want – Desmond Dekker
+- Ain't No Sunshine – Ken Boothe
+- Immigrant Song – Led Zeppelin
+- Rose Garden – Lynn Anderson
+- Help Me Make It Through the Night – Sammi Smith
+- Black Magic Woman – Santana
+- Samba Pa Ti – Santana
+- Tears of a Clown – Smokey Robinson & The Miracles
+- Signed, Sealed, Delivered I'm Yours – Stevie Wonder
+- ABC – The Jackson 5
+- Sweet Jane – The Velvet Underground
+- Tired of Being Alone – Al Green
+- Children of the Grave – Black Sabbath
+- Sun Is Shining – Bob Marley & The Wailers
+- Double Barrel – Dave and Ansell Collins
+- Coat of Many Colors – Dolly Parton
+- Sitting in Limbo – Jimmy Cliff
+- Use Me – Bill Withers
+- Me and Mrs. Jones – Billy Paul
+- Highway Star – Deep Purple
+- Money in My Pocket – Dennis Brown
+- Mr. Bojangles – Sammy Davis Jr.
+- Ge mig en kaka till kaffet – Ted Gärdestad
+- Sol, vind och vatten – Ted Gärdestad
+- Jag ger dig min morgon – Tomas Ledin
+- Hooked on a Feeling – Blue Swede
+- Concrete Jungle – Bob Marley & The Wailers
+- I Shot the Sheriff – Bob Marley & The Wailers
+- Kinky Reggae – Bob Marley & The Wailers
+- Stir It Up – Bob Marley & The Wailers
+- Behind Closed Doors – Charlie Rich
+- Ain't No Woman (Like the One I've Got) – Four Tops
+- Love's Theme – Love Unlimited Orchestra
+- Let's Get It On – Marvin Gaye
+- Personality Crisis – New York Dolls
+- Funky Kingston – Toots & the Maytals
+- Pick Up the Pieces – Average White Band
+- Lively Up Yourself – Bob Marley & The Wailers
+- Quimbara – Celia Cruz
+- I Will Always Love You – Dolly Parton
+- Never Can Say Goodbye – Gloria Gaynor
+- Annie's Song – John Denver
+- Tell Me Something Good – Rufus & Chaka Khan
+- Marcus Garvey – Burning Spear
+- Love to Love You Baby – Donna Summer
+- Rhinestone Cowboy – Glen Campbell
+- Thank God I'm a Country Boy – John Denver
+- That's the Way (I Like It) – KC and the Sunshine Band
+- Rock and Roll All Nite – Kiss
+- Jag vill ha en egen måne – Lasse Berghagen
+- Lovin' You – Minnie Riperton
+- Fly, Robin, Fly – Silver Convention
+- The Hustle – Van McCoy
+- Blue Eyes Crying in the Rain – Willie Nelson
+- Fernando – ABBA
+- More, More, More – Andrea True Connection
+- Rastaman Vibration – Bob Marley & The Wailers
+- Love Hangover – Diana Ross
+- Breezin' – George Benson
+- Boogie Nights – Heatwave
+- Shake Your Booty – KC and the Sunshine Band
+- Legalize It – Peter Tosh
+- Hey Ho Let's Go – Ramones
+- Anarchy in the U.K. – Sex Pistols
+- I Wish – Stevie Wonder
+- Heaven Must Be Missing an Angel – Tavares
+- New Rose – The Damned
+- Kiss and Say Goodbye – The Manhattans
+- Turn the Beat Around – Vicki Sue Robinson
+- Uptown Top Ranking – Althea & Donna
+- Yes Sir, I Can Boogie – Baccara
+- Natural Mystic – Bob Marley & The Wailers
+- Turn Your Lights Down Low – Bob Marley & The Wailers
+- Waiting in Vain – Bob Marley & The Wailers
+- Ma Baker – Boney M.
+- Orgasm Addict – Buzzcocks
+- Love and Kisses – Cerrone
+- Supernature – Cerrone
+- Everybody Dance – Chic
+- Feels So Good – Chuck Mangione
+- Two Sevens Clash – Culture
+- Fantasy – Earth, Wind & Fire
+- I Need a Man – Grace Jones
+- Love Is in the Air – John Paul Young
+- Lucille – Kenny Rogers
+- Native New Yorker – Odyssey
+- Ca plane pour moi – Plastic Bertrand
+- Rockaway Beach – Ramones
+- Sheena Is a Punk Rocker – Ramones
+- Holidays in the Sun – Sex Pistols
+- Pretty Vacant – Sex Pistols
+- Psycho Killer – Talking Heads
+- Complete Control – The Clash
+- White Riot – The Clash
+- Neat Neat Neat – The Damned
+- In the City – The Jam
+- Oh Bondage Up Yours! – X-Ray Spex
+- Boogie Oogie Oogie – A Taste of Honey
+- Take a Chance on Me – ABBA
+- I Love the Nightlife (Disco 'Round) – Alicia Bridges
+- Ever Fallen in Love – Buzzcocks
+- What Do I Get? – Buzzcocks
+- I'm Every Woman – Chaka Khan
+- Got to Be Real – Cheryl Lynn
+- Three Times a Lady – Commodores
+- Instant Replay – Dan Hartman
+- Last Dance – Donna Summer
+- MacArthur Park – Donna Summer
+- Pervers politiker – KSMB
+- Dröm är dröm och saga saga – Lill Lindfors
+- Hong Kong Garden – Siouxsie and the Banshees
+- Alternative Ulster – Stiff Little Fingers
+- Suspect Device – Stiff Little Fingers
+- Dance (Disco Heat) – Sylvester
+- You Make Me Feel (Mighty Real) – Sylvester
+- Blame It on the Boogie – The Jacksons
+- Shake Your Body (Down to the Ground) – The Jacksons
+- Down in the Tube Station at Midnight – The Jam
+- Miss You – The Rolling Stones
+- Macho Man – Village People
+- Mammas Don't Let Your Babies Grow Up to Be Cowboys – Waylon Jennings & Willie Nelson
+- Chiquitita – ABBA
+- Gimme Gimme Gimme – ABBA
+- Knock on Wood – Amii Stewart
+- Ring My Bell – Anita Ward
+- Nervous Breakdown – Black Flag
+- Africa Unite – Bob Marley & The Wailers
+- Zimbabwe – Bob Marley & The Wailers
+- Le Chic – Chic
+- Relight My Fire – Dan Hartman
+- California Über Alles – Dead Kennedys
+- Bad Girls – Donna Summer
+- Dim All the Lights – Donna Summer
+- On the Radio – Donna Summer
+- Boogie Wonderland – Earth, Wind & Fire
+- Die Young – Ebba Grön
+- Sex Pistols – Ebba Grön
+- One Way Ticket – Eruption
+- Coward of the County – Kenny Rogers
+- Ladies' Night – Kool & The Gang
+- Night Boat to Cairo – Madness
+- One Step Beyond – Madness
+- Ain't No Stoppin' Us Now – McFadden & Whitehead
+- Rock with You – Michael Jackson
+- Overkill – Motörhead
+- D.I.S.C.O. – Ottawan
+- Born to Be Alive – Patrick Hernandez
+- Spacer – Sheila & B. Devotion
+- He's the Greatest Dancer – Sister Sledge
+- Lost in Music – Sister Sledge
+- Morning Dance – Spyro Gyra
+- The Devil Went Down to Georgia – The Charlie Daniels Band
+- Clampdown – The Clash
+- I Fought the Law – The Clash
+- Pressure Drop – The Clash
+- Rudie Can't Fail – The Clash
+- Train in Vain – The Clash
+- Boys Don't Cry – The Cure
+- Smash It Up – The Damned
+- Walking on the Moon – The Police
+- A Message to You, Rudy – The Specials
+- Gangsters – The Specials
+- In the Navy – Village People
+- Super Trouper – ABBA
+- Gimme Gimme Gimme – Black Flag
+- Redemption Song – Bob Marley & The Wailers
+- Mona Tumbas slim club – Ebba Grön
+- New York, New York – Frank Sinatra
+- He Stopped Loving Her Today – George Jones
+- (Kom så ska vi) leva livet – Gyllene Tider
+- Flickorna på TV2 – Gyllene Tider
+- Iron Maiden – Iron Maiden
+- Atmosphere – Joy Division
+- Living After Midnight – Judas Priest
+- The Breaks – Kurtis Blow
+- Ge mig en sommardag – Lasse Holm
+- Last Caress – Misfits
+- Hands Up (Give Me Your Heart) – Ottawan
+- Mr. Crowley – Ozzy Osbourne
+- Once in a Lifetime – Talking Heads
+- Mirror in the Bathroom – The Beat
+- Can You Feel It – The Jacksons
+- Going Underground – The Jam
+- Too Much Too Young – The Specials
+- Just nu! – Tomas Ledin
+- Ung och stolt – Tomas Ledin
+- TV Party – Black Flag
+- Too Drunk to Fuck – Dead Kennedys
+- Let's Groove – Earth, Wind & Fire
+- Staten och kapitalet – Ebba Grön
+- Ganja Smuggling – Eek-A-Mouse
+- Vill ha dig – Freestyle
+- När vi två blir en – Gyllene Tider
+- Kom ut ikväll – Ingmar Nordström
+- Mitt hjärta klappar för dig – Jerry Williams
+- Get Down On It – Kool & The Gang
+- Before I Let You Go – Maze
+- Don't You Want Me – The Human League
+- Ghost Town – The Specials
+- Skänk mig ett leende – Vikingarna
+- Planet Rock – Afrika Bambaataa & the Soulsonic Force
+- Mountain Music – Alabama
+- Fantasi – Freestyle
+- Amarillo by Morning – George Strait
+- Cool Down the Pace – Gregory Isaacs
+- Night Nurse – Gregory Isaacs
+- Det hjärta som brinner – Gyllene Tider
+- Gamla Nordsjön – Hasse Andersson
+- Guld och gröna skogar – Hasse Andersson
+- Månsken i augusti – Lasse Stefanz
+- Our House – Madness
+- Skulls – Misfits
+- Bam Bam – Sister Nancy
+- Rock the Casbah – The Clash
+- Always on My Mind – Willie Nelson
+- Balls to the Wall – Accept
+- Hunger – Carola
+- Photograph – Def Leppard
+- Rainbow in the Dark – Dio
+- White Lines (Don't Don't Do It) – Grandmaster Melle Mel
+- Rockit – Herbie Hancock
+- The Trooper – Iron Maiden
+- Reggae Night – Jimmy Cliff
+- Sunshine Reggae – Laid Back
+- Joey Killer – Magnus Uggla
+- Bark at the Moon – Ozzy Osbourne
+- Cum On Feel the Noize – Quiet Riot
+- Ain't Nobody – Rufus & Chaka Khan
+- Mommy's Little Monster – Social Distortion
+- Institutionalized – Suicidal Tendencies
+- This Charming Man – The Smiths
+- Murderer – Barrington Levy
+- Mitt i ett äventyr – Carola
+- Here I Come – Dennis Brown
+- Kvinnan i mitt liv – Hasse Andersson
+- Diggi-Loo Diggi-Ley – Herreys
+- Round and Round – Ratt
+- Rock Box – Run-DMC
+- We're Not Gonna Take It – Twisted Sister
+- Madhouse – Anthrax
+- Fly Me Away – Kikki Danielsson
+- Minns du Hollywood – Kikki Danielsson
+- Canneloni Macaroni – Lasse Holm & Annette Kullenberg
+- Highwayman – The Highwaymen
+- Bastards of Young – The Replacements
+- Under Mi Sleng Teng – Wayne Smith
+- Saving All My Love for You – Whitney Houston
+- Caught Up in the Rapture – Anita Baker
+- Sweet Love – Anita Baker
+- (You Gotta) Fight for Your Right (To Party!) – Beastie Boys
+- No Sleep till Brooklyn – Beastie Boys
+- Don't Wanna Know If You Are Lonely – Hüsker Dü
+- Wasted Years – Iron Maiden
+- Papaya Coconut – Kikki Danielsson
+- Det är vi ändå – Lasse Holm
+- E' de' det här du kallar kärlek? – Lasse Holm & Monica Törnell
+- Jag och min far – Magnus Uggla
+- Långa bollar på Bengt – Magnus Uggla
+- Peace Sells – Megadeth
+- Battery – Metallica
+- Tutu – Miles Davis
+- It's Tricky – Run-DMC
+- Walk This Way – Run-DMC
+- Raining Blood – Slayer
+- Jack Your Body – Steve 'Silk' Hurley
+- Bigmouth Strikes Again – The Smiths
+- Ett andetag ifrån – Tommy Körberg
+- Rat in Mi Kitchen – UB40
+- Pour Some Sugar on Me – Def Leppard
+- Paid in Full – Eric B. & Rakim
+- Carrie – Europe
+- Djobi Djoba – Gipsy Kings
+- Rhythm Is Gonna Get You – Gloria Estefan & Miami Sound Machine
+- Paradise City – Guns N' Roses
+- Bad Boys – Inner Circle
+- Leva livet – Lotta Engberg
+- Varning på stan – Magnus Uggla
+- Pump Up the Volume – MARRS
+- Forever and Ever, Amen – Randy Travis
+- Push It – Salt-N-Pepa
+- Como la Flor – Selena
+- Here I Go Again – Whitesnake
+- Rock Me – Europe
+- Eighteen Wheels and a Dozen Roses – Kathy Mattea
+- La Incondicional – Luis Miguel
+- Allt jag behöver – Mauro Scocco
+- Sarah – Mauro Scocco
+- One – Metallica
+- Straight Outta Compton – N.W.A
+- Gigantic – Pixies
+- Dressed for Success – Roxette
+- Theme from S-Express – S'Express
+- South of Heaven – Slayer
+- Teen Age Riot – Sonic Youth
+- There She Goes – The La's
+- Wild Thing – Tone Lōc
+- Ride on Time – Black Box
+- Me Myself and I – De La Soul
+- Volare – Gipsy Kings
+- Get On Your Feet – Gloria Estefan
+- Rhythm Nation – Janet Jackson
+- Lambada – Kaoma
+- Dr. Feelgood – Mötley Crüe
+- Kickstart My Heart – Mötley Crüe
+- Pet Sematary – Ramones
+- 18 and Life – Skid Row
+- Youth Gone Wild – Skid Row
+- Lullaby – The Cure
+- Fools Gold – The Stone Roses
+- I Wanna Be Adored – The Stone Roses
+- She Bangs the Drums – The Stone Roses
+- Kingston Town – UB40
+- Bust a Move – Young MC
+- Can I Kick It? – A Tribe Called Quest
+- Poison – Bell Biv DeVoe
+- Is It Love – Beres Hammond
+- Gonna Make You Sweat (Everybody Dance Now) – C+C Music Factory
+- Groove Is in the Heart – Deee-Lite
+- The Dance – Garth Brooks
+- Step On – Happy Mondays
+- Burbujas de amor – Juan Luis Guerra
+- Painkiller – Judas Priest
+- Dansa med vindarna – Kayo
+- Better the Devil You Know – Kylie Minogue
+- Mama Said Knock You Out – LL Cool J
+- Holy Wars... The Punishment Due – Megadeth
+- Cemetery Gates – Pantera
+- Cowboys from Hell – Pantera
+- Loaded – Primal Scream
+- Wind of Change – Scorpions
+- Stand by Me – Seal
+- Seasons in the Abyss – Slayer
+- Ball and Chain – Social Distortion
+- Story of My Life – Social Distortion
+- Börja om från början – Sven-Ingvars
+- Cherry Pie – Warrant
+- Get Ready for This – 2 Unlimited
+- Jazz (We've Got) – A Tribe Called Quest
+- Motownphilly – Boyz II Men
+- Finally – CeCe Peniston
+- Oh Mama – Lasse Stefanz
+- Dansa i månsken – Lotta & Anders Engbergs orkester
+- Copacabana – Lotta Engberg
+- Contigo en la distancia – Luis Miguel
+- Only Shallow – My Bloody Valentine
+- O.P.P. – Naughty by Nature
+- Mama, I'm Coming Home – Ozzy Osbourne
+- Bro Hymn – Pennywise
+- Fading Like a Flower (Every Time You Leave) – Roxette
+- Spending My Time – Roxette
+- Det finns en morgondag – Thorleifs
+- Happy Nation – Ace of Base
+- Wheel of Fortune – Ace of Base
+- Iron Lion Zion – Bob Marley & The Wailers
+- Boot Scootin' Boogie – Brooks & Dunn
+- It Was a Good Day – Ice Cube
+- Jump – Kris Kross
+- Om – Lisa Nilsson
+- Varje gång jag ser dig – Lisa Nilsson
+- Symphony of Destruction – Megadeth
+- Remember the Time – Michael Jackson
+- They Reminisce Over You (T.R.O.Y.) – Pete Rock & CL Smooth
+- Killing in the Name – Rage Against the Machine
+- How Do You Do! – Roxette
+- Baby Got Back – Sir Mix-a-Lot
+- Kom hem – Sven-Bertil Taube
+- Weak – SWV
+- Rump Shaker – Wreckx-n-Effect
+- Don't Turn Around – Ace of Base
+- Chattahoochee – Alan Jackson
+- Pa' Mayté – Arturo Sandoval
+- American Jesus – Bad Religion
+- Rebel Girl – Bikini Kill
+- Tease Me – Chaka Demus & Pliers
+- I Can See Clearly Now – Jimmy Cliff
+- Bara du – Lasse Stefanz
+- Mitt eget Nangijala – Magnus Uggla
+- Oh Carolina – Shaggy
+- Whoomp! (There It Is) – Tag Team
+- Den vackraste – Thorleifs
+- (I Can't Help) Falling in Love with You – UB40
+- Kom och värm dig – Wizex
+- Baby I Love Your Way – Big Mountain
+- Girls & Boys – Blur
+- I'll Make Love to You – Boyz II Men
+- Love Is All I Bring – Dawn Penn
+- You Don't Love Me (No, No, No) – Dawn Penn
+- Longview – Green Day
+- When I Come Around – Green Day
+- Blind – Korn
+- Stockholm – Lisa Ekdahl
+- Vem vet – Lisa Ekdahl
+- Independence Day – Martina McBride
+- N.Y. State of Mind – Nas
+- Leave It Alone – NOFX
+- Linoleum – NOFX
+- Cut Your Hair – Pavement
+- Range Life – Pavement
+- Cotton Eye Joe – Rednex
+- Sleeping in My Car – Roxette
+- Bidi Bidi Bom Bom – Selena
+- Gin and Juice – Snoop Doggy Dogg
+- Come Out and Play – The Offspring
+- Creep – TLC
+- Under ytan – Uno Svenningsson
+- Regulate – Warren G & Nate Dogg
+- C.R.E.A.M. – Wu-Tang Clan
+- Beautiful Life – Ace of Base
+- Lady – D'Angelo
+- Insomnia – Faithless
+- Check Yes or No – George Strait
+- Fantasy – Mariah Carey
+- Shook Ones, Pt. II – Mobb Deep
+- Disco 2000 – Pulp
+- High and Dry – Radiohead
+- Time Bomb – Rancid
+- María – Ricky Martin
+- Children – Robert Miles
+- Boombastic – Shaggy
+- Any Man of Mine – Shania Twain
+- Alright – Supergrass
+- Carnival – The Cardigans
+- Exhale (Shoop Shoop) – Whitney Houston
+- Punk Rock Song – Bad Religion
+- Strawberry Wine – Deana Carter
+- Don't Let Go (Love) – En Vogue
+- No Woman, No Cry – Fugees
+- Ready or Not – Fugees
+- Pony – Ginuwine
+- Gå och fiska – Gyllene Tider
+- 747 – Kent
+- Return of the Mack – Mark Morrison
+- Coco Jamboo – Mr. President
+- I Believe I Can Fly – R. Kelly
+- Bulls on Parade – Rage Against the Machine
+- Tonight, Tonight – The Smashing Pumpkins
+- Gråt inga tårar – Thorleifs
+- Un-Break My Heart – Toni Braxton
+- You're Makin' Me High – Toni Braxton
+- Brimful of Asha – Cornershop
+- Around the World – Daft Punk
+- On & On – Erykah Badu
+- How Do I Live – LeAnn Rimes
+- Too Close – Next
+- I'll Be Missing You – Puff Daddy & Faith Evans
+- Karma Police – Radiohead
+- No Surprises – Radiohead
+- Engel – Rammstein
+- Do You Know (What It Takes) – Robyn
+- Hypnotize – The Notorious B.I.G.
+- Mo Money Mo Problems – The Notorious B.I.G.
+- Professional Widow (It's Got to Be Big) – Tori Amos
+- Gettin' Jiggy wit It – Will Smith
+- Are You That Somebody? – Aaliyah
+- 9PM (Till I Come) – ATB
+- Who Am I – Beenie Man
+- This Kiss – Faith Hill
+- Hard Knock Life (Ghetto Anthem) – Jay-Z
+- Kärleken är – Jill Johnson
+- Freak on a Leash – Korn
+- Doo Wop (That Thing) – Lauryn Hill
+- Ex-Factor – Lauryn Hill
+- Vi drar till fjällen – Markoolio
+- In the Aeroplane Over the Sea – Neutral Milk Hotel
+- Ghetto Supastar (That Is What You Are) – Pras
+- La Copa de la Vida – Ricky Martin
+- The Cup of Life – Ricky Martin
+- Ojos Así – Shakira
+- Music Sounds Better with You – Stardust
+- Erase/Rewind – The Cardigans
+- My Favourite Game – The Cardigans
+- Wide Open Spaces – The Chicks
+- Pretty Fly (For a White Guy) – The Offspring
+- Why Don't You Get a Job? – The Offspring
+- Bara hon älskar mig – Arvingarna
+- What's My Age Again? – blink-182
+- Cassius 1999 – Cassius
+- Tusen och en natt – Charlotte Nilsson
+- Genie in a Bottle (Genio Atrapado) – Christina Aguilera
+- Bills, Bills, Bills – Destiny's Child
+- Say My Name – Destiny's Child
+- Paper Bag – Fiona Apple
+- Amazed – Lonestar
+- Gubbarna i parken – Markoolio
+- Han går omkring – Patrik Isaksson
+- Turn Around – Phats & Small
+- Corazón Espinado – Santana
+- Wait and Bleed – Slipknot
+- Jag är så glad att jag är svensk – Totta Näslund
+- Kernkraft 400 – Zombie Nation
+- Try Again – Aaliyah
+- Glorious – Andreas Johnson
+- Girls Dem Sugar – Beenie Man
+- Adam's Song – blink-182
+- Ven Conmigo (Solamente Tú) – Christina Aguilera
+- Untitled (How Does It Feel) – D'Angelo
+- Stan – Eminem
+- The Real Slim Shady – Eminem
+- Känn ingen sorg för mig Göteborg – Håkan Hellström
+- Musik non stop – Kent
+- De sista ljuva åren – Lasse Stefanz
+- Kärlekens tunga – Markoolio
+- Ride wit Me – Nelly
+- Wishmaster – Nightwish
+- Last Resort – Papa Roach
+- She Bangs – Ricky Martin
+- När vindarna viskar mitt namn – Roger Pontare
+- Groovejet (If This Ain't Love) – Spiller
+- Goodbye Earl – The Chicks
+- Survivor – Destiny's Child
+- Bodies – Drowning Pool
+- Escape – Enrique Iglesias
+- Hero – Enrique Iglesias
+- The Middle – Jimmy Eat World
+- Sommarparty – Markoolio
+- Halo – Martin O'Donnell, Michael Salvatori
+- Get Ur Freak On – Missy Elliott
+- Ich will – Rammstein
+- Sonne – Rammstein
+- Hela världen för mig – Sanna Nielsen
+- Angel – Shaggy
+- Suerte (Whenever, Wherever) – Shakira
+- Murder on the Dancefloor – Sophie Ellis-Bextor
+- In Too Deep – Sum 41
+- Toxicity – System of a Down
+- New Slang – The Shins
+- Someday – The Strokes
+- Fell in Love with a Girl – The White Stripes
+- U Remind Me – Usher
+- Obsesión – Aventura
+- Complicated – Avril Lavigne
+- Sk8er Boi – Avril Lavigne
+- X Gon' Give It to Ya – DMX
+- Lifestyles of the Rich & Famous – Good Charlotte
+- The Anthem – Good Charlotte
+- Kom igen Lena! – Håkan Hellström
+- Snart tystnar musiken – Hollywood Ultra
+- Hurt – Johnny Cash
+- A Dios le pido – Juanes
+- Elektrisk – Kent
+- Work It – Missy Elliott
+- Dilemma – Nelly
+- Hot in Herre – Nelly
+- Gimme the Light – Sean Paul
+- Still Waiting – Sum 41
+- Aerials – System of a Down
+- Dude – Beenie Man
+- I Miss You – blink-182
+- Whiskey Lullaby – Brad Paisley & Alison Krauss
+- Pon de River, Pon de Bank – Elephant Man
+- Give Me Your Love – Fame
+- Sway – Michael Bublé
+- Like Glue – Sean Paul
+- Such Great Heights – The Postal Service
+- Reptilia – The Strokes
+- Maps – Yeah Yeah Yeahs
+- Ocean Avenue – Yellowcard
+- Wake Up – Arcade Fire
+- Tröstlös – Benny Anderssons Orkester
+- Dip It Low – Christina Milian
+- Lo Que Pasó, Pasó – Daddy Yankee
+- Holiday – Green Day
+- Du är min man – Helen Sjöholm
+- 99 Problems – Jay-Z
+- Golden – Jill Scott
+- Ordinary People – John Legend
+- Let Me Love You – Mario
+- Blood and Thunder – Mastodon
+- Float On – Modest Mouse
+- Helena – My Chemical Romance
+- I'm Not Okay (I Promise) – My Chemical Romance
+- Kärlek är för alla – Nanne Grönvall
+- Nemo – Nightwish
+- Lola's Theme – Shapeshifters
+- Before I Forget – Slipknot
+- Drop It Like It's Hot – Snoop Dogg
+- Lean Back – Terror Squad
+- Supply and Demand – The Hives
+- Somebody Told Me – The Killers
+- The Rat – The Walkmen
+- Live Like You Were Dying – Tim McGraw
+- Burn – Usher
+- Hjärta – Weeping Willows
+- Candy Shop – 50 Cent
+- 1 Thing – Amerie
+- Bat Country – Avenged Sevenfold
+- Lua – Bright Eyes
+- Hej, hej, vi ses (Hej då) – Brolle
+- Jesus, Take the Wheel – Carrie Underwood
+- Rompe – Daddy Yankee
+- Dale Don Dale – Don Omar
+- Dance, Dance – Fall Out Boy
+- Wake Me Up When September Ends – Green Day
+- Alla flickor – Linda Bengtzing
+- We Belong Together – Mariah Carey
+- Las Vegas – Martin Stenmarck
+- So Sick – Ne-Yo
+- Be Mine! – Robyn
+- Ride It – Sean Paul
+- We Be Burnin' – Sean Paul
+- La Tortura – Shakira
+- B.Y.O.B. – System of a Down
+- You Know I'm No Good – Amy Winehouse
+- The Funeral – Band of Horses
+- Evighet – Carola
+- Invincible – Carola
+- Through the Fire and Flames – DragonForce
+- Put Your Hands Up for Detroit – Fedde Le Grand
+- SexyBack – Justin Timberlake
+- Jag ljuger så bra – Linda Bengtzing
+- Mr Hit – Linda Bengtzing
+- Teenagers – My Chemical Romance
+- Lazy Eye – Silversun Pickups
+- Our Song – Taylor Swift
+- Chelsea Dagger – The Fratellis
+- Naive – The Kooks
+- Måndagsbarn – Veronica Maggio
+- No One – Alicia Keys
+- 505 – Arctic Monkeys
+- Fluorescent Adolescent – Arctic Monkeys
+- Vår bästa tid är nu – Benny Anderssons Orkester
+- Skinny Love – Bon Iver
+- Thnks fr th Mmrs – Fall Out Boy
+- Low – Flo Rida
+- Ruby – Kaiser Chiefs
+- Stronger – Kanye West
+- Bröder – Linda Bengtzing
+- Paper Planes – M.I.A.
+- Alcastar – Magnus Uggla
+- Electric Feel – MGMT
+- Time to Pretend – MGMT
+- Everything – Michael Bublé
+- Gunpowder & Lead – Miranda Lambert
+- Teardrops on My Guitar – Taylor Swift
+- Tick Tick Boom – The Hives
+- Snälla snälla – Carola
+- Älska mig – Charlotte Perrelli
+- Mercy – Duffy
+- Mykonos – Fleet Foxes
+- White Winter Hymnal – Fleet Foxes
+- Dog Days Are Over – Florence + The Machine
+- Love Lockdown – Kanye West
+- A Milli – Lil Wayne
+- Lollipop – Lil Wayne
+- Swedish Pagans – Sabaton
+- Empty Room – Sanna Nielsen
+- Psychosocial – Slipknot
+- You Belong with Me – Taylor Swift
+- A-Punk – Vampire Weekend
+- Chicken Fried – Zac Brown Band
+- Ready for the Weekend – Calvin Harris
+- Memories – David Guetta
+- Home – Edward Sharpe & The Magnetic Zeros
+- Two Weeks – Grizzly Bear
+- Haven't Met You Yet – Michael Bublé
+- Ignorance – Paramore
+- 1901 – Phoenix
+- Lisztomania – Phoenix
+- Mi Niña Bonita – Chino & Nacho
+- Love the Way You Lie – Eminem
+- Manboy – Eric Saade
+- Ritual – Ghost
+- Hold You – Gyptian
+- Dirt Road Anthem – Jason Aldean
+- Bara hålla om dig – Jenny Silver
+- The House That Built Me – Miranda Lambert
+- Från och med du – Oskar Linnros
+- Body Talk – Robyn
+- Hang with Me – Robyn
+- Loca – Shakira
+- Bloodbuzz Ohio – The National
+- Love on Top – Beyoncé
+- Holocene – Bon Iver
+- Popular – Eric Saade
+- Tongue Tied – Grouplove
+- Niggas in Paris – Jay-Z & Kanye West
+- Country Girl (Shake It for Me) – Luke Bryan
+- Super Bass – Nicki Minaj
+- We Found Love – Rihanna
+- Call Your Girlfriend – Robyn
+- Lonely Boy – The Black Keys
+- Myth – Beach House
+- Sweet Nothing – Calvin Harris
+- Limbo – Daddy Yankee
+- Latch – Disclosure
+- Bailando por el Mundo – Juan Magán
+- Swimming Pools (Drank) – Kendrick Lamar
+- Pontoon – Little Big Town
+- Can't Hold Us – Macklemore & Ryan Lewis
+- Dansa pausa – Panetoz
+- Stay – Rihanna
+- Hail to the King – Avenged Sevenfold
+- Hey Brother – Avicii
+- Om sanningen ska fram – Eric Saade
+- Take Me to Church – Hozier
+- Retrograde – James Blake
+- Follow Your Arrow – Kacey Musgraves
+- Propuesta Indecente – Romeo Santos
+- Dansar inte – Veronica Maggio
+- Dem a Watch – Chronixx
+- Trap Queen – Fetty Wap
+- Fancy – Iggy Azalea
+- Prayer in C – Lilly Wood & The Prick
+- Love Never Felt So Good – Michael Jackson
+- Travesuras – Nicky Jam
+- Cheerleader – OMI
+- Lay Me Down – Sam Smith
+- Undo – Sanna Nielsen
+- Earned It – The Weeknd
+- Paris – Tove Lo
+- Waiting for Love – Avicii
+- Space Song – Beach House
+- La Gozadera – Gente de Zona
+- Ginza – J Balvin
+- Where Are Ü Now – Jack Ü
+- Alright – Kendrick Lamar
+- El Perdón – Nicky Jam & Enrique Iglesias
+- La Mordidita – Ricky Martin
+- Let It Happen – Tame Impala
+- Die a Happy Man – Thomas Rhett
+- Stressed Out – Twenty One Pilots
+- Never Forget You – Zara Larsson & MNEK
+- Andas en Mi Cabeza – Chino & Nacho
+- Reggaetón Lento (Bailemos) – CNCO
+- Corazón – Daddy Yankee
+- Shaky Shaky – Daddy Yankee
+- Panda – Desiigner
+- Ivy – Frank Ocean
+- Cherry Wine – Hozier
+- Safari – J Balvin
+- Location – Khalid
+- Cold Water – Major Lazer
+- Bad and Boujee – Migos
+- Hasta el Amanecer – Nicky Jam
+- Vente Pa' Ca – Ricky Martin
+- The Last Stand – Sabaton
+- No Lie – Sean Paul
+- Chantaje – Shakira
+- Cool Girl – Tove Lo
+- 17 år – Veronica Maggio
+- Meant to Be – Bebe Rexha & Florida Georgia Line
+- Mayores – Becky G
+- Cola – CamelPhat & Elderbrook
+- Bodak Yellow – Cardi B
+- The Gambler – Chris Stapleton
+- Mask Off – Future
+- Échame la Culpa – Luis Fonsi & Demi Lovato
+- Felices los 4 – Maluma
+- Rockstar – Post Malone
+- Hollow – Robin Bengtsson
+- I Can't Go On – Robin Bengtsson
+- Body Like a Back Road – Sam Hunt
+- Mo Bamba – Sheck Wes
+- Dance You Off – Benjamin Ingrosso
+- Lovely – Billie Eilish & Khalid
+- One Kiss – Calvin Harris & Dua Lipa
+- Te Boté – Casper Mágico
+- Dura – Daddy Yankee
+- In My Feelings – Drake
+- Lucid Dreams – Juice WRLD
+- Rainbow – Kacey Musgraves
+- Beautiful Crazy – Luke Combs
+- Whiskey Glasses – Morgan Wallen
+- X (Equis) – Nicky Jam & J Balvin
+- Calma – Pedro Capó
+- Sunflower (Spider-Man: Into the Spider-Verse) – Post Malone & Swae Lee
+- Sobredosis – Romeo Santos
+- Malamente – Rosalía
+- Clandestino – Shakira & Maluma
+- Ruin My Life – Zara Larsson
+- China – Anuel AA
+- Con Calma – Daddy Yankee
+- Too Late for Love – John Lundvik
+- Tusa – Karol G
+- Svag – Victor Leksell
+- Physical – Dua Lipa
+- Head & Heart – Joel Corry
+- Bichota – Karol G
+- Hawái – Maluma
+- Midnight Sky – Miley Cyrus
+- Essence – Wizkid
+- Wasted on You – Morgan Wallen
+- Seventeen Going Under – Sam Fender
+- Voices – Tusse
+- Me Porto Bonito – Bad Bunny
+- Hold Me Closer – Cornelia Jakobs
+- Rich Flex – Drake & 21 Savage
+- Cry for Me – Ghost
+- Provenza – Karol G
+- You Proof – Morgan Wallen
+- Bad Habit – Steve Lacy
+- Snooze – SZA
+- Bzrp Music Sessions #53 – Bizarrap & Shakira
+- Ella Baila Sola – Eslabon Armado & Peso Pluma
+- Need a Favor – Jelly Roll
+- Rich Men North of Richmond – Oliver Anthony
+- Cowboys Cry Too – Kelsea Ballerini & Noah Kahan
 
 ## Not found on Spotify
 
@@ -50,20 +947,28 @@ Taken out of the catalogue. Add one back with the right title and artist (and "i
 - Vigil – Sam Hulick: no recording with this title by this artist.
 - Build That Wall – Darren Korb: no recording with this title by this artist.
 - Walk the Line – Johnny Cash: 1956, country: no recording with this title by this artist.
-- Anarchy in the U.K. – Sex Pistols: 1976, punk: no recording with this title by this artist.
-- Boogie Wonderland – Earth, Wind & Fire: 1979, disco: no recording with this title by this artist.
-- Staten och kapitalet – Ebba Grön: 1981, punk: no recording with this title by this artist.
-- Diggi-Loo Diggi-Ley – Herreys: 1984, schlager: no recording with this title by this artist.
+- Anarchy in the U.K. – Sex Pistols (catalogue): 1976, punk: no recording with this title by this artist.
+- Boogie Wonderland – Earth, Wind & Fire (catalogue): 1979, disco: no recording with this title by this artist.
+- Staten och kapitalet – Ebba Grön (catalogue): 1981, punk: no recording with this title by this artist.
+- Diggi-Loo Diggi-Ley – Herreys (catalogue): 1984, schlager: no recording with this title by this artist.
 - Venus Butterfly – Pernilla Wahlgren: 1988, schlager: no recording with this title by this artist.
 - Vi får väl se – Arvingarna: 1993, schlager: no recording with this title by this artist.
 - Take Me to Your Heaven – Charlotte Nilsson: 1999, schlager: no recording with this title by this artist.
-- Alcastar – Magnus Uggla: 2006, schlager: no recording with this title by this artist.
+- Alcastar – Magnus Uggla (catalogue): 2006, schlager: no recording with this title by this artist.
 - Gods of War – Sabaton: 2008, metal: no recording with this title by this artist.
 - Hold Yuh – Gyptian: 2010, reggae: no recording with this title by this artist.
 - Thinking About You – Frank Ocean: 2012, rnb: no recording with this title by this artist.
-- One Kiss – Calvin Harris & Dua Lipa: 2018, dance: no recording with this title by this artist.
+- One Kiss – Calvin Harris & Dua Lipa (catalogue): 2018, dance: no recording with this title by this artist.
 - Seven – Måneskin: 2021, rock: no recording with this title by this artist.
 - Bzrp Music Sessions, Vol. 53 – Bizarrap & Shakira: 2023, latin: no recording with this title by this artist.
+
+## Deck songs that may have the wrong recording
+
+Their Spotify page names another artist. Check the id by hand (open.spotify.com/track/<id>).
+
+- My Favorite Things – Mary Martin: 1iCHl2R7xoEsh7CvYe5Ej0
+- Prelude – Nobuo Uematsu: 3OLy8iBF8deyQG8TO526va
+- Flowers – Miley Cyrus: 4u9cOL7R5OjAmlWkeEFXzf
 
 ## Year differs from Spotify
 
@@ -161,26 +1066,55 @@ The catalogue year was kept. Spotify is often wrong (it dates songs by album), b
 - Kids – MGMT (catalogue): the catalogue says 2007, Spotify's earliest release is 2005 (Oracular Spectacular).
 - With Every Heartbeat – Robyn (catalogue): the catalogue says 2007, Spotify's earliest release is 2005 (With Every Heartbeat).
 - Don't Start Now – Dua Lipa (catalogue): the catalogue says 2019, Spotify's earliest release is 2021 (Future Nostalgia (The Moonlight Edition)).
+- Stardust – Hoagy Carmichael (catalogue): the catalogue says 1927, Spotify's earliest release is 1947 (Stardust & Much More).
+- West End Blues – Louis Armstrong (catalogue): the catalogue says 1928, Spotify's earliest release is 1989 (Essence of Armstrong).
+- Ain't Misbehavin' – Fats Waller (catalogue): the catalogue says 1929, Spotify's earliest release is 1926 (Fats Waller Misbehavin' Badly On V).
+- Mood Indigo – Duke Ellington (catalogue): the catalogue says 1930, Spotify's earliest release is 1951 (Masterpieces By Ellington (Uncut Concert Arrangements)).
+- I Got Rhythm – Ethel Merman (catalogue): the catalogue says 1930, Spotify's earliest release is 1958 (Ethel: A Musical Autobiography).
+- Minnie the Moocher – Cab Calloway (catalogue): the catalogue says 1931, Spotify's earliest release is 1940 (The Hi-De-Ho Man).
+- It Don't Mean a Thing (If It Ain't Got That Swing) – Duke Ellington (catalogue): the catalogue says 1932, Spotify's earliest release is 1963 (The Great Reunion).
+- Summertime – Billie Holiday (catalogue): the catalogue says 1936, Spotify's earliest release is 2001 (Total George Gershwin, Vol. 8).
+- A-Tisket, A-Tasket – Ella Fitzgerald (catalogue): the catalogue says 1938, Spotify's earliest release is 1959 (Music Legends Ella Fitzgerald : The Queen of Jazz).
+- Body and Soul – Coleman Hawkins (catalogue): the catalogue says 1939, Spotify's earliest release is 1996 (Body & Soul).
+- In the Mood – Glenn Miller (catalogue): the catalogue says 1939, Spotify's earliest release is 1954 (In The Digital Mood).
+- Moonlight Serenade – Glenn Miller (catalogue): the catalogue says 1939, Spotify's earliest release is 1972 (Candlelight Miller).
+- God Bless the Child – Billie Holiday (catalogue): the catalogue says 1941, Spotify's earliest release is 1956 (Lady Sings The Blues).
+- Take the "A" Train – Duke Ellington (catalogue): the catalogue says 1941, Spotify's earliest release is 1948 (First Time! The Count Meets The Duke).
+- Chattanooga Choo Choo – Glenn Miller (catalogue): the catalogue says 1941, Spotify's earliest release is 1933 (In The Digital Mood).
+- Lover Man – Billie Holiday (catalogue): the catalogue says 1945, Spotify's earliest release is 1958 (Lover Man).
+- Salt Peanuts – Dizzy Gillespie (catalogue): the catalogue says 1945, Spotify's earliest release is 1955 (Absolutely The Best: Dizzy Gillespie).
+- Bésame Mucho – Trío Los Panchos (catalogue): the catalogue says 1945, Spotify's earliest release is 1960 (Historia De Un Amor).
+- Ornithology – Charlie Parker (catalogue): the catalogue says 1946, Spotify's earliest release is 1966 (Ornithology).
+- Night and Day – Frank Sinatra (catalogue): the catalogue says 1946, Spotify's earliest release is 1957 (Sinatra & Strings).
+- Round Midnight – Thelonious Monk (catalogue): the catalogue says 1947, Spotify's earliest release is 1951 (Genius Of Modern Music, Vol. 1).
+- I'm So Lonesome I Could Cry – Hank Williams (catalogue): the catalogue says 1949, Spotify's earliest release is 1952 (Top 5 - Hank Williams - EP).
+- La vie en rose – Louis Armstrong (catalogue): the catalogue says 1950, Spotify's earliest release is 1952 (BD Music Presents Louis Armstrong).
+- Mona Lisa – Nat King Cole (catalogue): the catalogue says 1950, Spotify's earliest release is 1954 (Unforgettable).
+- Tennessee Waltz – Patti Page (catalogue): the catalogue says 1950, Spotify's earliest release is 1952 (Tennessee Waltz).
+- Petite Fleur – Sidney Bechet (catalogue): the catalogue says 1952, Spotify's earliest release is 1997 (Les Années Bechet).
+- Satin Doll – Duke Ellington (catalogue): the catalogue says 1953, Spotify's earliest release is 1987 (Jazz Party).
+- Cielito Lindo – Pedro Infante (catalogue): the catalogue says 1953, Spotify's earliest release is 1997 (60 Rancheras Inmortales Vol. 2).
+- My Funny Valentine – Chet Baker (catalogue): the catalogue says 1954, Spotify's earliest release is 1956 (Chet Baker Sings).
 
 ## Songs per genre ("By genre")
 
-Genres from MusicBrainz/Last.fm tags: 465 songs; hand-set: 189; changed by hand: 0.
+Genres from MusicBrainz/Last.fm tags: 505 songs; hand-set: 1224; changed by hand: 0.
 
 | Genre | 50s | 60s | 70s | 80s | 90s | 00s | 10s | 20s | Total |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| pop | 5 | 12 | 22 | 24 | 24 | 26 | 32 | 23 | 168 |
-| rock | 11 | 21 | 29 | 32 | 22 | 23 | 15 | 3 | 156 |
-| hiphop | 0 | 0 | 1 | 4 | 10 | 14 | 7 | 4 | 40 |
-| rnb | 4 | 3 | 3 | 4 | 5 | 7 | 4 | 3 | 33 |
-| soul | 1 | 11 | 16 | 10 | 5 | 7 | 5 | 1 | 56 |
-| disco | 0 | 0 | 20 | 4 | 0 | 2 | 3 | 1 | 30 |
-| dance | 0 | 0 | 3 | 8 | 14 | 10 | 20 | 5 | 60 |
-| country | 1 | 4 | 4 | 3 | 4 | 3 | 4 | 5 | 28 |
-| metal | 0 | 0 | 4 | 9 | 4 | 10 | 3 | 0 | 30 |
-| indie | 0 | 0 | 0 | 5 | 5 | 8 | 10 | 2 | 30 |
-| schlager | 0 | 2 | 4 | 7 | 2 | 3 | 2 | 1 | 21 |
-| swedishpop | 0 | 0 | 6 | 7 | 7 | 3 | 9 | 1 | 33 |
-| jazz | 10 | 10 | 3 | 1 | 0 | 4 | 0 | 2 | 33 |
-| reggae | 0 | 4 | 9 | 5 | 5 | 4 | 2 | 0 | 29 |
-| latin | 2 | 2 | 1 | 2 | 6 | 3 | 8 | 3 | 28 |
-| punk | 0 | 0 | 7 | 5 | 6 | 8 | 0 | 1 | 27 |
+| pop | 5 | 12 | 22 | 24 | 23 | 25 | 32 | 23 | 166 |
+| rock | 12 | 22 | 29 | 32 | 22 | 23 | 15 | 3 | 158 |
+| hiphop | 0 | 0 | 1 | 3 | 13 | 15 | 8 | 5 | 45 |
+| rnb | 4 | 9 | 4 | 10 | 5 | 11 | 5 | 3 | 51 |
+| soul | 1 | 18 | 25 | 11 | 5 | 6 | 5 | 1 | 72 |
+| disco | 0 | 0 | 33 | 7 | 0 | 4 | 4 | 2 | 50 |
+| dance | 0 | 0 | 4 | 11 | 19 | 13 | 23 | 5 | 75 |
+| country | 5 | 6 | 6 | 3 | 6 | 3 | 4 | 5 | 39 |
+| metal | 0 | 0 | 6 | 18 | 7 | 10 | 4 | 0 | 45 |
+| indie | 0 | 1 | 1 | 8 | 8 | 8 | 11 | 2 | 39 |
+| schlager | 0 | 3 | 4 | 7 | 3 | 4 | 2 | 2 | 25 |
+| swedishpop | 0 | 0 | 9 | 8 | 8 | 3 | 13 | 1 | 42 |
+| jazz | 22 | 15 | 4 | 2 | 0 | 5 | 0 | 2 | 76 |
+| reggae | 0 | 4 | 14 | 6 | 6 | 4 | 2 | 0 | 36 |
+| latin | 3 | 2 | 3 | 4 | 6 | 4 | 10 | 4 | 38 |
+| punk | 0 | 0 | 8 | 5 | 7 | 8 | 0 | 1 | 29 |
