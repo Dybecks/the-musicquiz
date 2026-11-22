@@ -148,6 +148,10 @@ shared by every app on the developer account, so a run makes at most 300 request
 for a long pause. Running it again carries on where it stopped, and once everything is
 looked up it makes no requests at all.
 
+To fill and check one genre at a time, run `GENRE=schlager npm run spotify-data`
+(any of the 16 genre ids). Only that genre's songs are looked up and tagged, and
+`REVIEW.md` then lists every song in the genre, oldest first, with a Spotify link.
+
 ## Setting up a game
 
 Setup asks one thing per screen, in three steps:
