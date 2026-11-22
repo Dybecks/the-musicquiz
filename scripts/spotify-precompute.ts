@@ -222,7 +222,18 @@ async function spotify<T>(path: string): Promise<T> {
     if (requests >= MAX_REQUESTS) throw new StopRun(`Reached ${MAX_REQUESTS} requests for this run.`);
     if (requests > 0) await sleep(PAUSE_MS);
     requests++;
-    const res = await fetch(`https://api.spotify.com/v1${path}`, { headers: { Authorization: `Bearer ${await getToken()}` } });
+    let res: Response;
+    try {
+      // A request that hangs is given up after 30 s and tried again, instead of stopping the run.
+      res = await fetch(`https://api.spotify.com/v1${path}`, { headers: { Authorization: `Bearer ${await getToken()}` }, signal: AbortSignal.timeout(30_000) });
+    } catch (e) {
+      if (attempt < 3) {
+        console.log(`Spotify didn't answer (${(e as Error).name}); trying again.`);
+        await sleep(5000);
+        continue;
+      }
+      throw new StopRun(`Spotify didn't answer ${attempt + 1} times in a row.`);
+    }
     if (res.ok) return (await res.json()) as T;
     if (res.status === 429) {
       const wait = Number(res.headers.get('retry-after')) || 30;
@@ -353,7 +364,7 @@ export function pageNames(text: string, artist: string): boolean {
 async function pageArtist(id: string, row: Row): Promise<boolean | null> {
   try {
     if (!process.env.NO_SLEEP) await sleep(300);
-    const res = await fetch(`https://open.spotify.com/track/${id}`, { headers: { 'User-Agent': 'the-musicquiz-precompute/1.0 (https://github.com/Dybecks/the-musicquiz)' } });
+    const res = await fetch(`https://open.spotify.com/track/${id}`, { headers: { 'User-Agent': 'the-musicquiz-precompute/1.0 (https://github.com/Dybecks/the-musicquiz)' }, signal: AbortSignal.timeout(30_000) });
     if (!res.ok) return null;
     const html = await res.text();
     const meta = (p: string) => html.match(new RegExp(`<meta[^>]+property="${p}"[^>]+content="([^"]*)"`))?.[1] ?? '';
