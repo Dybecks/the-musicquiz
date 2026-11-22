@@ -2,7 +2,7 @@
 
 Written by `scripts/spotify-precompute.ts` from `songs.json` and `decks.json`.
 
-Songs with a Spotify id: **1061 of 2015**. classic 160, movies 49, musicals 45, tv 33, games 37.
+Songs with a Spotify id: **1070 of 2008**. classic 160, movies 49, musicals 45, tv 33, games 37.
 
 ## Not looked up yet
 
@@ -497,11 +497,9 @@ These stay out of the game until `npm run spotify-data` finds them.
 - Don't Let Go (Love) – En Vogue
 - No Woman, No Cry – Fugees
 - Ready or Not – Fugees
-- Ooh Aah... Just a Little Bit – Gina G
 - Pony – Ginuwine
 - Gå och fiska – Gyllene Tider
 - 747 – Kent
-- Juliette & Jonathan – Lotta Engberg
 - Return of the Mack – Mark Morrison
 - Coco Jamboo – Mr. President
 - I Believe I Can Fly – R. Kelly
@@ -512,35 +510,25 @@ These stay out of the game until `npm run spotify-data` finds them.
 - Brimful of Asha – Cornershop
 - Around the World – Daft Punk
 - On & On – Erykah Badu
-- Love Shine a Light – Katrina and the Waves
 - How Do I Live – LeAnn Rimes
-- Mysterious Woman – Marc Roberts
-- Där en ängel hälsat på – N-Mix
 - Too Close – Next
 - I'll Be Missing You – Puff Daddy & Faith Evans
 - Karma Police – Radiohead
 - No Surprises – Radiohead
 - Engel – Rammstein
 - Do You Know (What It Takes) – Robyn
-- Dinle – Şebnem Paker and Grup Ethnic
 - Hypnotize – The Notorious B.I.G.
 - Mo Money Mo Problems – The Notorious B.I.G.
 - Professional Widow (It's Got to Be Big) – Tori Amos
 - Gettin' Jiggy wit It – Will Smith
-- Missarna – Wille Crafoord
 - Are You That Somebody? – Aaliyah
 - 9PM (Till I Come) – ATB
-- Ingen annan väg – B.I.G.
 - Who Am I – Beenie Man
-- The One That I Love – Chiara
-- Diva – Dana International
 - This Kiss – Faith Hill
-- Where Are You? – Imaani
 - Hard Knock Life (Ghetto Anthem) – Jay-Z
 - Freak on a Leash – Korn
 - Doo Wop (That Thing) – Lauryn Hill
 - Ex-Factor – Lauryn Hill
-- Julia – Myrra Malmberg
 - In the Aeroplane Over the Sea – Neutral Milk Hotel
 - Ghetto Supastar (That Is What You Are) – Pras
 - La Copa de la Vida – Ricky Martin
@@ -552,14 +540,10 @@ These stay out of the game until `npm run spotify-data` finds them.
 - Wide Open Spaces – The Chicks
 - Pretty Fly (For a White Guy) – The Offspring
 - Why Don't You Get a Job? – The Offspring
-- Det svär jag på – Arvingarna
 - What's My Age Again? – blink-182
 - Cassius 1999 – Cassius
-- Take Me to Your Heaven – Charlotte Nilsson
-- Tusen och en natt – Charlotte Nilsson
 - Genie in a Bottle (Genio Atrapado) – Christina Aguilera
 - Bills, Bills, Bills – Destiny's Child
-- Stjärna på himmelen – Drömhus
 - Paper Bag – Fiona Apple
 - Amazed – Lonestar
 - Gubbarna i parken – Markoolio
@@ -1012,7 +996,6 @@ Taken out of the catalogue. Add one back with the right title and artist (and "i
 - One Kiss – Calvin Harris & Dua Lipa (catalogue): 2018, dance: no recording with this title by this artist.
 - Seven – Måneskin: 2021, rock: no recording with this title by this artist.
 - Bzrp Music Sessions, Vol. 53 – Bizarrap & Shakira: 2023, latin: no recording with this title by this artist.
-- Skibet skal sejle i nat – Birthe Wilke and Gustav Winckler: 1957, schlager: no recording with this title by this artist.
 - Dags igen att vara kära – Staffan Broms: 1959, schlager: no recording with this title by this artist.
 - Underbar, så underbar – Inger Berggren: 1960, schlager: no recording with this title by this artist.
 - Alexander – Mona Grain: 1960, schlager: no recording with this title by this artist.
@@ -1087,6 +1070,12 @@ Taken out of the catalogue. Add one back with the right title and artist (and "i
 - Den vackraste – Thorleifs: 1993, schlager: no recording with this title by this artist.
 - Kom och värm dig – Wizex: 1993, schlager: no recording with this title by this artist.
 - Jag ger dig allt – Jessica G. Pilnäs: 1995, schlager: no recording with this title by this artist.
+- Där en ängel hälsat på – N-Mix: 1997, schlager: no recording with this title by this artist.
+- Ingen annan väg – B.I.G.: 1998, schlager: no recording with this title by this artist.
+- Julia – Myrra Malmberg: 1998, schlager: no recording with this title by this artist.
+- Take Me to Your Heaven – Charlotte Nilsson: 1999, schlager: no recording with this title by this artist.
+- Tusen och en natt – Charlotte Nilsson: 1999, schlager: no recording with this title by this artist.
+- Stjärna på himmelen – Drömhus: 1999, schlager: no recording with this title by this artist.
 
 ## Deck songs that may have the wrong recording
 
@@ -1306,10 +1295,13 @@ The catalogue year was kept. Spotify is often wrong (it dates songs by album), b
 - One Step Out of Time – Michael Ball (catalogue): the catalogue says 1992, Spotify's earliest release is 2023 (Eurosong Party 2023).
 - We Are All the Winners – Nick Borgen (catalogue): the catalogue says 1993, Spotify's earliest release is 2006 (We Are All The Winners).
 - Wir geben 'ne Party – Mekado (catalogue): the catalogue says 1994, Spotify's earliest release is 1999 (SAT 1 TEXT Schlager Grand Prix).
+- Skibet skal sejle i nat – Birthe Wilke and Gustav Winckler (catalogue): the catalogue says 1957, Spotify's earliest release is 2018 (25 Radio Hits Vol. 1).
+- Juliette & Jonathan – Lotta Engberg (catalogue): the catalogue says 1996, Spotify's earliest release is 2007 (Festivalfavoriter 3).
+- Mysterious Woman – Marc Roberts (catalogue): the catalogue says 1997, Spotify's earliest release is 2007 (Marc Roberts).
 
 ## Songs per genre ("By genre")
 
-Genres from MusicBrainz/Last.fm tags: 526 songs; hand-set: 1489; changed by hand: 0.
+Genres from MusicBrainz/Last.fm tags: 526 songs; hand-set: 1482; changed by hand: 0.
 
 | Genre | 50s | 60s | 70s | 80s | 90s | 00s | 10s | 20s | Total |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
@@ -1323,20 +1315,21 @@ Genres from MusicBrainz/Last.fm tags: 526 songs; hand-set: 1489; changed by hand
 | country | 5 | 6 | 6 | 3 | 6 | 3 | 4 | 5 | 39 |
 | metal | 0 | 0 | 6 | 19 | 7 | 10 | 4 | 0 | 46 |
 | indie | 0 | 1 | 1 | 8 | 8 | 8 | 11 | 2 | 39 |
-| schlager | 13 | 46 | 35 | 45 | 35 | 17 | 21 | 11 | 223 |
+| schlager | 14 | 46 | 35 | 45 | 43 | 17 | 21 | 11 | 232 |
 | swedishpop | 0 | 0 | 9 | 9 | 8 | 4 | 13 | 1 | 44 |
 | jazz | 22 | 15 | 4 | 2 | 0 | 5 | 0 | 2 | 76 |
 | reggae | 0 | 4 | 14 | 6 | 6 | 4 | 2 | 0 | 36 |
 | latin | 3 | 2 | 3 | 4 | 6 | 4 | 10 | 4 | 38 |
 | punk | 0 | 0 | 8 | 5 | 7 | 8 | 0 | 1 | 29 |
 
-## All schlager songs (223 with an id, 136 waiting)
+## All schlager songs (232 with an id, 120 waiting)
 
 Written because this run had GENRE set. Check that each one belongs here and is the right recording.
 
 - 1956 · Refrain – Lys Assia · [Spotify](https://open.spotify.com/track/4GX1W5Zthu98rjGTrhURnQ)
 - 1957 · La Belle Amour – Paule Desjardins · [Spotify](https://open.spotify.com/track/1pMDLjdoyAOfucSkDWSVJQ)
 - 1957 · Net als toen – Corry Brokken · [Spotify](https://open.spotify.com/track/1g35tiS8hrpnnK8Zb5uOj4)
+- 1957 · Skibet skal sejle i nat – Birthe Wilke and Gustav Winckler · [Spotify](https://open.spotify.com/track/5EFhfGFskfw135MDHCoWTi)
 - 1958 · Dors mon amour – André Claveau · [Spotify](https://open.spotify.com/track/22ouxJVeGaQb5Xjq9hsD4p)
 - 1958 · Giorgio – Lys Assia · [Spotify](https://open.spotify.com/track/743PZb8XjPYjqrbHYnMgJp)
 - 1958 · Lilla stjärna – Alice Babs · [Spotify](https://open.spotify.com/track/5jaPX2VglcZJXghJey87O8)
@@ -1480,7 +1473,6 @@ Written because this run had GENRE set. Check that each one belongs here and is 
 - 1990 · White and Black Blues – Joëlle Ursull · [Spotify](https://open.spotify.com/track/663Tj0JStDI8Lb7sZgKD78)
 - 1991 · Fångad av en stormvind – Carola · [Spotify](https://open.spotify.com/track/7yWCxpivUiPsfrxPGU1vhE) · also swedishpop
 - 1992 · I morgon är en annan dag – Christer Björkman · [Spotify](https://open.spotify.com/track/7DqyeESnaKCwDjgmA45UFZ)
-- 1992 · Imorgon är en annan dag – Christer Björkman · [Spotify](https://open.spotify.com/track/7DqyeESnaKCwDjgmA45UFZ)
 - 1992 · One Step Out of Time – Michael Ball · [Spotify](https://open.spotify.com/track/7dpd5lxsIGY8v6SD1CChsX)
 - 1992 · Som om himlen brann – Lizette Pålsson & Bizazz · [Spotify](https://open.spotify.com/track/3zN9mql7O0p80ekg09pOPt)
 - 1992 · Vad som än händer – Maria Rådsten · [Spotify](https://open.spotify.com/track/5VlIUWGv10Ne1Dud60lB9L)
@@ -1498,34 +1490,27 @@ Written because this run had GENRE set. Check that each one belongs here and is 
 - 1994 · Wir geben 'ne Party – Mekado · [Spotify](https://open.spotify.com/track/1U7XB0RlYZJXNdtyYnzDTv)
 - 1995 · Det vackraste – Cecilia Vennersten · [Spotify](https://open.spotify.com/track/3JIOkz5QLH2UjSMzeoGCH2)
 - 1995 · Nocturne – Secret Garden · [Spotify](https://open.spotify.com/track/6bk11TH82XrT5QUC1gDw9A)
-- 1995 · Se på mej – Jan Johansen · [Spotify](https://open.spotify.com/track/5E0DPn2m1oAigfof05lKmJ)
 - 1995 · Se på mig – Jan Johansen · [Spotify](https://open.spotify.com/track/5E0DPn2m1oAigfof05lKmJ)
 - 1995 · Vuelve conmigo – Anabel Conde · [Spotify](https://open.spotify.com/track/24xF7DIibfXNpAU7gzLAKd)
 - 1996 · Den vilda – One More Time · [Spotify](https://open.spotify.com/track/0TYwFP4MxszHAXAJMYhi3E)
 - 1996 · Driver dagg faller regn – Andreas Lundstedt · [Spotify](https://open.spotify.com/track/4A2fR30sQDjPX785mEnyW0)
-- 1996 · Juliette & Jonathan – Lotta Engberg · not found yet
-- 1996 · Ooh Aah... Just a Little Bit – Gina G · not found yet
+- 1996 · Juliette & Jonathan – Lotta Engberg · [Spotify](https://open.spotify.com/track/1uh9A0lBBKQ5H6CjeidTTd)
+- 1996 · Ooh Aah... Just a Little Bit – Gina G · [Spotify](https://open.spotify.com/track/5KsGeqTJgJMAWuyTZ5WmMn)
 - 1996 · The Voice – Eimear Quinn · [Spotify](https://open.spotify.com/track/6SA7BxY6zh5SaxUBp3tCtb)
 - 1997 · Bara hon älskar mig – Blond · [Spotify](https://open.spotify.com/track/5dEHUYf0NkT1pZeEJOCMsW)
-- 1997 · Där en ängel hälsat på – N-Mix · not found yet
-- 1997 · Dinle – Şebnem Paker and Grup Ethnic · not found yet
-- 1997 · Love Shine a Light – Katrina and the Waves · not found yet
-- 1997 · Missarna – Wille Crafoord · not found yet
-- 1997 · Mysterious Woman – Marc Roberts · not found yet
-- 1998 · Diva – Dana International · not found yet
-- 1998 · Ingen annan väg – B.I.G. · not found yet
-- 1998 · Julia – Myrra Malmberg · not found yet
+- 1997 · Dinle – Şebnem Paker and Grup Ethnic · [Spotify](https://open.spotify.com/track/0Q8oCVScG0PfzXa5EnCDdj)
+- 1997 · Love Shine a Light – Katrina and the Waves · [Spotify](https://open.spotify.com/track/7jxGRU3EH0QveYx4bD32i7)
+- 1997 · Missarna – Wille Crafoord · [Spotify](https://open.spotify.com/track/2cnJW9LlHRgJhATHUp3zXR)
+- 1997 · Mysterious Woman – Marc Roberts · [Spotify](https://open.spotify.com/track/4ttOUTe2PEiaACM5DjDWYx)
+- 1998 · Diva – Dana International · [Spotify](https://open.spotify.com/track/4xTKSi7m6jUb1qaOmXn3R6)
 - 1998 · Kärleken är – Jill Johnson · [Spotify](https://open.spotify.com/track/69o3qL8watZsJZJPS6cuuR) · also pop
-- 1998 · The One That I Love – Chiara · not found yet
-- 1998 · Where Are You? – Imaani · not found yet
+- 1998 · The One That I Love – Chiara · [Spotify](https://open.spotify.com/track/1RKPo2MJNWoi2jf2FMWUoL)
+- 1998 · Where Are You? – Imaani · [Spotify](https://open.spotify.com/track/0RZWvRRijaySZKhDHSkzHL)
 - 1999 · All Out of Luck – Selma · not found yet
-- 1999 · Det svär jag på – Arvingarna · not found yet
+- 1999 · Det svär jag på – Arvingarna · [Spotify](https://open.spotify.com/track/6doLbYRNNKS4qymx52yzEt)
 - 1999 · Gubbarna i parken – Markoolio · not found yet
 - 1999 · Journey to Jerusalem – Kudüs'e Seyahat – Sürpriz · not found yet
-- 1999 · Stjärna på himmelen – Drömhus · not found yet
-- 1999 · Take Me to Your Heaven – Charlotte Nilsson · not found yet
 - 1999 · Take Me to Your Heaven – Charlotte Perrelli · [Spotify](https://open.spotify.com/track/0Z6y9qCkkfESLiEOuBWhAZ) · also pop, rock
-- 1999 · Tusen och en natt – Charlotte Nilsson · not found yet
 - 1999 · Tusen och en natt – Charlotte Perrelli · [Spotify](https://open.spotify.com/track/6JIwvW8ioos5KFp0Q0mS3Y)
 - 2000 · Fly on the Wings of Love – Olsen Brothers · not found yet
 - 2000 · Kärlekens tunga – Markoolio · not found yet
@@ -1694,4 +1679,4 @@ Written because this run had GENRE set. Check that each one belongs here and is 
 - 2026 · My System – Felicia · not found yet
 - 2026 · Viva L'amor – Medina · not found yet
 
-Not found on Spotify at all (any genre): 120, listed above.
+Not found on Spotify at all (any genre): 125, listed above.
