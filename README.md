@@ -43,6 +43,16 @@ On the **Players & play** screen the host picks a game mode:
   keep at least one). Phones on the team whose turn it is can buy them too.
 - **Sudden death**: one wrong placement and the team is out. The last team left wins, or the
   first to reach the target.
+- **Decade duel**: the team also guesses which decade the song is from, among four in a row.
+  A right guess gives a ⭐.
+- **Betting**: before locking in, the team bets 0 to 3 ⭐ on how sure it is. A right placement
+  wins the bet, a wrong one loses it (stars can go below zero).
+- **Speed round**: 30 seconds to lock in from when the song starts. When the time runs out
+  the turn is lost; a right placement with 15 seconds or more left gives a ⭐.
+- **Intro challenge**: only the first 2 seconds play, and a right placement gives 2 ⭐ on top
+  of the card. The host can play the intro again, or a longer clip (5 s for 1 ⭐, 10 s for none).
+
+In the modes with ⭐, cards plus stars count toward the target.
 
 The rules are in `src/game/engine.ts` (`GameMode`, `makeQuestion`, `scoreOf`, `applyPower`, `nextTurn`).
 

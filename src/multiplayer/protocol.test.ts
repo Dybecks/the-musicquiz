@@ -26,6 +26,7 @@ import {
   setConnected,
   teamDecision,
   powerRequest,
+  betRequest,
   votesBySlot,
   type Room,
 } from './protocol';
@@ -310,5 +311,27 @@ describe('power-ups from phones', () => {
     expect(gameView(g)!.powers).toBeUndefined();
     const hinted = applyPower(g, 'hint');
     expect(gameView(hinted)!.powers?.hintDecade).toBe(Math.floor(g.current!.year / 10) * 10);
+  });
+});
+
+describe('betting, speed and intro on phones', () => {
+  it('takes bets only from the team whose turn it is', () => {
+    const g = createGame({ playerNames: ['Red', 'Blue'], targetCards: 5, songs, mode: 'betting' });
+    const room = roomWith(g, ['ann', 'p1'], ['bob', 'p2']);
+    expect(betRequest(room, g, 'ann', { type: 'bet', amount: 2 })).toBe(2);
+    expect(betRequest(room, g, 'bob', { type: 'bet', amount: 2 })).toBeNull();
+    expect(betRequest(room, g, 'ann', { type: 'bet', amount: 'lots' })).toBeNull();
+    expect(gameView(g)!.bet).toBe(0);
+  });
+
+  it('sends the time left rather than the host clock', () => {
+    const g = { ...createGame({ playerNames: ['Red'], targetCards: 5, songs, mode: 'speed' }), deadline: 50_000 };
+    expect(gameView(g, 40_000)!.timeLeftMs).toBe(10_000);
+    expect(gameView(g, 60_000)!.timeLeftMs).toBe(0);
+  });
+
+  it('shows the clip length in the intro challenge', () => {
+    const g = createGame({ playerNames: ['Red'], targetCards: 5, songs, mode: 'intro' });
+    expect(gameView(g)!.clipMs).toBe(2000);
   });
 });

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { GAME_MODES, type GameMode, type Song } from '../game/engine';
+import { GAME_MODES, usesStars, type GameMode, type Song } from '../game/engine';
 import { onSpotifyWait, spotifyBlockedUntil, type SpotifyProfile } from '../spotify/api';
 import { BUILT_IN_CLIENT_ID, getClientIdOverride, hasScopes, redirectUri, setClientId } from '../spotify/auth';
 import type { PlaybackKind } from '../spotify/playback';
@@ -761,6 +761,10 @@ export function Setup(props: Props) {
           <ModeOption value="steal" current={gameMode} onSelect={setGameMode} title={`🕵️ ${t.modes.steal}`} detail={t.modes.stealDetail} />
           <ModeOption value="powerups" current={gameMode} onSelect={setGameMode} title={`🪙 ${t.modes.powerups}`} detail={t.modes.powerupsDetail} />
           <ModeOption value="sudden" current={gameMode} onSelect={setGameMode} title={`💀 ${t.modes.sudden}`} detail={t.modes.suddenDetail} />
+          <ModeOption value="decades" current={gameMode} onSelect={setGameMode} title={`📅 ${t.modes.decades}`} detail={t.modes.decadesDetail} />
+          <ModeOption value="betting" current={gameMode} onSelect={setGameMode} title={`🎲 ${t.modes.betting}`} detail={t.modes.bettingDetail} />
+          <ModeOption value="speed" current={gameMode} onSelect={setGameMode} title={`⚡ ${t.modes.speed}`} detail={t.modes.speedDetail} />
+          <ModeOption value="intro" current={gameMode} onSelect={setGameMode} title={`🎧 ${t.modes.intro}`} detail={t.modes.introDetail} />
         </div>
       </section>
 
@@ -790,7 +794,7 @@ export function Setup(props: Props) {
         )}
 
         <label className="field">
-          <span>{gameMode === 'bonus' ? t.modes.pointsToWin : ts.cardsToWin}</span>
+          <span>{usesStars(gameMode) ? t.modes.pointsToWin : ts.cardsToWin}</span>
           <input type="number" min={3} max={30} value={target} onChange={(e) => setTarget(Math.max(3, Math.min(30, Number(e.target.value) || 10)))} />
         </label>
         <p className="hint">

@@ -44,9 +44,27 @@ export interface Player {
  *    right on their own timeline; then they play their own turn.
  *  - 'powerups': a right placement earns a coin, and coins buy power-ups (see POWERS).
  *  - 'sudden': one wrong placement and the team is out; the last team left wins.
+ *  - 'decades': also guess the song's decade among four; a right guess gives a star.
+ *  - 'betting': before locking in, bet 0–3 points: won with a right placement, lost with a wrong one.
+ *  - 'speed': 30 seconds to lock in from when the song starts; right with half the time left gives a star.
+ *  - 'intro': only the first 2 seconds play; a right placement gives 2 stars, or fewer after asking for a longer clip.
+ * Stars count toward the target like cards.
  */
-export type GameMode = 'classic' | 'bonus' | 'steal' | 'powerups' | 'sudden';
-export const GAME_MODES: GameMode[] = ['classic', 'bonus', 'steal', 'powerups', 'sudden'];
+export type GameMode = 'classic' | 'bonus' | 'steal' | 'powerups' | 'sudden' | 'decades' | 'betting' | 'speed' | 'intro';
+export const GAME_MODES: GameMode[] = ['classic', 'bonus', 'steal', 'powerups', 'sudden', 'decades', 'betting', 'speed', 'intro'];
+
+/** Modes with a multiple-choice question while the song plays. */
+export const asksQuestion = (mode: GameMode) => mode === 'bonus' || mode === 'decades';
+/** Modes where stars count toward the target besides cards. */
+export const usesStars = (mode: GameMode) => mode === 'bonus' || mode === 'decades' || mode === 'betting' || mode === 'speed' || mode === 'intro';
+
+/** The most a team can bet in mode 'betting'. */
+export const MAX_BET = 3;
+/** Time to lock in, in mode 'speed'. */
+export const SPEED_MS = 30_000;
+/** How long the clip plays in mode 'intro', shortest first, and the stars a right placement gives with each. */
+export const CLIPS_MS = [2_000, 5_000, 10_000];
+export const CLIP_STARS = [2, 1, 0];
 
 /**
  * What coins buy in mode 'powerups', on your own turn before locking in:
@@ -76,7 +94,7 @@ export interface TurnPowers {
 }
 
 /** What a bonus question asks: who performs the song, its title, or the film/show/game/musical it is from. */
-export type QuestionKind = 'artist' | 'title' | 'from';
+export type QuestionKind = 'artist' | 'title' | 'from' | 'decade';
 
 export interface BonusQuestion {
   kind: QuestionKind;
@@ -111,6 +129,14 @@ export interface LastGuess {
   eliminated?: boolean;
   /** A coin was earned (mode 'powerups'). */
   coin?: boolean;
+  /** Stars won (or lost, below zero) with this guess, besides a bonus question (modes 'betting', 'speed', 'intro'). */
+  stars?: number;
+  /** The bet that was placed (mode 'betting'). */
+  bet?: number;
+  /** Locked in with half the time or more left (mode 'speed'). */
+  fast?: boolean;
+  /** The time ran out (mode 'speed'). */
+  timeout?: boolean;
 }
 
 export interface GameState {
@@ -138,7 +164,16 @@ export interface GameState {
   stealing?: boolean;
   /** Power-ups used this turn (mode 'powerups'). */
   powers?: TurnPowers;
+  /** The bet for this turn (mode 'betting'). */
+  bet?: number;
+  /** When the time to lock in runs out, as Date.now() on the host (mode 'speed'); missing until the song starts. */
+  deadline?: number;
+  /** Which clip length (index into CLIPS_MS) is playing (mode 'intro'). */
+  clip?: number;
 }
+
+/** What a new turn starts without. */
+const FRESH_TURN = { powers: undefined, bet: undefined, deadline: undefined, clip: undefined } as const;
 
 export const modeOf = (state: Pick<GameState, 'mode'>): GameMode =>
   state.mode && GAME_MODES.includes(state.mode) ? state.mode : 'classic';
@@ -241,8 +276,27 @@ const knownSongs = (state: Pick<GameState, 'deck' | 'players' | 'current'>): Son
 
 /** The state with a fresh bonus question for its current song, in mode 'bonus'. */
 function withQuestion<S extends GameState>(state: S, rng: Rng = Math.random): S {
-  if (modeOf(state) !== 'bonus') return state;
-  return { ...state, question: state.current ? makeQuestion(state.current, knownSongs(state), rng) : null };
+  const mode = modeOf(state);
+  if (!asksQuestion(mode)) return state;
+  const song = state.current;
+  const question = !song ? null : mode === 'decades' ? decadeQuestion(song.year, rng) : makeQuestion(song, knownSongs(state), rng);
+  return { ...state, question };
+}
+
+/** The decades a song can be from, oldest first. */
+const FIRST_DECADE = 1900;
+
+/**
+ * Which decade is the song from: its own and three neighbouring decades
+ * (choices are the decades' first years as text, "1980").
+ */
+export function decadeQuestion(year: number, rng: Rng = Math.random, thisYear = new Date().getFullYear()): BonusQuestion {
+  const d = decadeOf(year);
+  const last = Math.max(d, decadeOf(thisYear));
+  const starts = [0, 1, 2, 3].map((k) => d - 10 * k).filter((start) => start >= FIRST_DECADE && start + 30 <= last);
+  const start = starts.length ? starts[Math.min(starts.length - 1, Math.floor(rng() * starts.length))] : d;
+  const choices = [0, 1, 2, 3].map((k) => String(start + 10 * k));
+  return { kind: 'decade', choices, answer: choices.indexOf(String(d)) };
 }
 
 export interface NewGameOptions {
@@ -326,12 +380,12 @@ export function currentPlayer(state: GameState): Player {
  * Locks in the guess: `slot` on the timeline, and in mode 'bonus' `pick`,
  * the index of the chosen answer to the bonus question (null for none).
  */
-export function placeCurrent(state: GameState, slot: number, pick: number | null = null): GameState {
+export function placeCurrent(state: GameState, slot: number, pick: number | null = null, now: number = Date.now()): GameState {
   if (state.phase !== 'guessing' || !state.current) return state;
   const player = currentPlayer(state);
   const song = state.current;
   const correct = isCorrectPlacement(player.timeline, slot, song.year);
-  const question = modeOf(state) === 'bonus' ? state.question : null;
+  const question = asksQuestion(modeOf(state)) ? state.question : null;
   const bonus: BonusResult | undefined = question
     ? { question, pick: pick !== null && pick >= 0 && pick < question.choices.length ? pick : null, correct: pick === question.answer }
     : undefined;
@@ -342,10 +396,25 @@ export function placeCurrent(state: GameState, slot: number, pick: number | null
   }
   const coin = mode === 'powerups' && correct;
   const eliminated = mode === 'sudden' && !correct;
+  const fast = mode === 'speed' && correct && state.deadline !== undefined && state.deadline - now >= SPEED_MS / 2;
+  const bet = mode === 'betting' ? Math.max(0, Math.min(MAX_BET, state.bet ?? 0)) : 0;
+  const extra =
+    mode === 'betting'
+      ? correct
+        ? bet
+        : -bet
+      : mode === 'speed'
+        ? fast
+          ? 1
+          : 0
+        : mode === 'intro' && correct
+          ? (CLIP_STARS[clipOf(state)] ?? 0)
+          : 0;
   const players = state.players.map((p) => {
     if (p.id !== player.id) return p;
     let next = correct ? { ...p, timeline: insertSorted(p.timeline, song) } : p;
-    if (bonus?.correct) next = { ...next, stars: (p.stars ?? 0) + 1 };
+    const stars = (bonus?.correct ? 1 : 0) + extra;
+    if (stars) next = { ...next, stars: (p.stars ?? 0) + stars };
     if (coin) next = { ...next, coins: (p.coins ?? 0) + 1 };
     if (eliminated) next = { ...next, out: true };
     return next;
@@ -365,6 +434,9 @@ export function placeCurrent(state: GameState, slot: number, pick: number | null
       ...(stealer && stealer.id !== player.id ? { stealNext: stealer.id } : {}),
       ...(eliminated ? { eliminated: true } : {}),
       ...(coin ? { coin: true } : {}),
+      ...(extra ? { stars: extra } : {}),
+      ...(fast ? { fast: true } : {}),
+      ...(mode === 'betting' ? { bet } : {}),
     },
     winnerIds: winnersOf(state, players),
   };
@@ -419,7 +491,7 @@ export function nextTurn(state: GameState): GameState {
       phase: 'guessing',
       lastGuess: null,
       stealing: true,
-      powers: undefined,
+      ...FRESH_TURN,
     };
   }
   // After a steal the stealing team plays its own turn.
@@ -443,7 +515,7 @@ function drawFor(state: GameState, advance: boolean): GameState {
     phase: 'guessing',
     lastGuess: null,
     stealing: false,
-    powers: undefined,
+    ...FRESH_TURN,
   });
 }
 
@@ -515,7 +587,7 @@ export function skipSong(state: GameState): GameState {
   const current = deck.shift() ?? null;
   if (!current) return finishByMostCards(state);
   // Skipping a song that was up for stealing ends the steal: the team plays its own turn.
-  return withQuestion({ ...state, deck, current, used: [...(state.used ?? []), songKeyOf(current)], stealing: false, powers: state.stealing ? undefined : state.powers });
+  return withQuestion({ ...state, deck, current, used: [...(state.used ?? []), songKeyOf(current)], stealing: false, powers: state.stealing ? undefined : state.powers, deadline: undefined, clip: undefined });
 }
 
 /**
@@ -558,4 +630,34 @@ export function upNext(state: Pick<GameState, 'players' | 'currentPlayerIndex' |
   if (steal) return state.players.find((p) => p.id === steal) ?? state.players[0];
   if (state.stealing) return state.players[state.currentPlayerIndex];
   return state.players[nextIndex(state, state.players).index];
+}
+
+const clipOf = (state: Pick<GameState, 'clip'>) => Math.max(0, Math.min(CLIPS_MS.length - 1, state.clip ?? 0));
+
+/** How long the clip plays now, in mode 'intro'. */
+export const clipMs = (state: Pick<GameState, 'clip'>) => CLIPS_MS[clipOf(state)];
+
+/** A longer clip in mode 'intro', for fewer stars. */
+export function longerClip(state: GameState): GameState {
+  if (modeOf(state) !== 'intro' || state.phase !== 'guessing' || clipOf(state) >= CLIPS_MS.length - 1) return state;
+  return { ...state, clip: clipOf(state) + 1 };
+}
+
+/** Sets the team's bet for this turn (mode 'betting'). */
+export function setBet(state: GameState, amount: number): GameState {
+  if (modeOf(state) !== 'betting' || state.phase !== 'guessing' || !Number.isFinite(amount)) return state;
+  return { ...state, bet: Math.max(0, Math.min(MAX_BET, Math.trunc(amount))) };
+}
+
+/** Starts the clock when the song starts (mode 'speed'); does nothing once it runs. */
+export function startClock(state: GameState, now: number = Date.now()): GameState {
+  if (modeOf(state) !== 'speed' || state.phase !== 'guessing' || state.deadline !== undefined) return state;
+  return { ...state, deadline: now + SPEED_MS };
+}
+
+/** The time ran out (mode 'speed'): the turn is lost. */
+export function timeUp(state: GameState, now: number = Date.now()): GameState {
+  if (modeOf(state) !== 'speed' || state.phase !== 'guessing' || state.deadline === undefined || now < state.deadline) return state;
+  const next = placeCurrent({ ...state, powers: undefined }, -1, null, now);
+  return next.lastGuess ? { ...next, lastGuess: { ...next.lastGuess, timeout: true } } : next;
 }

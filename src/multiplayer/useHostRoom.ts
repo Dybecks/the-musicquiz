@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from 'react';
-import { addSongs, applyPower, placeCurrent, type GameState, type Song } from '../game/engine';
+import { addSongs, applyPower, placeCurrent, setBet, type GameState, type Song } from '../game/engine';
 import { mergeSongs } from '../spotify/personalDeck';
 import { openHost, type HostLink, type HostStatus } from './connection';
 import {
@@ -26,6 +26,7 @@ import {
   cleanTeamName,
   teamDecision,
   powerRequest,
+  betRequest,
   teamRename,
   teamsOf,
   type ClientMessage,
@@ -171,6 +172,12 @@ export function useHostRoom(
             return;
           }
           commandHandler.current?.(msg, memberId);
+          return;
+        }
+        if (msg.type === 'bet') {
+          const r = latest.current.room;
+          const amount = r ? betRequest(r, latest.current.game, memberId, msg) : null;
+          if (amount !== null) setGame((g) => (g ? setBet(g, amount) : g));
           return;
         }
         if (msg.type === 'power') {

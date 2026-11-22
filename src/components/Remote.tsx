@@ -24,6 +24,7 @@ import { Timeline } from './Timeline';
 import { BonusQuestion } from './BonusQuestion';
 import { scoreOf, upNext } from '../game/engine';
 import { PowerUps } from './PowerUps';
+import { BetPicker, IntroInfo, SpeedClock } from './TurnExtras';
 import { msg, useT } from '../i18n';
 import { Rich } from '../i18n/Rich';
 
@@ -192,6 +193,8 @@ function Joined({
   const t = tt.remote;
   const [status, setStatus] = useState<ClientStatus>({ kind: 'connecting' });
   const [view, setView] = useState<RoomView | null>(null);
+  /** When the last view arrived here, to count down the speed round's clock on this device. */
+  const [viewAt, setViewAt] = useState(0);
   const [added, setAdded] = useState<number | null>(null);
   const link = useRef<ClientLink | null>(null);
   const me = useRef(memberId()).current;
@@ -203,7 +206,10 @@ function Joined({
         if (s.kind === 'not-found') onNotFound();
         if (s.kind === 'closed') localStorage.removeItem(REMOTE_KEY);
       },
-      onView: setView,
+      onView: (v) => {
+        setView(v);
+        setViewAt(Date.now());
+      },
       onSongsAdded: setAdded,
     });
     link.current = l;
@@ -341,6 +347,7 @@ function Joined({
   const myTurn = myTeam.id === active.id && game.phase === 'guessing';
   const host = view.members.find((m) => m.id === HOST_ID);
   const question = game.phase === 'guessing' ? game.question ?? null : null;
+  const speedDeadline = game.timeLeftMs !== undefined ? viewAt + game.timeLeftMs : null;
 
   // The votes, plus the spot the host has tapped (when the host isn't voting on this team).
   const votes = game.phase === 'guessing' ? votesBySlot(teamMembers) : undefined;
@@ -385,6 +392,11 @@ function Joined({
                   <p className="hint">{t.otherVoting(active.name)}</p>
                 )}
                 {game.stealing && <p className="steal-banner">{tt.modes.stealBanner}</p>}
+                {game.mode === 'betting' && game.bet !== undefined && (
+                  <BetPicker bet={game.bet} onSet={myTurn ? (amount) => send({ type: 'bet', amount }) : undefined} />
+                )}
+                {game.mode === 'speed' && <SpeedClock deadline={speedDeadline} />}
+                {game.mode === 'intro' && game.clipMs !== undefined && <IntroInfo clipMs={game.clipMs} />}
                 {game.mode === 'powerups' && (
                   <PowerUps game={game} onUse={myTurn ? (power, target) => send({ type: 'power', power, ...(target ? { target } : {}) }) : undefined} />
                 )}

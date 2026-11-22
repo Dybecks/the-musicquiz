@@ -5,7 +5,14 @@ import { Rich } from '../i18n/Rich';
 /** The question text for each kind of bonus question. */
 function useAsk(): (kind: QuestionKind) => string {
   const tm = useT().modes;
-  return (kind) => (kind === 'artist' ? tm.questionArtist : kind === 'title' ? tm.questionTitle : tm.questionFrom);
+  return (kind) =>
+    kind === 'artist' ? tm.questionArtist : kind === 'title' ? tm.questionTitle : kind === 'decade' ? tm.questionDecade : tm.questionFrom;
+}
+
+/** How a choice is shown: decades are stored as their first year ("1980"). */
+function useChoiceLabel(): (kind: QuestionKind, choice: string) => string {
+  const tm = useT().modes;
+  return (kind, choice) => (kind === 'decade' ? tm.decadeLabel(Number(choice)) : choice);
 }
 
 /**
@@ -21,6 +28,7 @@ export function BonusQuestion(props: {
 }) {
   const tm = useT().modes;
   const ask = useAsk();
+  const labelOf = useChoiceLabel();
   return (
     <section className="bonus-question" aria-label={tm.questionLabel}>
       <p className="bonus-label">⭐ {tm.questionLabel}</p>
@@ -37,7 +45,7 @@ export function BonusQuestion(props: {
               disabled={!props.onSelect}
               onClick={() => props.onSelect?.(props.selected === i ? null : i)}
             >
-              <span>{choice}</span>
+              <span>{labelOf(props.kind, choice)}</span>
               {voters && (
                 <span className="votes" aria-label={tm.choiceVotes(voters)}>
                   {voters.map((name, j) => (
@@ -58,7 +66,8 @@ export function BonusQuestion(props: {
 /** How the bonus question went, under the revealed song. */
 export function BonusOutcome({ result }: { result: BonusResult }) {
   const tm = useT().modes;
-  const right = result.question.choices[result.question.answer];
+  const labelOf = useChoiceLabel();
+  const right = labelOf(result.question.kind, result.question.choices[result.question.answer]);
   return (
     <p className={`bonus-outcome ${result.correct ? 'right' : 'wrong'}`}>
       {result.correct ? tm.bonusRight : <Rich text={result.pick === null ? tm.bonusNone(right) : tm.bonusWrong(right)} />}

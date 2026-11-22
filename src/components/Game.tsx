@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { addSongs, applyPower, currentPlayer, modeOf, nextTurn, placeCurrent, scoreOf, skipSong, upNext, type GameState, type LastGuess, type Player } from '../game/engine';
+import { addSongs, applyPower, clipMs, currentPlayer, longerClip, modeOf, setBet, startClock, timeUp, usesStars, nextTurn, placeCurrent, scoreOf, skipSong, upNext, type GameState, type LastGuess, type Player } from '../game/engine';
 import { fetchBatch, type RefillPlan } from '../spotify/listening';
 import {
   createEmbedPlayback,
@@ -15,6 +15,7 @@ import type { HostRoom } from '../multiplayer/useHostRoom';
 import { HOST_ID, gameView, activeVoters, hasQuestion, nextRuleOf, nextVotes, readyToLock, turnOf, votesByAnswer, votesBySlot } from '../multiplayer/protocol';
 import { BonusOutcome, BonusQuestion } from './BonusQuestion';
 import { PowerUps } from './PowerUps';
+import { BetPicker, IntroInfo, SpeedClock } from './TurnExtras';
 import { SharePanel } from './SharePanel';
 import { msg, useLang, useT } from '../i18n';
 import { SongNotFoundError } from '../spotify/playback';
@@ -208,7 +209,11 @@ export function Game({ state, mode, onModeChange, onChange, onQuit, host }: Prop
     setStarting(true);
     try {
       if (playing) await playback.pause();
-      else await playback.play();
+      else {
+        // The intro challenge always plays from the start.
+        if (intro) await seek(0);
+        await playback.play();
+      }
       if (playback.kind === 'none') setPlaying(!playing);
       setSongError(null);
     } catch (e) {
@@ -228,6 +233,46 @@ export function Game({ state, mode, onModeChange, onChange, onQuit, host }: Prop
     } catch (e) {
       setSongError(message(e));
     }
+  };
+
+  // ---- Speed round: the clock starts with the song, and the turn is lost when it runs out.
+  const gameMode = modeOf(state);
+  const latestState = useRef(state);
+  latestState.current = state;
+  useEffect(() => {
+    if (gameMode === 'speed' && playing && state.phase === 'guessing' && state.deadline === undefined) onChange(startClock(state));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gameMode, playing, state.phase, state.deadline]);
+  useEffect(() => {
+    if (gameMode !== 'speed' || state.phase !== 'guessing' || state.deadline === undefined) return;
+    const timer = setTimeout(() => {
+      const late = timeUp(latestState.current);
+      if (late !== latestState.current) {
+        void playback?.pause().catch(() => {});
+        onChange(late);
+      }
+    }, Math.max(0, state.deadline - Date.now()) + 50);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gameMode, state.phase, state.deadline]);
+
+  // ---- Intro challenge: only the clip plays, then the song pauses.
+  const intro = gameMode === 'intro' && state.phase === 'guessing';
+  const clip = clipMs(state);
+  useEffect(() => {
+    if (!intro || !playing || !playback) return;
+    const left = clip - progress.positionMs;
+    if (left <= 0) {
+      void playback.pause().catch(() => {});
+      return;
+    }
+    const timer = setTimeout(() => void playback.pause().catch(() => {}), left);
+    return () => clearTimeout(timer);
+  }, [intro, playing, playback, clip, progress.positionMs]);
+  const replayIntro = async () => {
+    if (!playback) return;
+    await seek(0);
+    if (!playing) await togglePlay();
   };
 
   // Tell the phones what happens here: the song playing, and the spot tapped.
@@ -334,6 +379,22 @@ export function Game({ state, mode, onModeChange, onChange, onQuit, host }: Prop
                   )}
                   {songError && <p className="warn">{songError}</p>}
                   {state.stealing && <p className="steal-banner">{t.modes.stealBanner}</p>}
+                  {gameMode === 'betting' && <BetPicker bet={state.bet ?? 0} onSet={(n) => onChange(setBet(state, n))} />}
+                  {gameMode === 'speed' && <SpeedClock deadline={state.deadline ?? null} />}
+                  {gameMode === 'intro' && (
+                    <IntroInfo
+                      clipMs={clip}
+                      onReplay={songStatus === 'ready' ? () => void replayIntro() : undefined}
+                      onLonger={
+                        songStatus === 'ready'
+                          ? () => {
+                              onChange(longerClip(state));
+                              void replayIntro();
+                            }
+                          : undefined
+                      }
+                    />
+                  )}
                   {modeOf(state) === 'powerups' && (
                     <PowerUps game={gameView(state)!} onUse={(power, target) => onChange(applyPower(state, power, target))} />
                   )}
@@ -482,7 +543,7 @@ export function Game({ state, mode, onModeChange, onChange, onQuit, host }: Prop
           }
           progress={progress}
           onToggle={() => void togglePlay()}
-          onSeek={songStatus === 'ready' ? (ms) => void seek(ms) : undefined}
+          onSeek={songStatus === 'ready' && !intro ? (ms) => void seek(ms) : undefined}
           onSkip={state.phase === 'guessing' ? skip : undefined}
           extra={
             mode === 'embed' && (
@@ -556,6 +617,12 @@ export function Reveal({ guess, players }: { guess: LastGuess; players: readonly
       </p>
       {bonus && <BonusOutcome result={bonus} />}
       {guess.coin && <p className="mode-note">{tm.coinEarned}</p>}
+      {guess.timeout && <p className="mode-note out">{tm.timeout}</p>}
+      {guess.fast && <p className="mode-note">{tm.fast}</p>}
+      {!!guess.bet && (
+        <p className={`mode-note ${correct ? '' : 'out'}`}>{correct ? tm.starsWon(guess.bet) : tm.starsLost(guess.bet)}</p>
+      )}
+      {guess.bet === undefined && !guess.fast && !!guess.stars && guess.stars > 0 && <p className="mode-note">{tm.introStars(guess.stars)}</p>}
       {guess.stealNext && <p className="mode-note">{tm.stealNext(nameOf(guess.stealNext))}</p>}
       {guess.eliminated && <p className="mode-note out">{tm.eliminated(nameOf(guess.playerId))}</p>}
       <div className="song-card big-card">
@@ -615,7 +682,7 @@ export function Finished({
           <h2>
             {p.name}{' '}
             <span className="muted">
-              {modeOf(state) === 'bonus' ? t.modes.points(p.timeline.length, p.stars ?? 0) : t.game.cards(p.timeline.length)}
+              {usesStars(modeOf(state)) ? t.modes.points(p.timeline.length, p.stars ?? 0) : t.game.cards(p.timeline.length)}
             </span>
           </h2>
           <Timeline cards={p.timeline} selectable={false} selectedSlot={null} onSelect={() => {}} compact />

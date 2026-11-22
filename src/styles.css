@@ -416,3 +416,14 @@ html:has(.player-bar) { scroll-padding-bottom: calc(var(--player-h) + var(--play
 .scoreboard li.out { opacity: 0.55; }
 .scoreboard .badge { margin-left: 6px; font-size: 0.75rem; }
 @media (max-width: 380px) { .power-grid { grid-template-columns: 1fr; } }
+
+/* Betting, speed round and intro challenge */
+.turn-extra { margin: 12px 0 4px; text-align: left; }
+.turn-extra .hint { margin: 6px 0 0; }
+.bet-options { display: flex; gap: 8px; }
+.bet { flex: 1; font-size: 1.2rem; font-weight: 800; padding: 10px 0; border-radius: 12px; border: 2px solid #4a4466; }
+.bet.selected { border-color: var(--accent); background: #35284f; }
+.bet:disabled { opacity: 1; cursor: default; }
+.clock { margin: 0; font-size: 1.15rem; font-weight: 800; color: var(--accent-2); }
+.speed-clock.urgent .clock { color: var(--bad); }
+.intro-buttons { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { addSongs, applyPower, canUsePower, createGame, currentPlayer, insertSorted, isCorrectPlacement, makeQuestion, nextTurn, placeCurrent, scoreOf, skipSong, spreadByDecade, type GameState, type Song } from './engine';
+import { addSongs, applyPower, canUsePower, clipMs, createGame, currentPlayer, decadeQuestion, insertSorted, isCorrectPlacement, longerClip, makeQuestion, nextTurn, placeCurrent, scoreOf, setBet, skipSong, spreadByDecade, startClock, SPEED_MS, timeUp, type GameState, type Song } from './engine';
 
 const song = (year: number, id = `s${year}`): Song => ({ id, title: `Song ${year}`, artist: 'Artist', year });
 const songs = [1960, 1970, 1980, 1990, 2000, 2010, 2020].map((y) => song(y));
@@ -335,5 +335,75 @@ describe('steal', () => {
       // One attack a turn.
       expect(canUsePower(g, 'freeze')).toBe(false);
     });
+  });
+});
+
+describe('decades, betting, speed and intro', () => {
+  const many = Array.from({ length: 20 }, (_, i): Song => ({ id: `u${i}`, title: `U${i}`, artist: `B${i}`, year: 1950 + i * 3 }));
+  const rightSlot = (g: GameState) => {
+    const tl = currentPlayer(g).timeline;
+    for (let i = 0; i <= tl.length; i++) if (isCorrectPlacement(tl, i, g.current!.year)) return i;
+    return 0;
+  };
+  const wrongSlot = (g: GameState) => {
+    const tl = currentPlayer(g).timeline;
+    for (let i = 0; i <= tl.length; i++) if (!isCorrectPlacement(tl, i, g.current!.year)) return i;
+    return 99;
+  };
+  const make = (mode: GameState['mode']) => createGame({ playerNames: ['A', 'B'], targetCards: 20, songs: many, mode });
+
+  it('asks for the decade among four in a row', () => {
+    for (const year of [1903, 1955, 1987, 2024]) {
+      for (let i = 0; i < 10; i++) {
+        const q = decadeQuestion(year, Math.random, 2026);
+        expect(q.choices[q.answer]).toBe(String(Math.floor(year / 10) * 10));
+        expect(q.choices.map(Number)).toEqual([0, 1, 2, 3].map((k) => Number(q.choices[0]) + 10 * k));
+        expect(Number(q.choices[3])).toBeLessThanOrEqual(2020);
+        expect(Number(q.choices[0])).toBeGreaterThanOrEqual(1900);
+      }
+    }
+  });
+
+  it('gives a star for the right decade', () => {
+    let g = make('decades');
+    expect(g.question?.kind).toBe('decade');
+    g = placeCurrent(g, 0, g.question!.answer);
+    expect(g.players[0].stars).toBe(1);
+  });
+
+  it('wins or loses the bet', () => {
+    let g = setBet(make('betting'), 2);
+    expect(setBet(g, 9).bet).toBe(3);
+    g = placeCurrent(g, rightSlot(g));
+    expect(g.players[0].stars).toBe(2);
+    g = nextTurn(g);
+    expect(g.bet).toBeUndefined();
+    g = placeCurrent(setBet(g, 3), wrongSlot(g));
+    expect(g.players[1].stars).toBe(-3);
+    expect(g.lastGuess?.stars).toBe(-3);
+  });
+
+  it('gives a star for a fast right answer, and loses the turn when time runs out', () => {
+    let g = startClock(make('speed'), 1000);
+    expect(g.deadline).toBe(1000 + SPEED_MS);
+    expect(startClock(g, 5000)).toBe(g);
+    const fast = placeCurrent(g, rightSlot(g), null, 2000);
+    expect(fast.lastGuess).toMatchObject({ fast: true, stars: 1 });
+    const slow = placeCurrent(g, rightSlot(g), null, 1000 + SPEED_MS - 1000);
+    expect(slow.lastGuess?.fast).toBeUndefined();
+    expect(timeUp(g, 2000)).toBe(g);
+    const late = timeUp(g, 1000 + SPEED_MS);
+    expect(late.lastGuess).toMatchObject({ correct: false, timeout: true });
+    expect(nextTurn(late).deadline).toBeUndefined();
+  });
+
+  it('gives fewer stars for a longer intro', () => {
+    let g = make('intro');
+    expect(clipMs(g)).toBe(2000);
+    const short = placeCurrent(g, rightSlot(g));
+    expect(short.players[0].stars).toBe(2);
+    g = longerClip(longerClip(longerClip(g)));
+    expect(clipMs(g)).toBe(10_000);
+    expect(placeCurrent(g, rightSlot(g)).players[0].stars ?? 0).toBe(0);
   });
 });

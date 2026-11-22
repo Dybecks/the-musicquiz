@@ -1,4 +1,4 @@
-import { POWERS, decadeOf, modeOf, type GameMode, type Power, type GameState, type LastGuess, type Phase, type Player, type QuestionKind, type Song } from '../game/engine';
+import { POWERS, asksQuestion, clipMs, decadeOf, modeOf, type GameMode, type Power, type GameState, type LastGuess, type Phase, type Player, type QuestionKind, type Song } from '../game/engine';
 
 /**
  * Shared play: the host device (the one that plays the music) opens a room
@@ -126,6 +126,12 @@ export interface GameView {
   stealing?: boolean;
   /** Power-ups used this turn (mode 'powerups'), with the decade when a hint was bought. */
   powers?: { hintDecade?: number; retry?: boolean; missedSlot?: number; attacked?: boolean };
+  /** The team's bet this turn (mode 'betting'). */
+  bet?: number;
+  /** Time left to lock in when this view was made, once the clock runs (mode 'speed'). */
+  timeLeftMs?: number;
+  /** How long the clip plays (mode 'intro'). */
+  clipMs?: number;
 }
 
 /** A bonus question as phones see it: the right answer stays on the host until the reveal. */
@@ -164,6 +170,8 @@ export type ClientMessage =
   | { type: 'team'; teamId: string | null }
   | { type: 'vote'; slot: number | null }
   | { type: 'lock'; locked: boolean }
+  /** Set the team's bet for this turn (mode 'betting'). */
+  | { type: 'bet'; amount: number }
   /** Use a power-up on the team's turn (mode 'powerups'); `target` is the team an attack is aimed at. */
   | { type: 'power'; power: Power; target?: string }
   /** A vote for an answer to the bonus question (index into its choices). */
@@ -195,11 +203,11 @@ export type HostMessage =
   | { type: 'songs-added'; added: number }
   | { type: 'closed'; reason: string };
 
-export function gameView(game: GameState | null): GameView | null {
+export function gameView(game: GameState | null, now: number = Date.now()): GameView | null {
   if (!game) return null;
   const { players, currentPlayerIndex, phase, targetCards, lastGuess, winnerIds, round } = game;
   const mode = modeOf(game);
-  const q = mode === 'bonus' && phase === 'guessing' ? game.question : null;
+  const q = asksQuestion(mode) && phase === 'guessing' ? game.question : null;
   const question = q ? { kind: q.kind, choices: q.choices } : null;
   const pw = phase === 'guessing' ? game.powers : undefined;
   const powers = pw
@@ -210,7 +218,34 @@ export function gameView(game: GameState | null): GameView | null {
         ...(pw.attacked ? { attacked: true } : {}),
       }
     : undefined;
-  return { players, currentPlayerIndex, phase, targetCards, lastGuess, winnerIds, round, mode, question, stealing: !!game.stealing, powers };
+  const guessing = phase === 'guessing';
+  return {
+    players,
+    currentPlayerIndex,
+    phase,
+    targetCards,
+    lastGuess,
+    winnerIds,
+    round,
+    mode,
+    question,
+    stealing: !!game.stealing,
+    powers,
+    ...(mode === 'betting' && guessing ? { bet: game.bet ?? 0 } : {}),
+    ...(mode === 'speed' && guessing && game.deadline !== undefined ? { timeLeftMs: Math.max(0, game.deadline - now) } : {}),
+    ...(mode === 'intro' && guessing ? { clipMs: clipMs(game) } : {}),
+  };
+}
+
+/** A member on the team whose turn it is, while it guesses. */
+const onTurn = (room: Room, game: GameState, memberId: string) =>
+  game.phase === 'guessing' && room.members.find((m) => m.id === memberId)?.teamId === game.players[game.currentPlayerIndex]?.id;
+
+/** A bet a member may set now (mode 'betting'), or null. */
+export function betRequest(room: Room, game: GameState | null, memberId: string, msg: unknown): number | null {
+  if (!game || modeOf(game) !== 'betting' || !msg || typeof msg !== 'object' || !onTurn(room, game, memberId)) return null;
+  const { amount } = msg as Record<string, unknown>;
+  return typeof amount === 'number' && Number.isFinite(amount) ? amount : null;
 }
 
 /** A power-up a member may use now: theirs is the team whose turn it is, and the message is well formed. */
@@ -282,7 +317,7 @@ function mostVoted(votes: Map<number, string[]>): number | null {
 
 /** The game has a bonus question for the current song. */
 export const hasQuestion = (game: Pick<GameState, 'mode' | 'question' | 'phase'>) =>
-  modeOf(game) === 'bonus' && game.phase === 'guessing' && !!game.question;
+  asksQuestion(modeOf(game)) && game.phase === 'guessing' && !!game.question;
 
 /** A member has voted for everything the turn asks: a spot, and an answer when there is a bonus question. */
 export const readyToLock = (m: Pick<Member, 'vote' | 'answer'>, question: boolean) =>
@@ -395,7 +430,7 @@ export function applyMessage(
     }
     return { ...room, members };
   }
-  if (i === -1 || msg.type === 'songs' || msg.type === 'team-name' || msg.type === 'next' || msg.type === 'play' || msg.type === 'power') return room;
+  if (i === -1 || msg.type === 'songs' || msg.type === 'team-name' || msg.type === 'next' || msg.type === 'play' || msg.type === 'power' || msg.type === 'bet') return room;
   const m = members[i];
   if (msg.type === 'reroll') {
     members[i] = { ...m, emoji: pickAvatar(members, Math.random, m.emoji) };
