@@ -297,8 +297,8 @@ The revealed song comes with a picture:
 Both work straight from the browser, on the host and on the phones. The lookup starts
 while the song plays, so the picture is usually ready at the reveal. When nothing is
 found, or the network fails, the reveal simply has no picture. Posters and album covers
-are copyrighted; they are shown the way Wikipedia and Spotify serve them, small and
-linked to the song, never copied into the game.
+are copyrighted; they are loaded from Wikipedia's and Spotify's own servers at reveal time
+and never copied into the game.
 
 The code: `src/facts/artwork.ts` (tested in `artwork.test.ts`) and `RevealArt` in
 `src/components/Game.tsx`.
