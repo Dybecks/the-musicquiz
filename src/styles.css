@@ -115,6 +115,8 @@ input:focus { outline: 2px solid var(--accent); border-color: transparent; }
 .verdict { font-weight: 800; font-size: 1.2rem; }
 .reveal.right .verdict { color: var(--good); }
 .reveal.wrong .verdict { color: var(--bad); }
+.reveal-art { display: block; margin: 12px auto 10px; max-width: min(200px, 60vw); max-height: 220px; width: auto; height: auto; border-radius: 12px; box-shadow: 0 6px 24px rgb(0 0 0 / 0.35); animation: pop 0.4s ease-out; }
+.reveal-art.album { aspect-ratio: 1; object-fit: cover; }
 .fun-fact { max-width: 360px; margin: 14px auto 0; text-align: left; font-size: 0.92rem; line-height: 1.45; animation: pop 0.3s ease-out; }
 .fun-fact p { margin: 0 0 6px; }
 .fun-fact .fun-fact-label { color: var(--accent-2); font-weight: 800; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; }
@@ -274,6 +276,7 @@ input:focus { outline: 2px solid var(--accent); border-color: transparent; }
   .big-card .year { font-size: 1.5rem; }
   .song-card { padding: 6px 12px; }
   .slot { padding: 6px; }
+  .reveal-art { max-height: 120px; margin: 8px auto 6px; }
 }
 
 /* Big tablets and desktops: a bit more room to breathe. */
@@ -282,7 +285,7 @@ input:focus { outline: 2px solid var(--accent); border-color: transparent; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .vinyl.spinning, .song-card.new { animation: none; }
+  .vinyl.spinning, .song-card.new, .reveal-art { animation: none; }
   button { transition: none; }
 }
 
