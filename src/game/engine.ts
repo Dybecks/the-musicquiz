@@ -157,8 +157,9 @@ export interface GameState {
   /** Songs already dealt (as `songKey`s), so songs fetched later don't repeat them. */
   used?: string[];
   /**
-   * Songs placed wrong and on nobody's timeline. When the deck runs out they
-   * are shuffled back in, so the game goes on until a team reaches the target.
+   * Songs placed wrong and on nobody's timeline. When the deck runs out and
+   * the list has no more songs to fetch, they are shuffled back in, so the
+   * game goes on until a team reaches the target.
    */
   missed?: Song[];
   /** Missing in games saved before there were modes: 'classic'. */
@@ -637,24 +638,27 @@ function missedSongs(state: Pick<GameState, 'missed' | 'players'>): Song[] {
   return out;
 }
 
-/** An empty deck gets the songs placed wrong back, shuffled. */
+/**
+ * A last resort: an empty deck from a list with nothing more to fetch gets
+ * the songs placed wrong back, shuffled.
+ */
 function withMissedBack(state: GameState, rng: Rng = Math.random): GameState {
-  if (state.deck.length > 0) return state;
+  if (state.deck.length > 0 || state.refill) return state;
   const back = missedSongs(state);
   return back.length ? { ...state, deck: shuffle(back, rng), missed: [] } : state;
 }
 
 /**
- * The deck is empty, no song placed wrong can come back, and more songs are
- * being fetched: the next turn waits for them instead of ending the game.
+ * The deck is empty and more songs are being fetched from the list (a
+ * playlist): the next turn waits for new songs instead of ending the game.
  */
-export const waitingForSongs = (state: Pick<GameState, 'deck' | 'missed' | 'players' | 'refill' | 'winnerIds'>) =>
-  state.winnerIds.length === 0 && state.deck.length === 0 && !!state.refill && missedSongs(state).length === 0;
+export const waitingForSongs = (state: Pick<GameState, 'deck' | 'refill' | 'winnerIds'>) =>
+  state.winnerIds.length === 0 && state.deck.length === 0 && !!state.refill;
 
 /**
- * Only when there are no songs left at all, not even ones placed wrong to
- * play again, does the game end before a team reaches the target: then the
- * most cards win.
+ * Only when there are no songs left at all, no new ones to fetch and no
+ * ones placed wrong to play again, does the game end before a team reaches
+ * the target: then the most cards win.
  */
 function finishByMostCards(state: GameState): GameState {
   const left = state.players.filter((p) => !p.out);

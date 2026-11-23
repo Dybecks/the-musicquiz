@@ -20,9 +20,12 @@ It runs in the browser on a phone, tablet or laptop that everyone gathers around
    wrong one discards it and shows where it really belonged. Songs from the same
    year as a neighbouring card count as correct on either side.
 6. Play passes to the next player. The first to reach the target (10 cards by default)
-   wins, in every game mode. If the deck runs out first, the songs that were placed wrong
-   are shuffled back in and play goes on; while a playlist is still fetching more songs,
-   the next turn waits for them. Only when no song is left at all does the most cards win.
+   wins, in every game mode. Games from Spotify playlists keep fetching new songs from the
+   chosen playlists as the deck runs low, and if the deck empties before they arrive the
+   next song waits for them. Ready-made and genre lists put all their songs in the deck
+   from the start. Only when a list has no new songs left are the songs that were placed
+   wrong shuffled back in, and only when there are none of those either does the most
+   cards win.
 
 Use **Skip song** if a track can't be found or played; it draws a new song
 without using up the turn. The game is saved in the browser, so a reload doesn't lose it.

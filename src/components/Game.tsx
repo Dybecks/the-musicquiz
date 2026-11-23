@@ -37,7 +37,7 @@ type SongStatus = 'loading' | 'ready' | 'error';
 const message = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
 /** Fetch more songs when this few are left in the deck. */
-const REFILL_AT = 4;
+const REFILL_AT = 6;
 
 /**
  * Keeps the deck topped up for lists that are fetched a few songs at a
@@ -302,11 +302,19 @@ export function Game({ state, mode, onModeChange, onChange, onQuit, host }: Prop
     setSelectedAnswer(null);
   };
 
+  // The deck ran out while more songs are being fetched: the next song comes as soon as they arrive.
+  const [awaitingSongs, setAwaitingSongs] = useState(false);
   const next = () => {
     void playback?.stop();
     setPlaying(false);
+    if (waitingForSongs(state)) return setAwaitingSongs(true);
+    setAwaitingSongs(false);
     onChange(nextTurn(state));
   };
+  useEffect(() => {
+    if (awaitingSongs && state.phase === 'revealed' && !waitingForSongs(state)) next();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [awaitingSongs, state.deck.length, state.refill]);
 
   // What the phones ask for: the next song after the reveal, play and pause.
   const commands = useRef({ state, playing, ready: false, next, togglePlay });
@@ -566,7 +574,7 @@ export function Game({ state, mode, onModeChange, onChange, onQuit, host }: Prop
       )}
 
       {refillNote && <p className="hint center">{refillNote}</p>}
-      {state.phase === 'revealed' && waitingForSongs(state) && <p className="hint center">{tg.waitingForSongs}</p>}
+      {state.phase === 'revealed' && awaitingSongs && <p className="hint center">{tg.waitingForSongs}</p>}
       <footer className="game-footer">
         <span className="muted">
           {tg.round(state.round)} · {state.refill ? tg.moreOnTheWay : tg.songsLeft(state.deck.length)}

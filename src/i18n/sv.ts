@@ -227,7 +227,7 @@ export const sv: Messages = {
     spotifyShowsTitle: 'Spotify-spelaren visar titeln. Använd den om Spela-knappen inte fungerar.',
     round: (n) => `Runda ${n}`,
     moreOnTheWay: 'fler låtar på väg',
-    waitingForSongs: 'Hämtar fler låtar, försök igen om en liten stund.',
+    waitingForSongs: 'Hämtar fler låtar från din lista… nästa startar så fort de är här.',
     songsLeft: (n) => `${n} låtar kvar`,
     endGame: 'Avsluta spelet',
     confirmEnd: 'Avsluta spelet? Ställningen försvinner.',

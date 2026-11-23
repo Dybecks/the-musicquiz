@@ -106,6 +106,17 @@ describe('game flow', () => {
     expect(g.winnerIds).toEqual(['p1']);
   });
 
+  it('fetches new songs before playing missed ones again', () => {
+    let g: GameState = { ...createGame({ playerNames: ['A', 'B'], targetCards: 99, songs: songs.slice(0, 3), rng: noShuffle }), refill: { more: true } };
+    g = placeCurrent(g, 99); // wrong: the only song left is missed
+    expect(waitingForSongs(g)).toBe(true);
+    expect(nextTurn(g)).toBe(g);
+    // The playlist has nothing more: now the missed song comes back.
+    g = nextTurn({ ...g, refill: undefined });
+    expect(g.phase).toBe('guessing');
+    expect(g.current?.id).toBe(songs[2].id);
+  });
+
   it('waits for more songs when the deck is empty and a list is still fetching', () => {
     let g: GameState = { ...createGame({ playerNames: ['A', 'B'], targetCards: 99, songs: songs.slice(0, 3), rng: noShuffle }), refill: { more: true } };
     const start = g.players[0].timeline[0].year;

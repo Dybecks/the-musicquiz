@@ -234,7 +234,7 @@ export const en = {
     spotifyShowsTitle: 'The Spotify player shows the title. Use it if the Play button doesn’t work.',
     round: (n: number) => `Round ${n}`,
     moreOnTheWay: 'more songs on the way',
-    waitingForSongs: 'Fetching more songs, try again in a moment.',
+    waitingForSongs: 'Fetching more songs from your list… the next one starts as soon as they arrive.',
     songsLeft: (n: number) => `${n} songs left`,
     endGame: 'End game',
     confirmEnd: 'End this game? Progress will be lost.',
