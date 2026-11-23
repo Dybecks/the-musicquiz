@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { addSongs, applyPower, clipMs, currentPlayer, longerClip, modeOf, setBet, startClock, timeUp, usesStars, nextTurn, placeCurrent, scoreOf, skipSong, upNext, type GameState, type LastGuess, type Player } from '../game/engine';
+import { addSongs, applyPower, clipMs, currentPlayer, longerClip, modeOf, setBet, startClock, timeUp, usesStars, nextTurn, placeCurrent, scoreOf, skipSong, upNext, waitingForSongs, type GameState, type LastGuess, type Player } from '../game/engine';
 import { fetchBatch, type RefillPlan } from '../spotify/listening';
 import {
   createEmbedPlayback,
@@ -566,6 +566,7 @@ export function Game({ state, mode, onModeChange, onChange, onQuit, host }: Prop
       )}
 
       {refillNote && <p className="hint center">{refillNote}</p>}
+      {state.phase === 'revealed' && waitingForSongs(state) && <p className="hint center">{tg.waitingForSongs}</p>}
       <footer className="game-footer">
         <span className="muted">
           {tg.round(state.round)} · {state.refill ? tg.moreOnTheWay : tg.songsLeft(state.deck.length)}

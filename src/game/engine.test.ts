@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { addSongs, applyPower, canUsePower, clipMs, createGame, currentPlayer, decadeQuestion, insertSorted, isCorrectPlacement, longerClip, makeQuestion, nextTurn, placeCurrent, scoreOf, setBet, skipSong, spreadByDecade, startClock, SPEED_MS, timeUp, type GameState, type Song } from './engine';
+import { addSongs, applyPower, canUsePower, clipMs, createGame, currentPlayer, GAME_MODES, decadeQuestion, insertSorted, isCorrectPlacement, longerClip, makeQuestion, nextTurn, placeCurrent, scoreOf, setBet, skipSong, spreadByDecade, startClock, SPEED_MS, timeUp, waitingForSongs, type GameState, type Song } from './engine';
 
 const song = (year: number, id = `s${year}`): Song => ({ id, title: `Song ${year}`, artist: 'Artist', year });
 const songs = [1960, 1970, 1980, 1990, 2000, 2010, 2020].map((y) => song(y));
@@ -66,11 +66,55 @@ describe('game flow', () => {
     expect(g.phase).toBe('finished');
   });
 
-  it('ends with the most cards when the deck runs out', () => {
+  it('shuffles the songs placed wrong back in when the deck runs out, instead of ending', () => {
     let g = createGame({ playerNames: ['A', 'B'], targetCards: 99, songs: songs.slice(0, 3), rng: noShuffle });
+    const missed = g.current!;
     g = nextTurn(placeCurrent(g, 99)); // invalid slot = wrong guess, deck now empty
+    expect(g.phase).toBe('guessing');
+    expect(g.currentPlayerIndex).toBe(1);
+    expect(g.current?.id).toBe(missed.id);
+  });
+
+  it('plays on until a team reaches the target, however small the deck', () => {
+    for (const mode of GAME_MODES) {
+      let g = createGame({ playerNames: ['A', 'B'], targetCards: 4, songs: songs.slice(0, 6), mode, rng: noShuffle });
+      for (let turn = 0; turn < 200 && g.phase !== 'finished'; turn++) {
+        if (g.phase === 'guessing') {
+          const p = currentPlayer(g);
+          // Team B always misses; team A gets every second song right.
+          const right = p.id === 'p1' && turn % 4 === 0;
+          const slot = right ? p.timeline.filter((s) => s.year < g.current!.year).length : 99;
+          g = placeCurrent(g, slot);
+        } else g = nextTurn(g);
+      }
+      if (mode === 'sudden') {
+        // B is out after its first miss, so A is the last team left.
+        expect(g.winnerIds).toEqual(['p1']);
+        continue;
+      }
+      expect(g.phase, mode).toBe('finished');
+      expect(g.winnerIds, mode).toEqual(['p1']);
+      expect(scoreOf(g.players[0]), mode).toBeGreaterThanOrEqual(4);
+    }
+  });
+
+  it('ends with the most cards only when no song is left at all', () => {
+    let g = createGame({ playerNames: ['A', 'B'], targetCards: 99, songs: songs.slice(0, 3), rng: noShuffle });
+    const start = g.players[0].timeline[0].year;
+    g = nextTurn(placeCurrent(g, g.current!.year < start ? 0 : 1)); // right, deck now empty
     expect(g.phase).toBe('finished');
-    expect(g.winnerIds).toEqual(['p1', 'p2']);
+    expect(g.winnerIds).toEqual(['p1']);
+  });
+
+  it('waits for more songs when the deck is empty and a list is still fetching', () => {
+    let g: GameState = { ...createGame({ playerNames: ['A', 'B'], targetCards: 99, songs: songs.slice(0, 3), rng: noShuffle }), refill: { more: true } };
+    const start = g.players[0].timeline[0].year;
+    g = placeCurrent(g, g.current!.year < start ? 0 : 1);
+    expect(waitingForSongs(g)).toBe(true);
+    expect(nextTurn(g)).toBe(g);
+    g = nextTurn(addSongs(g, [song(1999, 'late')], undefined));
+    expect(g.phase).toBe('guessing');
+    expect(g.current?.id).toBe('late');
   });
 
   it('skipSong swaps the current song without changing the player', () => {
