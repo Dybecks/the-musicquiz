@@ -156,6 +156,12 @@ export interface GameState {
   refill?: unknown;
   /** Songs already dealt (as `songKey`s), so songs fetched later don't repeat them. */
   used?: string[];
+  /**
+   * Songs placed wrong and on nobody's timeline. When the deck runs out and
+   * the list has no more songs to fetch, they are shuffled back in, so the
+   * game goes on until a team reaches the target.
+   */
+  missed?: Song[];
   /** Missing in games saved before there were modes: 'classic'. */
   mode?: GameMode;
   /** The bonus question about `current`, in mode 'bonus' (null when no good one could be made). */
@@ -419,10 +425,12 @@ export function placeCurrent(state: GameState, slot: number, pick: number | null
     if (eliminated) next = { ...next, out: true };
     return next;
   });
+  const missed = correct ? state.missed : [...(state.missed ?? []), song];
   const stealer = mode === 'steal' && !correct && !state.stealing ? players[nextIndex(state, players).index] : null;
   return {
     ...state,
     players,
+    ...(missed ? { missed } : {}),
     phase: 'revealed',
     lastGuess: {
       playerId: player.id,
@@ -480,6 +488,8 @@ function nextIndex(state: Pick<GameState, 'currentPlayerIndex' | 'round'>, playe
 export function nextTurn(state: GameState): GameState {
   if (state.phase !== 'revealed') return state;
   if (state.winnerIds.length > 0) return { ...state, phase: 'finished', current: null, question: null };
+  // More songs are on the way: wait for them rather than end the game.
+  if (waitingForSongs(state)) return state;
   const steal = state.lastGuess?.stealNext;
   if (steal) {
     // The same song, for the next team to steal.
@@ -499,7 +509,8 @@ export function nextTurn(state: GameState): GameState {
 }
 
 /** The next song, for the next player (or with `advance` false, the same one again). */
-function drawFor(state: GameState, advance: boolean): GameState {
+function drawFor(from: GameState, advance: boolean): GameState {
+  const state = withMissedBack(from);
   const deck = state.deck.slice();
   const current = deck.shift() ?? null;
   if (!current) return finishByMostCards(state);
@@ -582,8 +593,10 @@ export function attackTargets(state: Pick<GameState, 'players' | 'currentPlayerI
 export const decadeOf = (year: number) => Math.floor(year / 10) * 10;
 
 /** Swap the current song for a new one without using up the turn (e.g. track not found on Spotify). */
-export function skipSong(state: GameState): GameState {
-  if (state.phase !== 'guessing') return state;
+export function skipSong(from: GameState): GameState {
+  if (from.phase !== 'guessing') return from;
+  if (waitingForSongs(from)) return from;
+  const state = withMissedBack(from);
   const deck = state.deck.slice();
   const current = deck.shift() ?? null;
   if (!current) return finishByMostCards(state);
@@ -612,6 +625,41 @@ export function addSongs(state: GameState, songs: readonly Song[], refill: unkno
   return next.phase === 'guessing' && next.question === null ? withQuestion(next, rng) : next;
 }
 
+/** Songs placed wrong that no team holds, each once. */
+function missedSongs(state: Pick<GameState, 'missed' | 'players'>): Song[] {
+  const held = new Set(state.players.flatMap((p) => p.timeline.map(songKeyOf)));
+  const out: Song[] = [];
+  for (const s of state.missed ?? []) {
+    const key = songKeyOf(s);
+    if (held.has(key)) continue;
+    held.add(key);
+    out.push(s);
+  }
+  return out;
+}
+
+/**
+ * A last resort: an empty deck from a list with nothing more to fetch gets
+ * the songs placed wrong back, shuffled.
+ */
+function withMissedBack(state: GameState, rng: Rng = Math.random): GameState {
+  if (state.deck.length > 0 || state.refill) return state;
+  const back = missedSongs(state);
+  return back.length ? { ...state, deck: shuffle(back, rng), missed: [] } : state;
+}
+
+/**
+ * The deck is empty and more songs are being fetched from the list (a
+ * playlist): the next turn waits for new songs instead of ending the game.
+ */
+export const waitingForSongs = (state: Pick<GameState, 'deck' | 'refill' | 'winnerIds'>) =>
+  state.winnerIds.length === 0 && state.deck.length === 0 && !!state.refill;
+
+/**
+ * Only when there are no songs left at all, no new ones to fetch and no
+ * ones placed wrong to play again, does the game end before a team reaches
+ * the target: then the most cards win.
+ */
 function finishByMostCards(state: GameState): GameState {
   const left = state.players.filter((p) => !p.out);
   const most = Math.max(...(left.length ? left : state.players).map(scoreOf));
