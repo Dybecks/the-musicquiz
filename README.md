@@ -1,5 +1,7 @@
 # The Music Quiz
 
+**▶ Play it here: <https://dybecks.github.io/the-musicquiz/>**
+
 A party game about music history. A mystery song plays, and the player or team
 whose turn it is places it on their timeline: before, after or between the
 years they already have. Get it right and the card joins the timeline, so every
