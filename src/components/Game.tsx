@@ -10,6 +10,7 @@ import {
 } from '../spotify/playback';
 import { hideNowPlaying, primeNowPlaying, showNowPlaying, unprimeNowPlaying } from '../spotify/nowPlaying';
 import { loadFact, type SongFact } from '../facts';
+import { loadArtwork, type Artwork } from '../facts/artwork';
 import { Timeline } from './Timeline';
 import type { HostRoom } from '../multiplayer/useHostRoom';
 import { HOST_ID, gameView, activeVoters, hasQuestion, nextRuleOf, nextVotes, readyToLock, turnOf, votesByAnswer, votesBySlot } from '../multiplayer/protocol';
@@ -173,9 +174,12 @@ export function Game({ state, mode, onModeChange, onChange, onQuit, host }: Prop
   }, [hidden, playing, songId]);
   useEffect(() => () => showNowPlaying(), []);
 
-  // Look up the fun fact while the song plays, so it's ready at the reveal.
+  // Look up the fun fact and the picture while the song plays, so they're ready at the reveal.
   useEffect(() => {
-    if (songId && state.current) void loadFact(state.current);
+    if (songId && state.current) {
+      void loadFact(state.current);
+      void loadArtwork(state.current);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [songId]);
 
@@ -625,6 +629,7 @@ export function Reveal({ guess, players }: { guess: LastGuess; players: readonly
       {guess.bet === undefined && !guess.fast && !!guess.stars && guess.stars > 0 && <p className="mode-note">{tm.introStars(guess.stars)}</p>}
       {guess.stealNext && <p className="mode-note">{tm.stealNext(nameOf(guess.stealNext))}</p>}
       {guess.eliminated && <p className="mode-note out">{tm.eliminated(nameOf(guess.playerId))}</p>}
+      <RevealArt song={song} />
       <div className="song-card big-card">
         <span className="year">{song.year}</span>
         <span className="title">{song.title}</span>
@@ -635,6 +640,34 @@ export function Reveal({ guess, players }: { guess: LastGuess; players: readonly
       </div>
       <FunFact song={song} />
     </div>
+  );
+}
+
+/**
+ * The picture for the revealed song: the film, show, game or musical for
+ * soundtracks, else the album cover. Shows nothing until found, or if none is.
+ */
+function RevealArt({ song }: { song: GameState['deck'][number] }) {
+  const t = useT();
+  const [art, setArt] = useState<{ id: string; art: Artwork | null } | null>(null);
+  const [broken, setBroken] = useState<string | null>(null);
+  useEffect(() => {
+    let live = true;
+    loadArtwork(song).then((a) => live && setArt({ id: song.id, art: a }));
+    return () => {
+      live = false;
+    };
+  }, [song]);
+  if (!art || art.id !== song.id || !art.art || broken === art.art.url) return null;
+  const { url, kind } = art.art;
+  return (
+    <img
+      className={`reveal-art ${kind}`}
+      src={url}
+      alt={kind === 'work' && song.from ? t.game.artWork(song.from) : t.game.artAlbum(song.title, song.artist)}
+      referrerPolicy="no-referrer"
+      onError={() => setBroken(url)}
+    />
   );
 }
 

@@ -233,6 +233,8 @@ export const sv: Messages = {
     correct: 'Rätt! Kortet är ditt.',
     wrong: 'Inte riktigt. Kortet kastas.',
     fromWork: (from) => ` · från ${from}`,
+    artWork: (from) => `Bild från ${from}`,
+    artAlbum: (title, artist) => `Skivomslaget till ${title} med ${artist}`,
     didYouKnow: 'Visste du att…',
     aboutSong: 'Om låten',
     aboutArtist: 'Om artisten',

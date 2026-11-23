@@ -279,6 +279,30 @@ the browser.
 The code: `src/facts/index.ts` (picks the fact), `src/facts/wikipedia.ts` (the lookup,
 tested in `wikipedia.test.ts`) and `src/data/facts.ts` (the written facts).
 
+## Pictures at the reveal
+
+The revealed song comes with a picture:
+
+- **Soundtrack songs** (film, TV, game and musical decks) show the work's main image on
+  English Wikipedia, usually its poster, cover art or logo. The article must be titled like
+  the work, be described as a film, show, game or stage work, and not be about another year,
+  so "Barbie" shows the 2023 film rather than the doll, and the 1982 Knight Rider isn't
+  shown the 2008 remake. About 150 of the 158 works in the decks get one; the rest (shows
+  like Friends whose infobox image is a wide logo that Wikipedia doesn't offer as the page
+  image) fall back to the album cover, which for soundtracks is usually the soundtrack's
+  cover art anyway.
+- **Every other song**, including your own lists, shows its album cover from Spotify's
+  public oEmbed endpoint. It needs no login and doesn't count toward the Spotify API quota.
+
+Both work straight from the browser, on the host and on the phones. The lookup starts
+while the song plays, so the picture is usually ready at the reveal. When nothing is
+found, or the network fails, the reveal simply has no picture. Posters and album covers
+are copyrighted; they are loaded from Wikipedia's and Spotify's own servers at reveal time
+and never copied into the game.
+
+The code: `src/facts/artwork.ts` (tested in `artwork.test.ts`) and `RevealArt` in
+`src/components/Game.tsx`.
+
 ## Languages
 
 The whole site is in English and Swedish. The **EN / SV** switch in the top corner changes

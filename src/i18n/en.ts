@@ -240,6 +240,8 @@ export const en = {
     correct: 'Correct! The card is yours.',
     wrong: 'Not quite. The card is discarded.',
     fromWork: (from: string) => ` · from ${from}`,
+    artWork: (from: string) => `Picture of ${from}`,
+    artAlbum: (title: string, artist: string) => `Album cover for ${title} by ${artist}`,
     didYouKnow: 'Did you know?',
     aboutSong: 'About the song',
     aboutArtist: 'About the artist',
