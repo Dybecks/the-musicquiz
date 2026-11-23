@@ -30,7 +30,7 @@ export interface CatalogRow {
   from?: string;
 }
 
-export type BuiltInDeckId = 'classic' | 'movies' | 'musicals' | 'tv' | 'games';
+export type BuiltInDeckId = 'classic' | 'swedish' | 'party' | 'summer' | 'love' | 'movies' | 'musicals' | 'tv' | 'games';
 
 export const CATALOG_ROWS = SONGS as CatalogRow[];
 export const DECK_LISTS = DECK_IDS as Record<BuiltInDeckId, string[]>;

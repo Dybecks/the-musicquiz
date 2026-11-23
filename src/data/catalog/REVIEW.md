@@ -2,7 +2,7 @@
 
 Written by `scripts/spotify-precompute.ts` from `songs.json` and `decks.json`.
 
-Songs with a Spotify id: **1070 of 2008**. classic 160, movies 49, musicals 45, tv 33, games 37.
+Songs with a Spotify id: **1070 of 2008**. classic 160, movies 49, musicals 45, tv 33, games 37, swedish 50, party 45, summer 40, love 36.
 
 ## Not looked up yet
 

@@ -1,5 +1,7 @@
 # The Music Quiz
 
+**▶ Play it here: <https://dybecks.github.io/the-musicquiz/>**
+
 A party game about music history. A mystery song plays, and the player or team
 whose turn it is places it on their timeline: before, after or between the
 years they already have. Get it right and the card joins the timeline, so every
@@ -17,10 +19,50 @@ It runs in the browser on a phone, tablet or laptop that everyone gathers around
 5. The song is revealed. A correct placement adds the card to your timeline; a
    wrong one discards it and shows where it really belonged. Songs from the same
    year as a neighbouring card count as correct on either side.
-6. Play passes to the next player. If the deck runs out, whoever has the most cards wins.
+6. Play passes to the next player. The first to reach the target (10 cards by default)
+   wins, in every game mode. Games from Spotify playlists keep fetching new songs from the
+   chosen playlists as the deck runs low, and if the deck empties before they arrive the
+   next song waits for them. Ready-made and genre lists put all their songs in the deck
+   from the start. Only when a list has no new songs left are the songs that were placed
+   wrong shuffled back in, and only when there are none of those either does the most
+   cards win.
 
 Use **Skip song** if a track can't be found or played; it draws a new song
 without using up the turn. The game is saved in the browser, so a reload doesn't lose it.
+
+## Game modes
+
+On the **Players & play** screen the host picks a game mode:
+
+- **Classic**: the game as described above.
+- **Bonus questions**: while the song plays, the team also answers a multiple-choice
+  question about it: who performs it, what it's called, or for soundtrack songs which film,
+  show, game or musical it's from. A right answer gives a ⭐ bonus point, and cards plus
+  stars count toward the target. The questions are made from the song catalogue: the
+  wrong answers are other songs' artists, titles or works, preferably from nearby years, so
+  every deck works without writing questions by hand. With phones, every team member votes
+  for an answer as well as a spot, and the answer with the most votes counts.
+- **Steal**: a song placed wrong goes to the next team, who can steal it by placing it right
+  on their own timeline. Then they play their own turn as usual.
+- **Power-ups**: every team starts with one 🪙 coin and earns one per right placement. On
+  their turn, before locking in, they can buy a 💡 hint (the song's decade, 1 coin), a 🔁
+  second chance (one more try after a miss, 2), or one attack: 🧊 freeze another team so it
+  misses its next turn (2), or 🫳 grab a random card from another team's timeline (3; they
+  keep at least one). Phones on the team whose turn it is can buy them too.
+- **Sudden death**: one wrong placement and the team is out. The last team left wins, or the
+  first to reach the target.
+- **Decade duel**: the team also guesses which decade the song is from, among four in a row.
+  A right guess gives a ⭐.
+- **Betting**: before locking in, the team bets 0 to 3 ⭐ on how sure it is. A right placement
+  wins the bet, a wrong one loses it (stars can go below zero).
+- **Speed round**: 30 seconds to lock in from when the song starts. When the time runs out
+  the turn is lost; a right placement with 15 seconds or more left gives a ⭐.
+- **Intro challenge**: only the first 2 seconds play, and a right placement gives 2 ⭐ on top
+  of the card. The host can play the intro again, or a longer clip (5 s for 1 ⭐, 10 s for none).
+
+In the modes with ⭐, cards plus stars count toward the target.
+
+The rules are in `src/game/engine.ts` (`GameMode`, `makeQuestion`, `scoreOf`, `applyPower`, `nextTurn`).
 
 ## Playing together on phones
 
@@ -90,12 +132,18 @@ shuffled together, and a song that appears in two decks is only used once.
 | Deck | Songs | Range |
 | --- | --- | --- |
 | Classic hits | 160 | Well-known songs from the 1950s to today |
+| Swedish favourites | 50 | Swedish artists, from Jan Johansson (1964) to Loreen (2023) |
+| Party anthems | 45 | Disco, dance and floor-fillers, The O'Jays (1972) to Kylie Minogue (2023) |
+| Summer hits | 40 | Sunny songs, from Brian Hyland (1960) to Shaboozey (2024) |
+| Love songs | 36 | Ballads and love songs, Ella & Louis (1950) to Lady Gaga & Bruno Mars (2024) |
 | Movie songs | 49 | The Wizard of Oz (1939) to Barbie (2023) |
 | Musicals | 45 | Oklahoma! (1943) to Beetlejuice (2019) |
 | TV themes | 33 | Peter Gunn (1958) to Arcane (2021) |
 | Video game music | 38 | Super Mario Bros. (1985) to Baldur's Gate 3 (2023) |
 
 All decks are lists of songs from the song catalogue (see **The song catalogue** below).
+The four theme decks (Swedish, party, summer, love) may share songs with each other and
+with Classic hits; a song in two ticked decks is still only played once.
 The four soundtrack decks only hold songs written
 for the film, show, game or musical, so the year on the card is the year that work first
 came out: the film's release, the show's premiere, the game's first release, or the
@@ -247,6 +295,32 @@ the browser.
 
 The code: `src/facts/index.ts` (picks the fact), `src/facts/wikipedia.ts` (the lookup,
 tested in `wikipedia.test.ts`) and `src/data/facts.ts` (the written facts).
+
+## Pictures at the reveal
+
+The revealed song comes with a picture:
+
+- **Soundtrack songs** (film, TV, game and musical decks) show the work's main image on
+  English Wikipedia, usually its poster, cover art or logo. The article must be titled like
+  the work, be described as a film, show, game or stage work, and not be about another year,
+  so "Barbie" shows the 2023 film rather than the doll, and the 1982 Knight Rider isn't
+  shown the 2008 remake. About 150 of the 158 works in the decks get one; the rest (shows
+  like Friends whose infobox image is a wide logo that Wikipedia doesn't offer as the page
+  image) fall back to the album cover, which for soundtracks is usually the soundtrack's
+  cover art anyway.
+- **Every other song**, including your own lists, shows its album cover from Spotify's
+  public oEmbed endpoint. It needs no login and doesn't count toward the Spotify API quota.
+
+The same picture shows as a small thumbnail on the right of every card on the timelines.
+
+Both work straight from the browser, on the host and on the phones. The lookup starts
+while the song plays, so the picture is usually ready at the reveal. When nothing is
+found, or the network fails, the reveal simply has no picture. Posters and album covers
+are copyrighted; they are loaded from Wikipedia's and Spotify's own servers at reveal time
+and never copied into the game.
+
+The code: `src/facts/artwork.ts` (tested in `artwork.test.ts`) and
+`src/components/SongArt.tsx`.
 
 ## Languages
 

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { addSongs, currentPlayer, nextTurn, placeCurrent, skipSong, type GameState } from '../game/engine';
+import { addSongs, applyPower, clipMs, currentPlayer, longerClip, modeOf, setBet, startClock, timeUp, usesStars, nextTurn, placeCurrent, scoreOf, skipSong, upNext, waitingForSongs, type GameState, type LastGuess, type Player } from '../game/engine';
 import { fetchBatch, type RefillPlan } from '../spotify/listening';
 import {
   createEmbedPlayback,
@@ -10,12 +10,18 @@ import {
 } from '../spotify/playback';
 import { hideNowPlaying, primeNowPlaying, showNowPlaying, unprimeNowPlaying } from '../spotify/nowPlaying';
 import { loadFact, type SongFact } from '../facts';
+import { loadArtwork } from '../facts/artwork';
+import { SongArt } from './SongArt';
 import { Timeline } from './Timeline';
 import type { HostRoom } from '../multiplayer/useHostRoom';
-import { HOST_ID, activeVoters, nextRuleOf, nextVotes, turnOf, votesBySlot } from '../multiplayer/protocol';
+import { HOST_ID, gameView, activeVoters, hasQuestion, nextRuleOf, nextVotes, readyToLock, turnOf, votesByAnswer, votesBySlot } from '../multiplayer/protocol';
+import { BonusOutcome, BonusQuestion } from './BonusQuestion';
+import { PowerUps } from './PowerUps';
+import { BetPicker, IntroInfo, SpeedClock } from './TurnExtras';
 import { SharePanel } from './SharePanel';
 import { msg, useLang, useT } from '../i18n';
 import { SongNotFoundError } from '../spotify/playback';
+import { PlayerBar, type Clock } from './PlayerBar';
 
 interface Props {
   state: GameState;
@@ -32,7 +38,7 @@ type SongStatus = 'loading' | 'ready' | 'error';
 const message = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
 /** Fetch more songs when this few are left in the deck. */
-const REFILL_AT = 4;
+const REFILL_AT = 6;
 
 /**
  * Keeps the deck topped up for lists that are fetched a few songs at a
@@ -70,7 +76,10 @@ export function Game({ state, mode, onModeChange, onChange, onQuit, host }: Prop
   const t = useT();
   const tg = t.game;
   const refillNote = useRefill(state, onChange);
-  const votes = host.room && state.phase === 'guessing' ? votesBySlot(activeVoters(host.room, state)) : undefined;
+  const voters = host.room && state.phase === 'guessing' ? activeVoters(host.room, state) : null;
+  const votes = voters ? votesBySlot(voters) : undefined;
+  const answerVotes = voters ? votesByAnswer(voters) : undefined;
+  const question = hasQuestion(state) ? state.question! : null;
   // The host on the team whose turn it is votes like everyone else on it.
   const hostMember = host.room?.members.find((m) => m.id === HOST_ID);
   const hostVoting = !!hostMember && state.phase === 'guessing' && hostMember.teamId === currentPlayer(state).id;
@@ -83,7 +92,11 @@ export function Game({ state, mode, onModeChange, onChange, onQuit, host }: Prop
   const [songMissing, setSongMissing] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
+  /** The answer picked here for the bonus question (mode 'bonus'). */
+  const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
+  /** The Spotify embed is opened above the bar (it shows the title). */
   const [showPlayer, setShowPlayer] = useState(false);
+  const [progress, setProgress] = useState<Clock>(() => ({ positionMs: 0, durationMs: 0, at: performance.now() }));
   /** Play was tapped and the player hasn't answered yet. */
   const [starting, setStarting] = useState(false);
   /** Bumped by "Try again" to load the song again. */
@@ -106,6 +119,7 @@ export function Game({ state, mode, onModeChange, onChange, onQuit, host }: Prop
         if (cancelled) return p.destroy();
         created = p;
         p.onStateChange(setPlaying);
+        p.onProgress((pr) => setProgress({ ...pr, at: performance.now() }));
         setPlayback(p);
       })
       .catch((e) => !cancelled && setPlaybackError(message(e)));
@@ -127,6 +141,7 @@ export function Game({ state, mode, onModeChange, onChange, onQuit, host }: Prop
     setSongMissing(false);
     setPlaying(false);
     setShowPlayer(false);
+    setProgress({ positionMs: 0, durationMs: 0, at: performance.now() });
     playback
       .prepare(state.current)
       .then(() => {
@@ -160,9 +175,12 @@ export function Game({ state, mode, onModeChange, onChange, onQuit, host }: Prop
   }, [hidden, playing, songId]);
   useEffect(() => () => showNowPlaying(), []);
 
-  // Look up the fun fact while the song plays, so it's ready at the reveal.
+  // Look up the fun fact and the picture while the song plays, so they're ready at the reveal.
   useEffect(() => {
-    if (songId && state.current) void loadFact(state.current);
+    if (songId && state.current) {
+      void loadFact(state.current);
+      void loadArtwork(state.current);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [songId]);
 
@@ -196,7 +214,11 @@ export function Game({ state, mode, onModeChange, onChange, onQuit, host }: Prop
     setStarting(true);
     try {
       if (playing) await playback.pause();
-      else await playback.play();
+      else {
+        // The intro challenge always plays from the start.
+        if (intro) await seek(0);
+        await playback.play();
+      }
       if (playback.kind === 'none') setPlaying(!playing);
       setSongError(null);
     } catch (e) {
@@ -207,6 +229,57 @@ export function Game({ state, mode, onModeChange, onChange, onQuit, host }: Prop
     }
   };
 
+  const seek = async (ms: number) => {
+    if (!playback) return;
+    // Show the new spot right away; the player's next report corrects it.
+    setProgress((p) => ({ ...p, positionMs: ms, at: performance.now() }));
+    try {
+      await playback.seek(ms);
+    } catch (e) {
+      setSongError(message(e));
+    }
+  };
+
+  // ---- Speed round: the clock starts with the song, and the turn is lost when it runs out.
+  const gameMode = modeOf(state);
+  const latestState = useRef(state);
+  latestState.current = state;
+  useEffect(() => {
+    if (gameMode === 'speed' && playing && state.phase === 'guessing' && state.deadline === undefined) onChange(startClock(state));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gameMode, playing, state.phase, state.deadline]);
+  useEffect(() => {
+    if (gameMode !== 'speed' || state.phase !== 'guessing' || state.deadline === undefined) return;
+    const timer = setTimeout(() => {
+      const late = timeUp(latestState.current);
+      if (late !== latestState.current) {
+        void playback?.pause().catch(() => {});
+        onChange(late);
+      }
+    }, Math.max(0, state.deadline - Date.now()) + 50);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gameMode, state.phase, state.deadline]);
+
+  // ---- Intro challenge: only the clip plays, then the song pauses.
+  const intro = gameMode === 'intro' && state.phase === 'guessing';
+  const clip = clipMs(state);
+  useEffect(() => {
+    if (!intro || !playing || !playback) return;
+    const left = clip - progress.positionMs;
+    if (left <= 0) {
+      void playback.pause().catch(() => {});
+      return;
+    }
+    const timer = setTimeout(() => void playback.pause().catch(() => {}), left);
+    return () => clearTimeout(timer);
+  }, [intro, playing, playback, clip, progress.positionMs]);
+  const replayIntro = async () => {
+    if (!playback) return;
+    await seek(0);
+    if (!playing) await togglePlay();
+  };
+
   // Tell the phones what happens here: the song playing, and the spot tapped.
   const { setLive } = host;
   useEffect(() => {
@@ -215,20 +288,34 @@ export function Game({ state, mode, onModeChange, onChange, onQuit, host }: Prop
   useEffect(() => () => setLive({ playing: false, hostPick: null }), [setLive]);
 
   // A new turn starts with nothing picked.
-  const turn = `${state.round}:${state.currentPlayerIndex}:${state.current?.id ?? ''}`;
-  useEffect(() => setSelectedSlot(null), [turn]);
-
-  const lockIn = () => {
-    if (selectedSlot === null) return;
-    onChange(placeCurrent(state, selectedSlot));
+  const turn = `${state.round}:${state.currentPlayerIndex}:${state.current?.id ?? ''}:${state.stealing ? 's' : ''}:${state.powers?.missedSlot ?? ''}`;
+  useEffect(() => {
     setSelectedSlot(null);
+    setSelectedAnswer(null);
+  }, [turn]);
+
+  /** Everything the turn asks for is picked here: a spot, and an answer when there is a bonus question. */
+  const picked = readyToLock({ vote: selectedSlot, answer: selectedAnswer }, !!question);
+  const lockIn = () => {
+    if (selectedSlot === null || !picked) return;
+    onChange(placeCurrent(state, selectedSlot, selectedAnswer));
+    setSelectedSlot(null);
+    setSelectedAnswer(null);
   };
 
+  // The deck ran out while more songs are being fetched: the next song comes as soon as they arrive.
+  const [awaitingSongs, setAwaitingSongs] = useState(false);
   const next = () => {
     void playback?.stop();
     setPlaying(false);
+    if (waitingForSongs(state)) return setAwaitingSongs(true);
+    setAwaitingSongs(false);
     onChange(nextTurn(state));
   };
+  useEffect(() => {
+    if (awaitingSongs && state.phase === 'revealed' && !waitingForSongs(state)) next();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [awaitingSongs, state.deck.length, state.refill]);
 
   // What the phones ask for: the next song after the reveal, play and pause.
   const commands = useRef({ state, playing, ready: false, next, togglePlay });
@@ -251,6 +338,7 @@ export function Game({ state, mode, onModeChange, onChange, onQuit, host }: Prop
     void playback?.stop();
     setPlaying(false);
     setSelectedSlot(null);
+    setSelectedAnswer(null);
     onChange(skipSong(state));
   };
 
@@ -263,7 +351,7 @@ export function Game({ state, mode, onModeChange, onChange, onQuit, host }: Prop
     }
   };
 
-  const nextPlayer = state.players[(state.currentPlayerIndex + 1) % state.players.length];
+  const nextPlayer = upNext(state);
   // With phones in the room: who else can move on.
   const phones = host.room?.members.filter((m) => m.id !== HOST_ID && m.connected).length ?? 0;
   const rule = nextRuleOf(host.room);
@@ -292,30 +380,6 @@ export function Game({ state, mode, onModeChange, onChange, onQuit, host }: Prop
 
               {state.phase === 'guessing' ? (
                 <div className="mystery">
-                  <div className={`vinyl ${playing ? 'spinning' : ''}`} aria-hidden>
-                    ?
-                  </div>
-                  <div className="mystery-actions">
-                    {mode !== 'none' && (
-                      <button className="primary" onClick={() => void togglePlay()} disabled={!playback || songStatus !== 'ready' || starting}>
-                        {playbackError
-                          ? tg.playerUnavailable
-                          : !playback
-                            ? tg.startingPlayer
-                            : songStatus === 'loading'
-                              ? tg.findingSong
-                              : starting
-                                ? tg.oneMoment
-                                : playing
-                                ? tg.pause
-                                : tg.play}
-                      </button>
-                    )}
-                    {mode === 'none' && <p className="hint">{tg.noAudio}</p>}
-                    <button className="ghost" onClick={skip}>
-                      {tg.skip}
-                    </button>
-                  </div>
                   {playbackError && (
                     <div className="warn">
                       <p>{playbackError}</p>
@@ -327,6 +391,35 @@ export function Game({ state, mode, onModeChange, onChange, onQuit, host }: Prop
                     </div>
                   )}
                   {songError && <p className="warn">{songError}</p>}
+                  {state.stealing && <p className="steal-banner">{t.modes.stealBanner}</p>}
+                  {gameMode === 'betting' && <BetPicker bet={state.bet ?? 0} onSet={(n) => onChange(setBet(state, n))} />}
+                  {gameMode === 'speed' && <SpeedClock deadline={state.deadline ?? null} />}
+                  {gameMode === 'intro' && (
+                    <IntroInfo
+                      clipMs={clip}
+                      onReplay={songStatus === 'ready' ? () => void replayIntro() : undefined}
+                      onLonger={
+                        songStatus === 'ready'
+                          ? () => {
+                              onChange(longerClip(state));
+                              void replayIntro();
+                            }
+                          : undefined
+                      }
+                    />
+                  )}
+                  {modeOf(state) === 'powerups' && (
+                    <PowerUps game={gameView(state)!} onUse={(power, target) => onChange(applyPower(state, power, target))} />
+                  )}
+                  {question && (
+                    <BonusQuestion
+                      kind={question.kind}
+                      choices={question.choices}
+                      selected={hostVoting ? (hostMember.answer ?? null) : selectedAnswer}
+                      onSelect={(choice) => (hostVoting ? host.act({ type: 'answer', choice }) : setSelectedAnswer(choice))}
+                      votes={answerVotes}
+                    />
+                  )}
                   {songStatus === 'error' && !songMissing && (
                     <p>
                       <button className="link" onClick={() => setAttempt((n) => n + 1)}>
@@ -336,7 +429,7 @@ export function Game({ state, mode, onModeChange, onChange, onQuit, host }: Prop
                   )}
                 </div>
               ) : (
-                state.lastGuess && <Reveal correct={state.lastGuess.correct} song={state.lastGuess.song} />
+                state.lastGuess && <Reveal guess={state.lastGuess} players={state.players} />
               )}
             </section>
 
@@ -350,10 +443,10 @@ export function Game({ state, mode, onModeChange, onChange, onQuit, host }: Prop
                   ) : (
                     <button
                       className="primary big"
-                      disabled={hostMember.vote === null}
+                      disabled={!readyToLock(hostMember, !!question)}
                       onClick={() => host.act({ type: 'lock', locked: true })}
                     >
-                      {hostMember.vote === null ? tg.tapToVote : tg.lockMyVote}
+                      {readyToLock(hostMember, !!question) ? tg.lockMyVote : question ? t.modes.tapToVoteBoth : tg.tapToVote}
                     </button>
                   )}
                   {host.decision.kind === 'waiting' && (
@@ -362,15 +455,17 @@ export function Game({ state, mode, onModeChange, onChange, onQuit, host }: Prop
                     </p>
                   )}
                   {host.decision.kind === 'split' && (
-                    <p className="warn center vote-status">{tg.split}</p>
+                    <p className="warn center vote-status">{question ? t.modes.split : tg.split}</p>
                   )}
                 </>
               ) : state.phase === 'guessing' ? (
                 <>
-                  <button className="primary big" disabled={selectedSlot === null} onClick={lockIn}>
-                    {selectedSlot === null
+                  <button className="primary big" disabled={!picked} onClick={lockIn}>
+                    {!picked
                       ? host.decision.kind === 'none'
-                        ? tg.pickSpot
+                        ? question
+                          ? t.modes.pickBoth
+                          : tg.pickSpot
                         : tg.waitingVotes
                       : tg.lockGuess}
                   </button>
@@ -380,13 +475,17 @@ export function Game({ state, mode, onModeChange, onChange, onQuit, host }: Prop
                     </p>
                   )}
                   {host.decision.kind === 'split' && (
-                    <p className="warn center vote-status">{tg.split}</p>
+                    <p className="warn center vote-status">{question ? t.modes.split : tg.split}</p>
                   )}
                 </>
               ) : (
                 <>
                   <button className="primary big" onClick={next}>
-                    {state.winnerIds.length ? tg.seeWinner : tg.next(nextPlayer.name)}
+                    {state.winnerIds.length
+                      ? tg.seeWinner
+                      : state.lastGuess?.stealNext
+                        ? t.modes.nextSteal(nextPlayer.name)
+                        : tg.next(nextPlayer.name)}
                   </button>
                   {nextStatus && <p className="hint center vote-status">{nextStatus}</p>}
                 </>
@@ -398,7 +497,7 @@ export function Game({ state, mode, onModeChange, onChange, onQuit, host }: Prop
             <h2>
               {tg.timeline(player.name)}{' '}
               <span className="muted">
-                ({player.timeline.length}/{state.targetCards})
+                ({scoreOf(player)}/{state.targetCards})
               </span>
             </h2>
             {state.phase === 'guessing' ? (
@@ -429,18 +528,54 @@ export function Game({ state, mode, onModeChange, onChange, onQuit, host }: Prop
 
       {state.phase !== 'finished' && <SharePanel host={host} />}
 
-      {/* The Spotify embed lives here. It stays covered so the title isn't spoiled. */}
-      <section className={`embed-wrap ${mode === 'embed' && state.phase !== 'finished' ? '' : 'hidden'}`}>
-        <div className={`embed-cover ${showPlayer || state.phase === 'revealed' ? 'off' : ''}`}>
-          <span>{tg.playerHidden}</span>
-          <button className="link" onClick={() => setShowPlayer(true)}>
-            {tg.showPlayer}
-          </button>
-        </div>
+      {/* The Spotify embed lives here, invisible above the player bar unless opened: it shows the title. */}
+      <section
+        className={`embed-wrap ${mode === 'embed' && state.phase !== 'finished' ? 'pop' : 'hidden'} ${showPlayer ? 'open' : ''}`}
+        aria-hidden={!showPlayer}
+      >
+        {state.phase === 'guessing' && <p className="hint embed-note">{tg.spotifyShowsTitle}</p>}
         <div ref={embedHost} className="embed-host" />
       </section>
 
+      {state.phase !== 'finished' && (mode !== 'none' || state.phase === 'guessing') && (
+        <PlayerBar
+          silent={mode === 'none'}
+          note={tg.noAudio}
+          playing={playing}
+          canPlay={!!playback && songStatus === 'ready' && !starting}
+          status={
+            playbackError
+              ? tg.playerUnavailable
+              : !playback
+                ? tg.startingPlayer
+                : songStatus === 'loading'
+                  ? tg.findingSong
+                  : starting
+                    ? tg.oneMoment
+                    : null
+          }
+          progress={progress}
+          onToggle={() => void togglePlay()}
+          onSeek={songStatus === 'ready' && !intro ? (ms) => void seek(ms) : undefined}
+          onSkip={state.phase === 'guessing' ? skip : undefined}
+          extra={
+            mode === 'embed' && (
+              <button
+                className={`ghost player-icon ${showPlayer ? 'selected' : ''}`}
+                onClick={() => setShowPlayer((v) => !v)}
+                aria-pressed={showPlayer}
+                aria-label={showPlayer ? tg.hideSpotify : tg.showSpotify}
+                title={showPlayer ? tg.hideSpotify : tg.showSpotify}
+              >
+                {showPlayer ? '⌄' : '⌃'}
+              </button>
+            )
+          }
+        />
+      )}
+
       {refillNote && <p className="hint center">{refillNote}</p>}
+      {state.phase === 'revealed' && awaitingSongs && <p className="hint center">{tg.waitingForSongs}</p>}
       <footer className="game-footer">
         <span className="muted">
           {tg.round(state.round)} · {state.refill ? tg.moreOnTheWay : tg.songsLeft(state.deck.length)}
@@ -454,14 +589,29 @@ export function Game({ state, mode, onModeChange, onChange, onQuit, host }: Prop
 }
 
 export function Scoreboard({ state }: { state: Pick<GameState, 'players' | 'currentPlayerIndex' | 'phase' | 'targetCards'> }) {
+  const t = useT();
   return (
     <ol className="scoreboard">
       {state.players.map((p, i) => (
-        <li key={p.id} className={i === state.currentPlayerIndex && state.phase !== 'finished' ? 'active' : ''}>
-          <span className="name">{p.name}</span>
+        <li key={p.id} className={`${i === state.currentPlayerIndex && state.phase !== 'finished' ? 'active' : ''} ${p.out ? 'out' : ''}`}>
+          <span className="name">
+            {p.name}
+            {p.out && <span className="badge">💀 {t.modes.outTag}</span>}
+            {p.frozen && <span className="badge">🧊 {t.modes.frozenTag}</span>}
+          </span>
           <span className="count">
-            {p.timeline.length}
+            {scoreOf(p)}
             <span className="muted">/{state.targetCards}</span>
+            {!!p.stars && (
+              <span className="stars" title={t.modes.stars(p.stars)} aria-label={t.modes.stars(p.stars)}>
+                {' '}⭐{p.stars}
+              </span>
+            )}
+            {p.coins !== undefined && (
+              <span className="stars" title={t.modes.coins(p.coins)} aria-label={t.modes.coins(p.coins)}>
+                {' '}🪙{p.coins}
+              </span>
+            )}
           </span>
         </li>
       ))}
@@ -469,11 +619,27 @@ export function Scoreboard({ state }: { state: Pick<GameState, 'players' | 'curr
   );
 }
 
-export function Reveal({ correct, song }: { correct: boolean; song: GameState['deck'][number] }) {
+export function Reveal({ guess, players }: { guess: LastGuess; players: readonly Player[] }) {
   const t = useT();
+  const tm = t.modes;
+  const { correct, song, bonus } = guess;
+  const nameOf = (id: string) => players.find((p) => p.id === id)?.name ?? '';
   return (
     <div className={`reveal ${correct ? 'right' : 'wrong'}`}>
-      <p className="verdict">{correct ? t.game.correct : t.game.wrong}</p>
+      <p className="verdict">
+        {guess.steal ? (correct ? tm.stolen : tm.stealMissed) : correct ? t.game.correct : t.game.wrong}
+      </p>
+      {bonus && <BonusOutcome result={bonus} />}
+      {guess.coin && <p className="mode-note">{tm.coinEarned}</p>}
+      {guess.timeout && <p className="mode-note out">{tm.timeout}</p>}
+      {guess.fast && <p className="mode-note">{tm.fast}</p>}
+      {!!guess.bet && (
+        <p className={`mode-note ${correct ? '' : 'out'}`}>{correct ? tm.starsWon(guess.bet) : tm.starsLost(guess.bet)}</p>
+      )}
+      {guess.bet === undefined && !guess.fast && !!guess.stars && guess.stars > 0 && <p className="mode-note">{tm.introStars(guess.stars)}</p>}
+      {guess.stealNext && <p className="mode-note">{tm.stealNext(nameOf(guess.stealNext))}</p>}
+      {guess.eliminated && <p className="mode-note out">{tm.eliminated(nameOf(guess.playerId))}</p>}
+      <SongArt song={song} className="reveal-art" />
       <div className="song-card big-card">
         <span className="year">{song.year}</span>
         <span className="title">{song.title}</span>
@@ -518,7 +684,7 @@ export function Finished({
   state,
   onPlayAgain,
 }: {
-  state: Pick<GameState, 'players' | 'winnerIds'>;
+  state: Pick<GameState, 'players' | 'winnerIds' | 'mode'>;
   onPlayAgain?: () => void;
 }) {
   const t = useT();
@@ -529,7 +695,10 @@ export function Finished({
       {state.players.map((p) => (
         <div key={p.id} className="final-timeline">
           <h2>
-            {p.name} <span className="muted">{t.game.cards(p.timeline.length)}</span>
+            {p.name}{' '}
+            <span className="muted">
+              {usesStars(modeOf(state)) ? t.modes.points(p.timeline.length, p.stars ?? 0) : t.game.cards(p.timeline.length)}
+            </span>
           </h2>
           <Timeline cards={p.timeline} selectable={false} selectedSlot={null} onSelect={() => {}} compact />
         </div>

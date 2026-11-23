@@ -1,6 +1,7 @@
 import { Fragment } from 'react';
 import type { Song } from '../game/engine';
 import { msg, useT } from '../i18n';
+import { SongArt } from './SongArt';
 
 interface Props {
   cards: Song[];
@@ -74,6 +75,7 @@ export function Timeline({ cards, selectable, selectedSlot, onSelect, highlightI
               {card.artist}
               {card.from && <span className="from"> · {card.from}</span>}
             </span>
+            <SongArt song={card} className="card-art" />
           </li>
         </Fragment>
       ))}

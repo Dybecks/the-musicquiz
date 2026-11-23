@@ -120,7 +120,7 @@ function sortByRank(pages: WikiPage[]): WikiPage[] {
   return pages.slice().sort((a, b) => (a.index ?? 0) - (b.index ?? 0));
 }
 
-const usable = (p: WikiPage) => !p.missing && !p.pageprops?.disambiguation && !!p.extract?.trim();
+const usable = (p: WikiPage) => !p.missing && p.pageprops?.disambiguation === undefined && !!p.extract?.trim();
 
 /**
  * The song's own article: its title (without the "(song)" part) matches the

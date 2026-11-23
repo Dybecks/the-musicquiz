@@ -11,6 +11,7 @@ import { Remote, savedRemote } from './components/Remote';
 import { isValidCode, lobbyTeams, normalizeCode, renameLobbyTeam } from './multiplayer/protocol';
 import { useHostRoom } from './multiplayer/useHostRoom';
 import { SharePanel } from './components/SharePanel';
+import { RoomCode } from './components/RoomCode';
 import { mergeSongs } from './spotify/personalDeck';
 import { msg, useT } from './i18n';
 import { LanguagePicker } from './i18n/LanguagePicker';
@@ -94,7 +95,7 @@ export function App() {
       return next;
     });
   }, []);
-  const host = useHostRoom(game, setGame, lobby, renameTeam);
+  const host = useHostRoom(game, setGame, lobby, renameTeam, !remote);
 
   const refreshProfile = useCallback(async () => {
     if (!isLoggedIn()) {
@@ -136,13 +137,21 @@ export function App() {
     const order = values.spreadDecades ? 'decades' : 'random';
     // Songs the phones sent from their Spotify join the deck.
     const songs = mergeSongs(values.songs, host.takePending());
-    setGame({ ...createGame({ playerNames: values.players, targetCards: values.targetCards, songs, order }), refill: values.refill });
+    setGame({ ...createGame({ playerNames: values.players, targetCards: values.targetCards, songs, order, mode: values.gameMode }), refill: values.refill });
   };
 
   return (
     <div className="app">
       <header className="brand">
         <span className="brand-mark">♪</span> <span className="brand-name">{t.app.name}</span>
+        {!remote &&
+          (host.room ? (
+            <RoomCode code={host.room.code} small />
+          ) : (
+            <button className="room-code small share-pill" onClick={host.share}>
+              {t.share.shareCode}
+            </button>
+          ))}
         <LanguagePicker />
       </header>
       {remote ? (

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from 'react';
-import { addSongs, placeCurrent, type GameState, type Song } from '../game/engine';
+import { addSongs, applyPower, placeCurrent, setBet, type GameState, type Song } from '../game/engine';
 import { mergeSongs } from '../spotify/personalDeck';
 import { openHost, type HostLink, type HostStatus } from './connection';
 import {
@@ -25,6 +25,8 @@ import {
   setConnected,
   cleanTeamName,
   teamDecision,
+  powerRequest,
+  betRequest,
   teamRename,
   teamsOf,
   type ClientMessage,
@@ -39,6 +41,25 @@ import { msg as texts } from '../i18n';
 
 const ROOM_KEY = 'mq.room';
 const HOST_NAME_KEY = 'mq.hostName';
+/** Set when the host stopped sharing: no room is opened by itself until they share again. */
+const SHARING_OFF_KEY = 'mq.sharingOff';
+
+function sharingOff(): boolean {
+  try {
+    return localStorage.getItem(SHARING_OFF_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
+function setSharingOff(off: boolean) {
+  try {
+    if (off) localStorage.setItem(SHARING_OFF_KEY, '1');
+    else localStorage.removeItem(SHARING_OFF_KEY);
+  } catch {
+    /* only for this visit */
+  }
+}
 
 function loadRoom(): Room | null {
   try {
@@ -92,8 +113,11 @@ export function useHostRoom(
   lobby: Team[],
   /** Gives a team a new name, in the game and in setup. */
   onRenameTeam: (teamId: string, name: string) => void,
+  /** Open a room by itself, so the code is always there (not while this device joins someone else's game). */
+  autoOpen = true,
 ): HostRoom {
   const [room, setRoom] = useState<Room | null>(loadRoom);
+  const [off, setOff] = useState(sharingOff);
   const [status, setStatus] = useState<HostStatus | null>(null);
   const [live, setLiveState] = useState<Live>(NO_LIVE);
   const link = useRef<HostLink | null>(null);
@@ -150,6 +174,18 @@ export function useHostRoom(
           commandHandler.current?.(msg, memberId);
           return;
         }
+        if (msg.type === 'bet') {
+          const r = latest.current.room;
+          const amount = r ? betRequest(r, latest.current.game, memberId, msg) : null;
+          if (amount !== null) setGame((g) => (g ? setBet(g, amount) : g));
+          return;
+        }
+        if (msg.type === 'power') {
+          const r = latest.current.room;
+          const req = r && powerRequest(r, latest.current.game, memberId, msg);
+          if (req) setGame((g) => (g ? applyPower(g, req.power, req.target) : g));
+          return;
+        }
         if (msg.type === 'team-name') {
           const { room: r, teams: t } = latest.current;
           const rename = r && teamRename(r, t, memberId, msg.name);
@@ -178,7 +214,10 @@ export function useHostRoom(
   }, [teams]);
 
   // A new song, turn or game: everyone votes afresh.
-  const turnKey = game ? `${game.round}:${game.currentPlayerIndex}:${game.phase}:${game.current?.id ?? ''}` : 'lobby';
+  // A second try (power-up 'retry') is a fresh vote too.
+  const turnKey = game
+    ? `${game.round}:${game.currentPlayerIndex}:${game.phase}:${game.current?.id ?? ''}:${game.powers?.missedSlot ?? ''}`
+    : 'lobby';
   const lastTurn = useRef(turnKey);
   useEffect(() => {
     if (lastTurn.current === turnKey) return;
@@ -197,44 +236,57 @@ export function useHostRoom(
 
   // The whole team locked in: that's the guess.
   const placeSlot = decision.kind === 'place' ? decision.slot : null;
+  const placeAnswer = decision.kind === 'place' ? decision.answer : null;
   useEffect(() => {
     if (placeSlot === null) return;
-    setGame((g) => (g && g.phase === 'guessing' ? placeCurrent(g, placeSlot) : g));
-  }, [placeSlot, turnKey, setGame]);
+    setGame((g) => (g && g.phase === 'guessing' ? placeCurrent(g, placeSlot, placeAnswer) : g));
+  }, [placeSlot, placeAnswer, turnKey, setGame]);
 
   // Every change goes to every phone right away.
   useEffect(() => {
     if (room && status?.kind === 'open') link.current?.broadcast({ type: 'state', view: roomView(room, game, teams, live) });
   }, [room, game, teams, live, status]);
 
-  const share = useCallback(
-    () =>
-      setRoom(
-        (r) =>
-          r ?? {
-            code: newRoomCode(),
-            members: [
-              {
-                id: HOST_ID,
-                name: localStorage.getItem(HOST_NAME_KEY) || texts().app.defaultHost,
-                teamId: null,
-                connected: true,
-                vote: null,
-                locked: false,
-                emoji: pickAvatar([]),
-              },
-            ],
-          },
-      ),
-    [],
-  );
+  const share = useCallback(() => {
+    setOff(false);
+    setSharingOff(false);
+    setRoom(
+      (r) =>
+        r ?? {
+          code: newRoomCode(),
+          members: [
+            {
+              id: HOST_ID,
+              name: localStorage.getItem(HOST_NAME_KEY) || texts().app.defaultHost,
+              teamId: null,
+              connected: true,
+              vote: null,
+              locked: false,
+              emoji: pickAvatar([]),
+            },
+          ],
+        },
+    );
+  }, []);
 
   const stop = useCallback((reason?: string) => {
+    // Stopped by the host: stays off. Ended with the game: the next game gets a new code.
+    if (reason === 'stopped') {
+      setOff(true);
+      setSharingOff(true);
+    }
     link.current?.close(reason);
     link.current = null;
     setRoom(null);
     setStatus(null);
   }, []);
+
+  // A code is always there, unless the host stopped sharing. While this device
+  // has joined someone else's game it hosts nothing.
+  useEffect(() => {
+    if (autoOpen && !off && !room) share();
+    else if (!autoOpen && room) stop();
+  }, [autoOpen, off, room, share, stop]);
 
   const act = useCallback((msg: ClientMessage) => {
     if (msg.type === 'hello') localStorage.setItem(HOST_NAME_KEY, msg.name.trim());
