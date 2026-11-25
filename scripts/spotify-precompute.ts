@@ -33,8 +33,10 @@ import {
   needsYearCheck,
   normalizeKey,
   releaseYear,
+  songKey,
   type SpotifyTrack,
 } from '../src/spotify/personalDeck';
+import { spotifyArtist } from './artist-names';
 
 const file = (p: string) => fileURLToPath(new URL(p, import.meta.url));
 
@@ -48,6 +50,8 @@ try {
   /* no .env.local */
 }
 const SONGS_FILE = file('../src/data/catalog/songs.json');
+/** Songs to add: looked up here, and moved into songs.json only once they have a Spotify id. */
+const CANDIDATES_FILE = file('./candidates.json');
 const DECKS_FILE = file('../src/data/catalog/decks.json');
 const REVIEW_FILE = file('../src/data/catalog/REVIEW.md');
 const PROGRESS_FILE = file('./spotify-progress.json');
@@ -55,6 +59,17 @@ const GENRES_FILE = file('./genre-progress.json');
 
 /** Requests per run. The next run carries on. */
 const MAX_REQUESTS = Number(process.env.MAX_REQUESTS || 300);
+/**
+ * GENRE=schlager looks up only that genre's songs (ids and genre tags), so one
+ * genre can be filled and checked at a time. REVIEW.md then lists all its songs.
+ */
+const GENRE = process.env.GENRE || null;
+if (GENRE && !SEARCH_GENRES.some((g) => g.id === GENRE)) {
+  console.error(`Unknown GENRE "${GENRE}". Use one of: ${SEARCH_GENRES.map((g) => g.id).join(', ')}`);
+  process.exit(1);
+}
+/** Whether a song is part of this run (every song, unless GENRE is set). */
+const inFocus = (row: { genres: string[] }) => !GENRE || row.genres.includes(GENRE);
 /** Time between requests. */
 const PAUSE_MS = Number(process.env.PAUSE_MS || 1500);
 /** A pause Spotify asks for that is longer than this ends the run instead. */
@@ -78,6 +93,10 @@ interface Progress {
   wikidata?: Record<string, string>;
   /** Songs that matched nothing and were taken out of the catalogue, with why. */
   unmatched?: Record<string, string>;
+  /** Deck songs whose Spotify page names another artist (title|artist → id), for a look by hand. */
+  suspect?: Record<string, string>;
+  /** Wikidata ids checked against their Spotify page (title|artist → when). */
+  audited?: Record<string, string>;
   /** Songs whose Spotify year differs from the catalogue's year. */
   yearNotes?: Record<string, string>;
 }
@@ -90,7 +109,17 @@ const readJson = <T,>(path: string, fallback: T): T => {
   }
 };
 
-const rows = readJson<CatalogRow[]>(SONGS_FILE, []);
+/** A catalogue row, or a candidate (id null) that hasn't been found yet. */
+type Row = Omit<CatalogRow, 'id'> & { id: string | null };
+const catalogue = readJson<CatalogRow[]>(SONGS_FILE, []);
+const known = new Set(catalogue.map((r) => songKey(r.title, r.artist)));
+const rows: Row[] = [
+  ...catalogue,
+  // Candidates already in the catalogue are dropped.
+  ...readJson<Row[]>(CANDIDATES_FILE, [])
+    .map((r) => ({ ...r, artist: spotifyArtist(r.artist), id: null }))
+    .filter((r) => !known.has(songKey(r.title, r.artist))),
+];
 const decks = readJson<Record<BuiltInDeckId, string[]>>(DECKS_FILE, {} as Record<BuiltInDeckId, string[]>);
 const progress = readJson<Progress>(PROGRESS_FILE, { tried: {} });
 progress.unmatched ??= {};
@@ -113,18 +142,41 @@ interface GenreEntry {
 }
 const genreData = readJson<Record<string, GenreEntry>>(GENRES_FILE, {});
 
-const keyOf = (r: Pick<CatalogRow, 'title' | 'artist'>) => `${r.title}|${r.artist}`;
+const keyOf = (r: Pick<Row, 'title' | 'artist'>) => `${r.title}|${r.artist}`;
+
+// RETRY=1 searches songs that weren't found again (only GENRE's, when it is set), for example after
+// the title matching got looser. Their title, artist, year and genres are kept in the "not found" note.
+// RETRY=names only retries the ones a later fix could help: an artist in scripts/artist-names.ts, or a ß.
+if (process.env.RETRY === '1' || process.env.RETRY === 'names') {
+  let again = 0;
+  for (const [key, note] of Object.entries(progress.unmatched!)) {
+    const m = note.match(/^(\d{4}), (.*?): /);
+    const [title, credited] = key.split('|');
+    if (!m || !credited) continue;
+    if (process.env.RETRY === 'names' && spotifyArtist(credited) === credited && !title.includes('ß')) continue;
+    const artist = spotifyArtist(credited);
+    const genres = m[2] === 'no genre' ? [] : m[2].split(', ');
+    if (GENRE && !genres.includes(GENRE)) continue;
+    // Not when the song is already there under another spelling ("Se på mej" / "Se på mig").
+    const artistKey = songKey('', artist);
+    if (!rows.some((r) => songKey('', r.artist) === artistKey && looseTitle(r.title) === looseTitle(title))) rows.push({ title, artist, year: Number(m[1]), genres, id: null });
+    delete progress.unmatched![key];
+    delete progress.tried[key];
+    again++;
+  }
+  console.log(`Searching ${again} songs that weren't found before again.`);
+}
 const sortKeys = <T,>(o: Record<string, T>) => Object.fromEntries(Object.entries(o).sort(([a], [b]) => a.localeCompare(b)));
 const today = () => new Date().toISOString().slice(0, 10);
 
 /** Which ready-made deck a song is in, for messages. */
-function deckOf(row: CatalogRow): string {
+function deckOf(row: Row): string {
   const deck = row.id ? Object.entries(decks).find(([, ids]) => ids.includes(row.id!)) : undefined;
   return deck ? deck[0] : 'catalogue';
 }
 
 /** Gives a song a new id, also in the decks that list it. */
-function setId(row: CatalogRow, id: string): void {
+function setId(row: Row, id: string): void {
   for (const list of Object.values(decks)) {
     const i = row.id ? list.indexOf(row.id) : -1;
     if (i >= 0) list[i] = id;
@@ -136,7 +188,10 @@ function setId(row: CatalogRow, id: string): void {
 function save(): void {
   rows.sort((a, b) => a.year - b.year || a.artist.localeCompare(b.artist) || a.title.localeCompare(b.title));
   // One song per line keeps the diffs readable.
-  writeFileSync(SONGS_FILE, '[\n' + rows.map((r) => ' ' + JSON.stringify(r)).join(',\n') + '\n]\n');
+  // Only songs with a Spotify id go in the catalogue; the rest wait in candidates.json.
+  const lines = (list: Row[]) => '[\n' + list.map((r) => ' ' + JSON.stringify(r)).join(',\n') + '\n]\n';
+  writeFileSync(SONGS_FILE, lines(rows.filter((r) => r.id)));
+  writeFileSync(CANDIDATES_FILE, lines(rows.filter((r) => !r.id).map(({ id: _id, ...r }) => r as Row)));
   writeFileSync(
     DECKS_FILE,
     '{\n' +
@@ -191,7 +246,18 @@ async function spotify<T>(path: string): Promise<T> {
     if (requests >= MAX_REQUESTS) throw new StopRun(`Reached ${MAX_REQUESTS} requests for this run.`);
     if (requests > 0) await sleep(PAUSE_MS);
     requests++;
-    const res = await fetch(`https://api.spotify.com/v1${path}`, { headers: { Authorization: `Bearer ${await getToken()}` } });
+    let res: Response;
+    try {
+      // A request that hangs is given up after 30 s and tried again, instead of stopping the run.
+      res = await fetch(`https://api.spotify.com/v1${path}`, { headers: { Authorization: `Bearer ${await getToken()}` }, signal: AbortSignal.timeout(30_000) });
+    } catch (e) {
+      if (attempt < 3) {
+        console.log(`Spotify didn't answer (${(e as Error).name}); trying again.`);
+        await sleep(5000);
+        continue;
+      }
+      throw new StopRun(`Spotify didn't answer ${attempt + 1} times in a row.`);
+    }
     if (res.ok) return (await res.json()) as T;
     if (res.status === 429) {
       const wait = Number(res.headers.get('retry-after')) || 30;
@@ -248,10 +314,21 @@ function sameArtist(track: SpotifyTrack, artist: string): boolean {
   });
 }
 
+/**
+ * A title with spelling differences taken out: spaces ("Imorgon" / "I morgon")
+ * and old Swedish spellings ("Se på mej" / "Se på mig"). Punctuation is
+ * already gone ("Mr. Hit" / "Mr Hit").
+ */
+export function looseTitle(title: string): string {
+  return normalizeKey(cleanTitle(title).replace(/ß/g, 'ss'))
+    .replace(/\b(m|d|s)ej\b/g, '$1ig')
+    .replace(/ /g, '');
+}
+
 function sameTitle(track: SpotifyTrack, title: string): boolean {
   const t = normalizeKey(cleanTitle(track.name));
   const want = normalizeKey(cleanTitle(title));
-  return t === want || normalizeKey(track.name) === normalizeKey(title);
+  return t === want || normalizeKey(track.name) === normalizeKey(title) || looseTitle(track.name) === looseTitle(title);
 }
 
 /**
@@ -259,7 +336,7 @@ function sameTitle(track: SpotifyTrack, title: string): boolean {
  * or live version, preferring the original album or single over reissues,
  * then the earliest release.
  */
-export function bestMatch(song: Pick<CatalogRow, 'title' | 'artist' | 'year'>, items: SpotifyTrack[]): { track: SpotifyTrack & { id: string }; earliest: number | null } | null {
+export function bestMatch(song: Pick<Row, 'title' | 'artist' | 'year'>, items: SpotifyTrack[]): { track: SpotifyTrack & { id: string }; earliest: number | null } | null {
   const ok = uniqueTracksKeepAll(items).filter(
     (t) => sameTitle(t, song.title) && sameArtist(t, song.artist) && (NOT_ORIGINAL.test(song.title) || !NOT_ORIGINAL.test(`${t.name} ${t.album.name ?? ''}`)),
   );
@@ -291,6 +368,96 @@ function uniqueTracksKeepAll(items: SpotifyTrack[]): (SpotifyTrack & { id: strin
   });
 }
 
+/** Turns HTML entities such as &#x27; and &amp; back into characters. */
+export function decodeEntities(html: string): string {
+  const named: Record<string, string> = { amp: '&', quot: '"', apos: "'", lt: '<', gt: '>', nbsp: ' ' };
+  return html.replace(/&(#x[0-9a-f]+|#[0-9]+|[a-z]+);/gi, (all, code: string) => {
+    if (code[0] === '#') {
+      const n = code[1].toLowerCase() === 'x' ? parseInt(code.slice(2), 16) : parseInt(code.slice(1), 10);
+      return Number.isFinite(n) ? String.fromCodePoint(n) : all;
+    }
+    return named[code.toLowerCase()] ?? all;
+  });
+}
+
+/**
+ * Whether normalized page text names the artist. Spaces are ignored for longer
+ * names, so "Run–D.M.C." matches "Run-DMC"; short names must match whole words.
+ */
+export function pageNames(text: string, artist: string): boolean {
+  const squashed = text.replace(/ /g, '');
+  return artistParts(artist).some((a) => {
+    const flat = a.replace(/ /g, '');
+    return flat.length > 3 ? squashed.includes(flat) : ` ${text} `.includes(` ${a} `);
+  });
+}
+
+/**
+ * Whether the track's public Spotify page (not part of the API quota) names
+ * the song's artist; null when the page can't tell.
+ */
+async function pageArtist(id: string, row: Row): Promise<boolean | null> {
+  try {
+    if (!process.env.NO_SLEEP) await sleep(300);
+    const res = await fetch(`https://open.spotify.com/track/${id}`, { headers: { 'User-Agent': 'the-musicquiz-precompute/1.0 (https://github.com/Dybecks/the-musicquiz)' }, signal: AbortSignal.timeout(30_000) });
+    if (!res.ok) return null;
+    const html = await res.text();
+    const meta = (p: string) => html.match(new RegExp(`<meta[^>]+property="${p}"[^>]+content="([^"]*)"`))?.[1] ?? '';
+    const text = normalizeKey(decodeEntities(`${meta('og:description')} ${meta('og:title')} ${(html.match(/<title>([^<]*)<\/title>/) ?? [])[1] ?? ''}`));
+    if (!text) return null;
+    return pageNames(text, row.artist);
+  } catch {
+    return null;
+  }
+}
+
+/** Takes an id away from a song (and from the decks): it goes back to the candidates to be searched. */
+function dropId(row: Row, why: string): void {
+  console.log(`✗ ${row.title} – ${row.artist}: ${row.id} dropped (${why})`);
+  for (const [deck, list] of Object.entries(decks)) {
+    const i = row.id ? list.indexOf(row.id) : -1;
+    if (i >= 0) {
+      list.splice(i, 1);
+      console.log(`  also taken out of the ${deck} deck`);
+    }
+  }
+  row.id = null;
+}
+
+/**
+ * Ids taken from Wikidata were only checked by title, so some belong to
+ * another artist's song of the same name. Each one is checked once against
+ * its Spotify page (free); a wrong one, or one two songs share, is dropped and
+ * the song is searched again.
+ */
+async function auditIds(): Promise<void> {
+  progress.audited ??= {};
+  progress.suspect ??= {};
+  const byId = new Map<string, Row[]>();
+  for (const r of rows) if (r.id) byId.set(r.id, [...(byId.get(r.id) ?? []), r]);
+  for (const r of rows) {
+    const key = keyOf(r);
+    if (!r.id) continue;
+    const shared = (byId.get(r.id) ?? []).length > 1;
+    const fromWikidata = progress.wikidata![key] && !progress.tried[key];
+    if (!shared && (!fromWikidata || progress.audited[key])) continue;
+    const ok = await pageArtist(r.id, r);
+    progress.audited[key] = today();
+    if (ok !== false) continue;
+    // A deck song is only flagged (in REVIEW.md), never dropped by this check alone.
+    if (!shared && Object.values(decks).some((ids) => ids.includes(r.id!))) progress.suspect![key] = r.id;
+    else dropId(r, "its Spotify page names another artist");
+  }
+  // Still shared (the page couldn't tell): keep the first, search the others.
+  const seen = new Set<string>();
+  for (const r of rows) {
+    if (!r.id) continue;
+    if (seen.has(r.id)) dropId(r, 'another song has this id');
+    else seen.add(r.id);
+  }
+  save();
+}
+
 /**
  * Free of Spotify API requests: Wikidata lists Spotify track ids for many
  * songs (property P2207). Each one is checked against Spotify's public oEmbed
@@ -298,7 +465,7 @@ function uniqueTracksKeepAll(items: SpotifyTrack[]): (SpotifyTrack & { id: strin
  * song's title. Only songs left over after this are searched on Spotify.
  */
 async function fromWikidata(): Promise<void> {
-  const todo = rows.filter((r) => !r.id && !progress.tried[keyOf(r)] && !progress.wikidata![keyOf(r)]);
+  const todo = rows.filter((r) => inFocus(r) && !r.id && !progress.tried[keyOf(r)] && !progress.wikidata![keyOf(r)]);
   if (todo.length === 0) return;
   const agent = { 'User-Agent': 'the-musicquiz-precompute/1.0 (https://github.com/Dybecks/the-musicquiz)' };
   const literal = (t: string) => JSON.stringify(t) + '@en';
@@ -310,13 +477,13 @@ async function fromWikidata(): Promise<void> {
       ?item rdfs:label ?label; wdt:P2207 ?sp.
       OPTIONAL { ?item wdt:P175 ?performer. ?performer rdfs:label ?performerLabel. FILTER(LANG(?performerLabel) = "en") }
     }`;
-    let rows: { label: { value: string }; sp: { value: string }; performerLabel?: { value: string } }[] = [];
+    let bindings: { label: { value: string }; sp: { value: string }; performerLabel?: { value: string } }[] = [];
     try {
       const res = await fetch(`https://query.wikidata.org/sparql?${new URLSearchParams({ query, format: 'json' })}`, {
         headers: { ...agent, Accept: 'application/sparql-results+json' },
       });
       if (!res.ok) throw new Error(`Wikidata answered ${res.status}`);
-      rows = ((await res.json()) as { results: { bindings: typeof rows } }).results.bindings;
+      bindings = ((await res.json()) as { results: { bindings: typeof bindings } }).results.bindings;
     } catch (e) {
       console.log(`Wikidata not available (${(e as Error).message}); searching Spotify instead.`);
       return;
@@ -325,11 +492,12 @@ async function fromWikidata(): Promise<void> {
       const key = keyOf(song);
       const candidates = [
         ...new Set(
-          rows
+          bindings
             .filter((r) => r.label.value === song.title)
-            .filter((r) => !r.performerLabel || sameArtist({ artists: [{ id: '', name: r.performerLabel.value }] } as SpotifyTrack, song.artist))
+            // The performer must be known and match: a title alone matched other songs (Creep by TLC got Radiohead's).
+            .filter((r) => r.performerLabel && sameArtist({ artists: [{ id: '', name: r.performerLabel.value }] } as SpotifyTrack, song.artist))
             .map((r) => r.sp.value)
-            .filter((id) => /^[0-9A-Za-z]{22}$/.test(id)),
+            .filter((id) => /^[0-9A-Za-z]{22}$/.test(id) && !rows.some((o) => o !== song && o.id === id)),
         ),
       ];
       for (const id of candidates) {
@@ -338,7 +506,7 @@ async function fromWikidata(): Promise<void> {
           const res = await fetch(`https://open.spotify.com/oembed?url=${encodeURIComponent(`https://open.spotify.com/track/${id}`)}`, { headers: agent });
           if (!res.ok) continue;
           const { title } = (await res.json()) as { title?: string };
-          if (title && normalizeKey(cleanTitle(title)) === normalizeKey(cleanTitle(song.title))) {
+          if (title && normalizeKey(cleanTitle(title)) === normalizeKey(cleanTitle(song.title)) && (await pageArtist(id, song)) !== false) {
             setId(song, id);
             console.log(`✓ ${song.title} – ${song.artist}: ${id} (Wikidata)`);
             break;
@@ -353,11 +521,36 @@ async function fromWikidata(): Promise<void> {
   }
 }
 
+/**
+ * Deck songs whose Spotify page names another artist are searched once on
+ * Spotify; a match by the right artist replaces the id, in the decks too.
+ */
+async function fixSuspects(): Promise<void> {
+  for (const [key, id] of Object.entries(progress.suspect ?? {})) {
+    const song = rows.find((r) => keyOf(r) === key);
+    if (!song || song.id !== id) {
+      delete progress.suspect![key];
+      continue;
+    }
+    const firstArtist = song.artist.split(/\s*(?:,|&|\band\b|\boch\b|feat\.|ft\.)\s*/i)[0];
+    const found = bestMatch(song, (await search(`track:"${quoteless(song.title)}" artist:"${quoteless(firstArtist)}"`)).items);
+    progress.tried[key] = today();
+    if (found && found.track.id !== id && !rows.some((o) => o !== song && o.id === found.track.id)) {
+      console.log(`↻ ${song.title} – ${song.artist}: ${id} → ${found.track.id} (the old id was another artist's)`);
+      setId(song, found.track.id);
+      delete progress.suspect![key];
+    } else if (found?.track.id === id) {
+      delete progress.suspect![key]; // Spotify's own search agrees: the page check was wrong
+    }
+    save();
+  }
+}
+
 async function fillIds(): Promise<void> {
   for (const song of [...rows]) {
     const key = keyOf(song);
-    if (song.id || progress.tried[key]) continue;
-    const firstArtist = song.artist.split(/\s*(?:,|&|feat\.|ft\.)\s*/i)[0];
+    if (song.id || progress.tried[key] || !inFocus(song)) continue;
+    const firstArtist = song.artist.split(/\s*(?:,|&|\band\b|\boch\b|feat\.|ft\.)\s*/i)[0];
     // At most two searches: the exact one, then a looser one.
     const queries = [`track:"${quoteless(song.title)}" artist:"${quoteless(firstArtist)}"`, `${quoteless(song.title)} ${quoteless(firstArtist)}`];
     let found: ReturnType<typeof bestMatch> = null;
@@ -392,7 +585,7 @@ async function recheckOddYears(): Promise<void> {
   for (const key of Object.keys(progress.yearNotes ?? {})) {
     const song = byKey.get(key);
     if (!song?.id || progress.rechecked![key]) continue;
-    const firstArtist = song.artist.split(/\s*(?:,|&|feat\.|ft\.)\s*/i)[0];
+    const firstArtist = song.artist.split(/\s*(?:,|&|\band\b|\boch\b|feat\.|ft\.)\s*/i)[0];
     const found = bestMatch(song, (await search(`track:"${quoteless(song.title)}" artist:"${quoteless(firstArtist)}"`)).items);
     progress.rechecked![key] = today();
     if (found) {
@@ -445,8 +638,8 @@ interface MbRecording {
 }
 
 /** Tags on MusicBrainz for every recording of the song; the release group's genres when the recordings have none. */
-async function musicBrainzTags(row: CatalogRow): Promise<Tags> {
-  const firstArtist = row.artist.split(/\s*(?:,|&|feat\.|ft\.)\s*/i)[0];
+async function musicBrainzTags(row: Row): Promise<Tags> {
+  const firstArtist = row.artist.split(/\s*(?:,|&|\band\b|\boch\b|feat\.|ft\.)\s*/i)[0];
   const query = `recording:${lucene(row.title)} AND artist:${lucene(firstArtist)}`;
   const body = await getJson<{ recordings?: MbRecording[] }>(
     `https://musicbrainz.org/ws/2/recording?${new URLSearchParams({ query, fmt: 'json', limit: '25' })}`,
@@ -476,8 +669,8 @@ async function musicBrainzTags(row: CatalogRow): Promise<Tags> {
 }
 
 /** Last.fm's top tags for the song (weights 0–100). */
-async function lastFmTags(row: CatalogRow, key: string): Promise<Tags> {
-  const params = new URLSearchParams({ method: 'track.gettoptags', artist: row.artist.split(/\s*(?:,|&|feat\.|ft\.)\s*/i)[0], track: row.title, autocorrect: '1', api_key: key, format: 'json' });
+async function lastFmTags(row: Row, key: string): Promise<Tags> {
+  const params = new URLSearchParams({ method: 'track.gettoptags', artist: row.artist.split(/\s*(?:,|&|\band\b|\boch\b|feat\.|ft\.)\s*/i)[0], track: row.title, autocorrect: '1', api_key: key, format: 'json' });
   const body = await getJson<{ toptags?: { tag?: { name: string; count: number }[] } }>(`https://ws.audioscrobbler.com/2.0/?${params}`, 250);
   return (body?.toptags?.tag ?? []).slice(0, 15).map((t) => [t.name, Number(t.count) || 0]);
 }
@@ -488,6 +681,7 @@ async function fillGenres(): Promise<void> {
   let asked = 0;
   let failures = 0;
   for (const row of rows) {
+    if (!row.id || !inFocus(row)) continue; // a candidate not found yet, or another genre
     const key = keyOf(row);
     const entry = (genreData[key] ??= { handSet: [...row.genres] });
     if (entry.applied && !sameList(entry.applied, row.genres)) entry.manual = true;
@@ -526,6 +720,24 @@ async function fillGenres(): Promise<void> {
 
 // ---- Report ----
 
+/** Every song of one genre, oldest first, so the whole list can be checked by ear and eye. */
+function genreList(genre: string, byKey: Map<string, Row>): string[] {
+  const songs = rows.filter((r) => r.genres.includes(genre)).sort((a, b) => a.year - b.year || a.title.localeCompare(b.title));
+  const gone = Object.entries(progress.unmatched ?? {}).filter(([k]) => !byKey.has(k) || !byKey.get(k)?.id);
+  const line = (r: Row) =>
+    `- ${r.year} · ${r.title} – ${r.artist}${r.id ? ` · [Spotify](https://open.spotify.com/track/${r.id})` : ' · not found yet'}` +
+    (r.genres.length > 1 ? ` · also ${r.genres.filter((g) => g !== genre).join(', ')}` : '');
+  return [
+    `## All ${genre} songs (${songs.filter((r) => r.id).length} with an id, ${songs.filter((r) => !r.id).length} waiting)`,
+    '',
+    'Written because this run had GENRE set. Check that each one belongs here and is the right recording.',
+    '',
+    ...songs.map(line),
+    '',
+    ...(gone.length ? ['Not found on Spotify at all (any genre): ' + gone.length + ', listed above.', ''] : []),
+  ];
+}
+
 function review(): string {
   const byKey = new Map(rows.map((r) => [keyOf(r), r]));
   const unmatched = Object.entries(progress.unmatched ?? {}).filter(([k]) => !byKey.get(k)?.id);
@@ -556,6 +768,12 @@ function review(): string {
     '',
     ...(unmatched.length ? unmatched.map(item) : ['None.']),
     '',
+    '## Deck songs that may have the wrong recording',
+    '',
+    "Their Spotify page names another artist. Check the id by hand (open.spotify.com/track/<id>).",
+    '',
+    ...(Object.entries(progress.suspect ?? {}).filter(([k, id]) => byKey.get(k)?.id === id).map(([k, id]) => `- ${k.replace('|', ' – ')}: ${id}`) || []),
+    '',
     '## Year differs from Spotify',
     '',
     'The catalogue year was kept. Spotify is often wrong (it dates songs by album), but these are worth a check.',
@@ -579,6 +797,7 @@ function review(): string {
       return `| ${g.id} | ${counts.join(' | ')} | ${songs.length} |`;
     }),
     '',
+    ...(GENRE ? genreList(GENRE, byKey) : []),
   ];
   return lines.join('\n');
 }
@@ -588,8 +807,9 @@ function review(): string {
 async function main(): Promise<void> {
   let stopped: string | null = null;
   try {
-    if (process.env.GENRES !== '0') await fillGenres();
+    await auditIds();
     await fromWikidata();
+    await fixSuspects();
     await fillIds();
     await recheckOddYears();
   } catch (e) {
@@ -598,7 +818,10 @@ async function main(): Promise<void> {
       throw e;
     }
     stopped = e.message;
+    console.log(`\nSpotify stopped the run: ${stopped} (${requests} requests). Genres are looked up next.`);
   }
+  // Genres cost no Spotify requests, so they are looked up even when Spotify stopped the run.
+  if (process.env.GENRES !== '0') await fillGenres();
   save();
   console.log(`\n${requests} requests. ${stopped ? `Stopped early: ${stopped} The next run carries on.` : 'All done.'}`);
 }

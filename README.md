@@ -171,11 +171,11 @@ The ready-made decks are lists of Spotify ids from the catalogue, in
 (`src/data/catalog.ts`). Tests check that every row is valid, that no song is in twice,
 and that every deck song is in the catalogue with an id.
 
-To add a song, add a row with `"id": null` (and add it to a deck by id once it has one).
-Rows without an id stay out of the game until `scripts/spotify-precompute.ts` looks them
-up: Wikidata first (checked with Spotify's public oEmbed, which costs no API requests),
-then at most two Spotify searches each. Songs Spotify doesn't have are taken out of the
-catalogue, never guessed. `src/data/catalog/REVIEW.md` lists them, songs not looked up
+Every song in the catalogue has a Spotify id (a test checks this). To add songs, put them
+in `scripts/candidates.json` (`{"title", "artist", "year", "genres"}`, no id), and add one
+to a deck by id once it is in the catalogue. `scripts/spotify-precompute.ts` looks the
+candidates up and moves each one it finds into the catalogue: Wikidata first (checked with Spotify's public oEmbed, which costs no API requests),
+then at most two Spotify searches each. Songs Spotify doesn't have are dropped, never guessed. `src/data/catalog/REVIEW.md` lists them, songs not looked up
 yet, years that differ from Spotify's, and how many songs each genre has per decade.
 
 The same script sets each song's genres from the tags people gave that recording on
@@ -195,6 +195,15 @@ shared by every app on the developer account, so a run makes at most 300 request
 (`MAX_REQUESTS=…` changes that), one every 1.5 seconds, and stops by itself if Spotify asks
 for a long pause. Running it again carries on where it stopped, and once everything is
 looked up it makes no requests at all.
+
+New songs for a genre come from Wikidata rather than by hand: `GENRE=schlager npm run source-songs`
+lists the genre's best-known songs (by how many Wikipedia languages have an article;
+for schlager also every Melodifestivalen entry) in `scripts/sources/schlager.md`, and
+`APPLY=1` adds the new ones to `scripts/candidates.json` (`TOP=…`, default 150).
+
+To fill and check one genre at a time, run `GENRE=schlager npm run spotify-data`
+(any of the 16 genre ids). `RETRY=1` searches that genre's songs that weren't found before again. Only that genre's songs are looked up and tagged, and
+`REVIEW.md` then lists every song in the genre, oldest first, with a Spotify link.
 
 ## Setting up a game
 

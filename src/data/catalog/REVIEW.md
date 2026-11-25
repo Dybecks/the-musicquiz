@@ -2,13 +2,831 @@
 
 Written by `scripts/spotify-precompute.ts` from `songs.json` and `decks.json`.
 
-Songs with a Spotify id: **654 of 654**. classic 160, movies 49, musicals 45, tv 33, games 38, swedish 50, party 45, summer 40, love 36.
+Songs with a Spotify id: **1168 of 1987**. classic 160, movies 49, musicals 45, tv 33, games 37, swedish 50, party 45, summer 40, love 36.
 
 ## Not looked up yet
 
 These stay out of the game until `npm run spotify-data` finds them.
 
-None.
+- I Got a Woman – Ray Charles
+- Earth Angel – The Penguins
+- April in Paris – Count Basie
+- Every Day I Have the Blues – Count Basie
+- Folsom Prison Blues – Johnny Cash
+- Cry Me a River – Julie London
+- Cherry Pink and Apple Blossom White – Pérez Prado
+- Just a Gigolo / I Ain't Got Nobody – Louis Prima
+- Sing Sing Sing – Louis Prima
+- Hallelujah I Love Her So – Ray Charles
+- Lucille – Little Richard
+- Walkin' After Midnight – Patsy Cline
+- Autumn Leaves – Cannonball Adderley
+- Come Fly with Me – Frank Sinatra
+- Quizás, quizás, quizás – Nat King Cole
+- Fever – Peggy Lee
+- Patricia – Pérez Prado
+- He'll Have to Go – Jim Reeves
+- El Paso – Marty Robbins
+- Blue Rondo à la Turk – The Dave Brubeck Quartet
+- There Goes My Baby – The Drifters
+- Shout – The Isley Brothers
+- Giant Steps – John Coltrane
+- Moon River – Henry Mancini
+- My Favorite Things – John Coltrane
+- I Fall to Pieces – Patsy Cline
+- Hit the Road Jack – Ray Charles
+- Cupid – Sam Cooke
+- Green Onions – Booker T. & the M.G.'s
+- El Watusi – Ray Barretto
+- Bring It On Home to Me – Sam Cooke
+- Cry to Me – Solomon Burke
+- Desafinado – Stan Getz & Charlie Byrd
+- You've Really Got a Hold on Me – The Miracles
+- Act Naturally – Buck Owens
+- Dansevise – Grethe Ingmann
+- The Pink Panther Theme – Henry Mancini
+- Lush Life – John Coltrane & Johnny Hartman
+- Take It Easy My Brother Charlie – Jorge Ben
+- Oye cómo va – Tito Puente
+- Walk On By – Dionne Warwick
+- Sabor a mí – Eydie Gormé & Trío Los Panchos
+- The Way You Look Tonight – Frank Sinatra
+- The Sidewinder – Lee Morgan
+- Hello, Dolly! – Louis Armstrong
+- Dancing in the Street – Martha and the Vandellas
+- My Boy Lollipop – Millie Small
+- Corcovado (Quiet Nights of Quiet Stars) – Stan Getz
+- Rescue Me – Fontella Bass
+- Papa's Got a Brand New Bag – James Brown
+- L-O-V-E – Nat King Cole
+- I Put a Spell on You – Nina Simone
+- Sinnerman – Nina Simone
+- Strange Fruit – Nina Simone
+- Tracks of My Tears – Smokey Robinson & The Miracles
+- Ooo Baby Baby – The Miracles
+- Sunny – Bobby Hebb
+- Reach Out I'll Be There – Four Tops
+- Bang Bang – Joe Cuba Sextet
+- Teddybjörnen Fredriksson – Lars Berghagen
+- You Ain't Woman Enough – Loretta Lynn
+- Hold On, I'm Comin' – Sam & Dave
+- Guantanamera – The Sandpipers
+- Ain't Too Proud to Beg – The Temptations
+- Footprints – Wayne Shorter
+- (You Make Me Feel Like) A Natural Woman – Aretha Franklin
+- Chain of Fools – Aretha Franklin
+- I Say a Little Prayer – Aretha Franklin
+- Shanty Town (007) – Desmond Dekker
+- Ain't No Way – Aretha Franklin
+- Son of a Preacher Man – Dusty Springfield
+- Harper Valley PTA – Jeannie C. Riley
+- Hold Me Tight – Johnny Nash
+- Light My Fire – José Feliciano
+- Mama Tried – Merle Haggard
+- Red Red Wine – Neil Diamond
+- For Once in My Life – Stevie Wonder
+- Do the Reggay – Toots & the Maytals
+- Wonderful World, Beautiful People – Jimmy Cliff
+- A Boy Named Sue – Johnny Cash
+- Cupid – Johnny Nash
+- Ruby, Don't Take Your Love to Town – Kenny Rogers
+- Kick Out the Jams – MC5
+- Okie from Muskogee – Merle Haggard
+- Evil Ways – Santana
+- Sweet Sensation – The Melodians
+- I Wanna Be Your Dog – The Stooges
+- Return of Django – The Upsetters
+- Monkey Man – Toots & the Maytals
+- Black Sabbath – Black Sabbath
+- War Pigs – Black Sabbath
+- Move On Up – Curtis Mayfield
+- You Can Get It If You Really Want – Desmond Dekker
+- Ain't No Sunshine – Ken Boothe
+- Immigrant Song – Led Zeppelin
+- Rose Garden – Lynn Anderson
+- Help Me Make It Through the Night – Sammi Smith
+- Black Magic Woman – Santana
+- Samba Pa Ti – Santana
+- Tears of a Clown – Smokey Robinson & The Miracles
+- Signed, Sealed, Delivered I'm Yours – Stevie Wonder
+- ABC – The Jackson 5
+- Sweet Jane – The Velvet Underground
+- Tired of Being Alone – Al Green
+- Children of the Grave – Black Sabbath
+- Sun Is Shining – Bob Marley & The Wailers
+- Double Barrel – Dave and Ansell Collins
+- Coat of Many Colors – Dolly Parton
+- Sitting in Limbo – Jimmy Cliff
+- Use Me – Bill Withers
+- Me and Mrs. Jones – Billy Paul
+- Highway Star – Deep Purple
+- Money in My Pocket – Dennis Brown
+- Mr. Bojangles – Sammy Davis Jr.
+- Ge mig en kaka till kaffet – Ted Gärdestad
+- Sol, vind och vatten – Ted Gärdestad
+- Jag ger dig min morgon – Tomas Ledin
+- Hooked on a Feeling – Blue Swede
+- Concrete Jungle – Bob Marley & The Wailers
+- I Shot the Sheriff – Bob Marley & The Wailers
+- Kinky Reggae – Bob Marley & The Wailers
+- Stir It Up – Bob Marley & The Wailers
+- Behind Closed Doors – Charlie Rich
+- Ain't No Woman (Like the One I've Got) – Four Tops
+- Love's Theme – Love Unlimited Orchestra
+- Sommaren som aldrig säger nej – Malta
+- Let's Get It On – Marvin Gaye
+- Personality Crisis – New York Dolls
+- Funky Kingston – Toots & the Maytals
+- Pick Up the Pieces – Average White Band
+- Lively Up Yourself – Bob Marley & The Wailers
+- Quimbara – Celia Cruz
+- I Will Always Love You – Dolly Parton
+- Never Can Say Goodbye – Gloria Gaynor
+- Annie's Song – John Denver
+- Tell Me Something Good – Rufus & Chaka Khan
+- Marcus Garvey – Burning Spear
+- Love to Love You Baby – Donna Summer
+- Rhinestone Cowboy – Glen Campbell
+- Thank God I'm a Country Boy – John Denver
+- That's the Way (I Like It) – KC and the Sunshine Band
+- Rock and Roll All Nite – Kiss
+- Jag vill ha en egen måne – Lasse Berghagen
+- Lovin' You – Minnie Riperton
+- Fly, Robin, Fly – Silver Convention
+- The Hustle – Van McCoy
+- Blue Eyes Crying in the Rain – Willie Nelson
+- Fernando – ABBA
+- More, More, More – Andrea True Connection
+- Rastaman Vibration – Bob Marley & The Wailers
+- Love Hangover – Diana Ross
+- Breezin' – George Benson
+- Boogie Nights – Heatwave
+- Shake Your Booty – KC and the Sunshine Band
+- Legalize It – Peter Tosh
+- Hey Ho Let's Go – Ramones
+- Anarchy in the U.K. – Sex Pistols
+- I Wish – Stevie Wonder
+- Heaven Must Be Missing an Angel – Tavares
+- New Rose – The Damned
+- Kiss and Say Goodbye – The Manhattans
+- Turn the Beat Around – Vicki Sue Robinson
+- Uptown Top Ranking – Althea & Donna
+- Yes Sir, I Can Boogie – Baccara
+- Natural Mystic – Bob Marley & The Wailers
+- Turn Your Lights Down Low – Bob Marley & The Wailers
+- Waiting in Vain – Bob Marley & The Wailers
+- Ma Baker – Boney M.
+- Orgasm Addict – Buzzcocks
+- Love and Kisses – Cerrone
+- Supernature – Cerrone
+- Everybody Dance – Chic
+- Feels So Good – Chuck Mangione
+- Two Sevens Clash – Culture
+- Fantasy – Earth, Wind & Fire
+- I Need a Man – Grace Jones
+- Love Is in the Air – John Paul Young
+- Lucille – Kenny Rogers
+- Native New Yorker – Odyssey
+- Ca plane pour moi – Plastic Bertrand
+- Rockaway Beach – Ramones
+- Sheena Is a Punk Rocker – Ramones
+- Holidays in the Sun – Sex Pistols
+- Pretty Vacant – Sex Pistols
+- Psycho Killer – Talking Heads
+- Complete Control – The Clash
+- White Riot – The Clash
+- Neat Neat Neat – The Damned
+- In the City – The Jam
+- Oh Bondage Up Yours! – X-Ray Spex
+- Boogie Oogie Oogie – A Taste of Honey
+- Take a Chance on Me – ABBA
+- I Love the Nightlife (Disco 'Round) – Alicia Bridges
+- Ever Fallen in Love – Buzzcocks
+- What Do I Get? – Buzzcocks
+- I'm Every Woman – Chaka Khan
+- Got to Be Real – Cheryl Lynn
+- Three Times a Lady – Commodores
+- Instant Replay – Dan Hartman
+- Last Dance – Donna Summer
+- MacArthur Park – Donna Summer
+- Pervers politiker – KSMB
+- Hong Kong Garden – Siouxsie and the Banshees
+- Alternative Ulster – Stiff Little Fingers
+- Suspect Device – Stiff Little Fingers
+- Dance (Disco Heat) – Sylvester
+- You Make Me Feel (Mighty Real) – Sylvester
+- Blame It on the Boogie – The Jacksons
+- Shake Your Body (Down to the Ground) – The Jacksons
+- Down in the Tube Station at Midnight – The Jam
+- Miss You – The Rolling Stones
+- Macho Man – Village People
+- Mammas Don't Let Your Babies Grow Up to Be Cowboys – Waylon Jennings & Willie Nelson
+- Chiquitita – ABBA
+- Gimme Gimme Gimme – ABBA
+- Knock on Wood – Amii Stewart
+- Ring My Bell – Anita Ward
+- Nervous Breakdown – Black Flag
+- Africa Unite – Bob Marley & The Wailers
+- Zimbabwe – Bob Marley & The Wailers
+- Le Chic – Chic
+- Relight My Fire – Dan Hartman
+- California Über Alles – Dead Kennedys
+- Bad Girls – Donna Summer
+- Dim All the Lights – Donna Summer
+- On the Radio – Donna Summer
+- Boogie Wonderland – Earth, Wind & Fire
+- Die Young – Ebba Grön
+- Sex Pistols – Ebba Grön
+- One Way Ticket – Eruption
+- Coward of the County – Kenny Rogers
+- Ladies' Night – Kool & The Gang
+- Night Boat to Cairo – Madness
+- One Step Beyond – Madness
+- Ain't No Stoppin' Us Now – McFadden & Whitehead
+- Rock with You – Michael Jackson
+- Overkill – Motörhead
+- D.I.S.C.O. – Ottawan
+- Born to Be Alive – Patrick Hernandez
+- Spacer – Sheila & B. Devotion
+- He's the Greatest Dancer – Sister Sledge
+- Lost in Music – Sister Sledge
+- Morning Dance – Spyro Gyra
+- The Devil Went Down to Georgia – The Charlie Daniels Band
+- Clampdown – The Clash
+- I Fought the Law – The Clash
+- Pressure Drop – The Clash
+- Rudie Can't Fail – The Clash
+- Train in Vain – The Clash
+- Boys Don't Cry – The Cure
+- Smash It Up – The Damned
+- Walking on the Moon – The Police
+- A Message to You, Rudy – The Specials
+- Gangsters – The Specials
+- In the Navy – Village People
+- Super Trouper – ABBA
+- Gimme Gimme Gimme – Black Flag
+- Redemption Song – Bob Marley & The Wailers
+- Mona Tumbas slim club – Ebba Grön
+- New York, New York – Frank Sinatra
+- He Stopped Loving Her Today – George Jones
+- (Kom så ska vi) leva livet – Gyllene Tider
+- Flickorna på TV2 – Gyllene Tider
+- Iron Maiden – Iron Maiden
+- Atmosphere – Joy Division
+- Living After Midnight – Judas Priest
+- The Breaks – Kurtis Blow
+- Last Caress – Misfits
+- Hands Up (Give Me Your Heart) – Ottawan
+- Mr. Crowley – Ozzy Osbourne
+- Once in a Lifetime – Talking Heads
+- Mirror in the Bathroom – The Beat
+- Can You Feel It – The Jacksons
+- Going Underground – The Jam
+- Too Much Too Young – The Specials
+- Ung och stolt – Tomas Ledin
+- TV Party – Black Flag
+- Too Drunk to Fuck – Dead Kennedys
+- Let's Groove – Earth, Wind & Fire
+- Staten och kapitalet – Ebba Grön
+- Ganja Smuggling – Eek-A-Mouse
+- Vill ha dig – Freestyle
+- När vi två blir en – Gyllene Tider
+- Mitt hjärta klappar för dig – Jerry Williams
+- Get Down On It – Kool & The Gang
+- Before I Let You Go – Maze
+- Don't You Want Me – The Human League
+- Ghost Town – The Specials
+- Planet Rock – Afrika Bambaataa & the Soulsonic Force
+- Mountain Music – Alabama
+- Fantasi – Freestyle
+- Amarillo by Morning – George Strait
+- Cool Down the Pace – Gregory Isaacs
+- Night Nurse – Gregory Isaacs
+- Det hjärta som brinner – Gyllene Tider
+- Our House – Madness
+- Skulls – Misfits
+- Bam Bam – Sister Nancy
+- Rock the Casbah – The Clash
+- Always on My Mind – Willie Nelson
+- Balls to the Wall – Accept
+- Photograph – Def Leppard
+- Rainbow in the Dark – Dio
+- White Lines (Don't Don't Do It) – Grandmaster Melle Mel
+- Rockit – Herbie Hancock
+- The Trooper – Iron Maiden
+- Reggae Night – Jimmy Cliff
+- Sunshine Reggae – Laid Back
+- Joey Killer – Magnus Uggla
+- Bark at the Moon – Ozzy Osbourne
+- Cum On Feel the Noize – Quiet Riot
+- Ain't Nobody – Rufus & Chaka Khan
+- Mommy's Little Monster – Social Distortion
+- Institutionalized – Suicidal Tendencies
+- This Charming Man – The Smiths
+- Murderer – Barrington Levy
+- Here I Come – Dennis Brown
+- Round and Round – Ratt
+- Rock Box – Run-DMC
+- We're Not Gonna Take It – Twisted Sister
+- Madhouse – Anthrax
+- Highwayman – The Highwaymen
+- Bastards of Young – The Replacements
+- Under Mi Sleng Teng – Wayne Smith
+- Saving All My Love for You – Whitney Houston
+- Caught Up in the Rapture – Anita Baker
+- Sweet Love – Anita Baker
+- (You Gotta) Fight for Your Right (To Party!) – Beastie Boys
+- No Sleep till Brooklyn – Beastie Boys
+- Don't Wanna Know If You Are Lonely – Hüsker Dü
+- Wasted Years – Iron Maiden
+- Jag och min far – Magnus Uggla
+- Långa bollar på Bengt – Magnus Uggla
+- Peace Sells – Megadeth
+- Battery – Metallica
+- Tutu – Miles Davis
+- It's Tricky – Run-DMC
+- Raining Blood – Slayer
+- Jack Your Body – Steve 'Silk' Hurley
+- Bigmouth Strikes Again – The Smiths
+- Rat in Mi Kitchen – UB40
+- Pour Some Sugar on Me – Def Leppard
+- Paid in Full – Eric B. & Rakim
+- Carrie – Europe
+- Djobi Djoba – Gipsy Kings
+- Rhythm Is Gonna Get You – Gloria Estefan & Miami Sound Machine
+- Bad Boys – Inner Circle
+- Varning på stan – Magnus Uggla
+- Pump Up the Volume – MARRS
+- Forever and Ever, Amen – Randy Travis
+- Push It – Salt-N-Pepa
+- Como la Flor – Selena
+- Here I Go Again – Whitesnake
+- Rock Me – Europe
+- Eighteen Wheels and a Dozen Roses – Kathy Mattea
+- La Incondicional – Luis Miguel
+- Allt jag behöver – Mauro Scocco
+- Sarah – Mauro Scocco
+- One – Metallica
+- Straight Outta Compton – N.W.A
+- Gigantic – Pixies
+- Dressed for Success – Roxette
+- Theme from S-Express – S'Express
+- South of Heaven – Slayer
+- Teen Age Riot – Sonic Youth
+- There She Goes – The La's
+- Wild Thing – Tone Lōc
+- Ride on Time – Black Box
+- Me Myself and I – De La Soul
+- Volare – Gipsy Kings
+- Get On Your Feet – Gloria Estefan
+- Rhythm Nation – Janet Jackson
+- Lambada – Kaoma
+- Dr. Feelgood – Mötley Crüe
+- Kickstart My Heart – Mötley Crüe
+- Pet Sematary – Ramones
+- 18 and Life – Skid Row
+- Youth Gone Wild – Skid Row
+- Lullaby – The Cure
+- Fools Gold – The Stone Roses
+- I Wanna Be Adored – The Stone Roses
+- She Bangs the Drums – The Stone Roses
+- Kingston Town – UB40
+- Bust a Move – Young MC
+- Can I Kick It? – A Tribe Called Quest
+- Poison – Bell Biv DeVoe
+- Is It Love – Beres Hammond
+- Gonna Make You Sweat (Everybody Dance Now) – C+C Music Factory
+- Groove Is in the Heart – Deee-Lite
+- The Dance – Garth Brooks
+- Step On – Happy Mondays
+- Burbujas de amor – Juan Luis Guerra
+- Painkiller – Judas Priest
+- Dansa med vindarna – Kayo
+- Better the Devil You Know – Kylie Minogue
+- Mama Said Knock You Out – LL Cool J
+- Holy Wars... The Punishment Due – Megadeth
+- Cemetery Gates – Pantera
+- Cowboys from Hell – Pantera
+- Loaded – Primal Scream
+- Wind of Change – Scorpions
+- Stand by Me – Seal
+- Seasons in the Abyss – Slayer
+- Ball and Chain – Social Distortion
+- Story of My Life – Social Distortion
+- Cherry Pie – Warrant
+- Get Ready for This – 2 Unlimited
+- Jazz (We've Got) – A Tribe Called Quest
+- Motownphilly – Boyz II Men
+- Finally – CeCe Peniston
+- Contigo en la distancia – Luis Miguel
+- Only Shallow – My Bloody Valentine
+- O.P.P. – Naughty by Nature
+- Mama, I'm Coming Home – Ozzy Osbourne
+- Bro Hymn – Pennywise
+- Fading Like a Flower (Every Time You Leave) – Roxette
+- Spending My Time – Roxette
+- Happy Nation – Ace of Base
+- Wheel of Fortune – Ace of Base
+- Iron Lion Zion – Bob Marley & The Wailers
+- Boot Scootin' Boogie – Brooks & Dunn
+- It Was a Good Day – Ice Cube
+- Jump – Kris Kross
+- Om – Lisa Nilsson
+- Varje gång jag ser dig – Lisa Nilsson
+- Symphony of Destruction – Megadeth
+- Remember the Time – Michael Jackson
+- They Reminisce Over You (T.R.O.Y.) – Pete Rock & CL Smooth
+- Killing in the Name – Rage Against the Machine
+- How Do You Do! – Roxette
+- Baby Got Back – Sir Mix-a-Lot
+- Weak – SWV
+- Rump Shaker – Wreckx-n-Effect
+- Don't Turn Around – Ace of Base
+- Chattahoochee – Alan Jackson
+- Pa' Mayté – Arturo Sandoval
+- American Jesus – Bad Religion
+- Rebel Girl – Bikini Kill
+- Tease Me – Chaka Demus & Pliers
+- I Can See Clearly Now – Jimmy Cliff
+- Mitt eget Nangijala – Magnus Uggla
+- Oh Carolina – Shaggy
+- Whoomp! (There It Is) – Tag Team
+- (I Can't Help) Falling in Love with You – UB40
+- Baby I Love Your Way – Big Mountain
+- Girls & Boys – Blur
+- I'll Make Love to You – Boyz II Men
+- Love Is All I Bring – Dawn Penn
+- You Don't Love Me (No, No, No) – Dawn Penn
+- Longview – Green Day
+- When I Come Around – Green Day
+- Blind – Korn
+- Stockholm – Lisa Ekdahl
+- Vem vet – Lisa Ekdahl
+- Independence Day – Martina McBride
+- N.Y. State of Mind – Nas
+- Leave It Alone – NOFX
+- Linoleum – NOFX
+- Cut Your Hair – Pavement
+- Range Life – Pavement
+- Cotton Eye Joe – Rednex
+- Sleeping in My Car – Roxette
+- Bidi Bidi Bom Bom – Selena
+- Gin and Juice – Snoop Doggy Dogg
+- Come Out and Play – The Offspring
+- Creep – TLC
+- Under ytan – Uno Svenningsson
+- Regulate – Warren G & Nate Dogg
+- C.R.E.A.M. – Wu-Tang Clan
+- Beautiful Life – Ace of Base
+- Lady – D'Angelo
+- Insomnia – Faithless
+- Check Yes or No – George Strait
+- Fantasy – Mariah Carey
+- Shook Ones, Pt. II – Mobb Deep
+- Disco 2000 – Pulp
+- High and Dry – Radiohead
+- Time Bomb – Rancid
+- María – Ricky Martin
+- Children – Robert Miles
+- Boombastic – Shaggy
+- Any Man of Mine – Shania Twain
+- Alright – Supergrass
+- Carnival – The Cardigans
+- Exhale (Shoop Shoop) – Whitney Houston
+- Punk Rock Song – Bad Religion
+- Strawberry Wine – Deana Carter
+- Don't Let Go (Love) – En Vogue
+- No Woman, No Cry – Fugees
+- Ready or Not – Fugees
+- Pony – Ginuwine
+- Gå och fiska – Gyllene Tider
+- 747 – Kent
+- Return of the Mack – Mark Morrison
+- Coco Jamboo – Mr. President
+- I Believe I Can Fly – R. Kelly
+- Bulls on Parade – Rage Against the Machine
+- Tonight, Tonight – The Smashing Pumpkins
+- Un-Break My Heart – Toni Braxton
+- You're Makin' Me High – Toni Braxton
+- Brimful of Asha – Cornershop
+- Around the World – Daft Punk
+- On & On – Erykah Badu
+- How Do I Live – LeAnn Rimes
+- Too Close – Next
+- I'll Be Missing You – Puff Daddy & Faith Evans
+- Karma Police – Radiohead
+- No Surprises – Radiohead
+- Engel – Rammstein
+- Do You Know (What It Takes) – Robyn
+- Hypnotize – The Notorious B.I.G.
+- Mo Money Mo Problems – The Notorious B.I.G.
+- Professional Widow (It's Got to Be Big) – Tori Amos
+- Gettin' Jiggy wit It – Will Smith
+- Are You That Somebody? – Aaliyah
+- 9PM (Till I Come) – ATB
+- Who Am I – Beenie Man
+- This Kiss – Faith Hill
+- Hard Knock Life (Ghetto Anthem) – Jay-Z
+- Freak on a Leash – Korn
+- Doo Wop (That Thing) – Lauryn Hill
+- Ex-Factor – Lauryn Hill
+- In the Aeroplane Over the Sea – Neutral Milk Hotel
+- Ghetto Supastar (That Is What You Are) – Pras
+- La Copa de la Vida – Ricky Martin
+- The Cup of Life – Ricky Martin
+- Ojos Así – Shakira
+- Music Sounds Better with You – Stardust
+- Erase/Rewind – The Cardigans
+- My Favourite Game – The Cardigans
+- Wide Open Spaces – The Chicks
+- Pretty Fly (For a White Guy) – The Offspring
+- Why Don't You Get a Job? – The Offspring
+- What's My Age Again? – blink-182
+- Cassius 1999 – Cassius
+- Genie in a Bottle (Genio Atrapado) – Christina Aguilera
+- Bills, Bills, Bills – Destiny's Child
+- Paper Bag – Fiona Apple
+- Amazed – Lonestar
+- Han går omkring – Patrik Isaksson
+- Turn Around – Phats & Small
+- Corazón Espinado – Santana
+- Wait and Bleed – Slipknot
+- Kernkraft 400 – Zombie Nation
+- Try Again – Aaliyah
+- Glorious – Andreas Johnson
+- Girls Dem Sugar – Beenie Man
+- Adam's Song – blink-182
+- Ven Conmigo (Solamente Tú) – Christina Aguilera
+- Untitled (How Does It Feel) – D'Angelo
+- Stan – Eminem
+- The Real Slim Shady – Eminem
+- Känn ingen sorg för mig Göteborg – Håkan Hellström
+- Musik non stop – Kent
+- Ride wit Me – Nelly
+- Wishmaster – Nightwish
+- Last Resort – Papa Roach
+- She Bangs – Ricky Martin
+- Groovejet (If This Ain't Love) – Spiller
+- Goodbye Earl – The Chicks
+- Survivor – Destiny's Child
+- Bodies – Drowning Pool
+- Escape – Enrique Iglesias
+- Hero – Enrique Iglesias
+- The Middle – Jimmy Eat World
+- Halo – Martin O'Donnell, Michael Salvatori
+- Get Ur Freak On – Missy Elliott
+- Ich will – Rammstein
+- Sonne – Rammstein
+- Angel – Shaggy
+- Suerte (Whenever, Wherever) – Shakira
+- Murder on the Dancefloor – Sophie Ellis-Bextor
+- In Too Deep – Sum 41
+- Toxicity – System of a Down
+- New Slang – The Shins
+- Someday – The Strokes
+- Fell in Love with a Girl – The White Stripes
+- U Remind Me – Usher
+- Obsesión – Aventura
+- Complicated – Avril Lavigne
+- Sk8er Boi – Avril Lavigne
+- X Gon' Give It to Ya – DMX
+- Lifestyles of the Rich & Famous – Good Charlotte
+- The Anthem – Good Charlotte
+- Kom igen Lena! – Håkan Hellström
+- Snart tystnar musiken – Hollywood Ultra
+- Hurt – Johnny Cash
+- A Dios le pido – Juanes
+- Elektrisk – Kent
+- Work It – Missy Elliott
+- Dilemma – Nelly
+- Hot in Herre – Nelly
+- Gimme the Light – Sean Paul
+- Still Waiting – Sum 41
+- Aerials – System of a Down
+- Dude – Beenie Man
+- I Miss You – blink-182
+- Whiskey Lullaby – Brad Paisley & Alison Krauss
+- Pon de River, Pon de Bank – Elephant Man
+- Sway – Michael Bublé
+- Like Glue – Sean Paul
+- Such Great Heights – The Postal Service
+- Reptilia – The Strokes
+- Maps – Yeah Yeah Yeahs
+- Ocean Avenue – Yellowcard
+- Wake Up – Arcade Fire
+- Dip It Low – Christina Milian
+- Lo Que Pasó, Pasó – Daddy Yankee
+- Holiday – Green Day
+- 99 Problems – Jay-Z
+- Golden – Jill Scott
+- Ordinary People – John Legend
+- Let Me Love You – Mario
+- Blood and Thunder – Mastodon
+- Float On – Modest Mouse
+- Helena – My Chemical Romance
+- I'm Not Okay (I Promise) – My Chemical Romance
+- Nemo – Nightwish
+- Lola's Theme – Shapeshifters
+- Before I Forget – Slipknot
+- Drop It Like It's Hot – Snoop Dogg
+- Lean Back – Terror Squad
+- Supply and Demand – The Hives
+- Somebody Told Me – The Killers
+- The Rat – The Walkmen
+- Live Like You Were Dying – Tim McGraw
+- Burn – Usher
+- Hjärta – Weeping Willows
+- Candy Shop – 50 Cent
+- 1 Thing – Amerie
+- Bat Country – Avenged Sevenfold
+- Lua – Bright Eyes
+- Jesus, Take the Wheel – Carrie Underwood
+- Rompe – Daddy Yankee
+- Dale Don Dale – Don Omar
+- Dance, Dance – Fall Out Boy
+- Wake Me Up When September Ends – Green Day
+- We Belong Together – Mariah Carey
+- So Sick – Ne-Yo
+- Be Mine! – Robyn
+- Ride It – Sean Paul
+- We Be Burnin' – Sean Paul
+- La Tortura – Shakira
+- B.Y.O.B. – System of a Down
+- You Know I'm No Good – Amy Winehouse
+- The Funeral – Band of Horses
+- Through the Fire and Flames – DragonForce
+- Put Your Hands Up for Detroit – Fedde Le Grand
+- SexyBack – Justin Timberlake
+- Teenagers – My Chemical Romance
+- Lazy Eye – Silversun Pickups
+- Our Song – Taylor Swift
+- Chelsea Dagger – The Fratellis
+- Naive – The Kooks
+- Måndagsbarn – Veronica Maggio
+- No One – Alicia Keys
+- 505 – Arctic Monkeys
+- Fluorescent Adolescent – Arctic Monkeys
+- Skinny Love – Bon Iver
+- Thnks fr th Mmrs – Fall Out Boy
+- Low – Flo Rida
+- Ruby – Kaiser Chiefs
+- Stronger – Kanye West
+- Paper Planes – M.I.A.
+- Alcastar – Magnus Uggla
+- Electric Feel – MGMT
+- Time to Pretend – MGMT
+- Everything – Michael Bublé
+- Gunpowder & Lead – Miranda Lambert
+- Teardrops on My Guitar – Taylor Swift
+- Tick Tick Boom – The Hives
+- Mercy – Duffy
+- Mykonos – Fleet Foxes
+- White Winter Hymnal – Fleet Foxes
+- Dog Days Are Over – Florence + The Machine
+- Love Lockdown – Kanye West
+- A Milli – Lil Wayne
+- Lollipop – Lil Wayne
+- Swedish Pagans – Sabaton
+- Psychosocial – Slipknot
+- You Belong with Me – Taylor Swift
+- A-Punk – Vampire Weekend
+- Chicken Fried – Zac Brown Band
+- Ready for the Weekend – Calvin Harris
+- Memories – David Guetta
+- Home – Edward Sharpe & The Magnetic Zeros
+- Two Weeks – Grizzly Bear
+- Haven't Met You Yet – Michael Bublé
+- Ignorance – Paramore
+- 1901 – Phoenix
+- Lisztomania – Phoenix
+- Mi Niña Bonita – Chino & Nacho
+- Love the Way You Lie – Eminem
+- Ritual – Ghost
+- Hold You – Gyptian
+- Dirt Road Anthem – Jason Aldean
+- The House That Built Me – Miranda Lambert
+- Från och med du – Oskar Linnros
+- Body Talk – Robyn
+- Hang with Me – Robyn
+- Loca – Shakira
+- Bloodbuzz Ohio – The National
+- Love on Top – Beyoncé
+- Holocene – Bon Iver
+- Tongue Tied – Grouplove
+- Niggas in Paris – Jay-Z & Kanye West
+- Country Girl (Shake It for Me) – Luke Bryan
+- Super Bass – Nicki Minaj
+- We Found Love – Rihanna
+- Call Your Girlfriend – Robyn
+- Lonely Boy – The Black Keys
+- Myth – Beach House
+- Sweet Nothing – Calvin Harris
+- Limbo – Daddy Yankee
+- Latch – Disclosure
+- Bailando por el Mundo – Juan Magán
+- Swimming Pools (Drank) – Kendrick Lamar
+- Pontoon – Little Big Town
+- Can't Hold Us – Macklemore & Ryan Lewis
+- Dansa pausa – Panetoz
+- Stay – Rihanna
+- Hail to the King – Avenged Sevenfold
+- Hey Brother – Avicii
+- Take Me to Church – Hozier
+- Retrograde – James Blake
+- Follow Your Arrow – Kacey Musgraves
+- Propuesta Indecente – Romeo Santos
+- Dansar inte – Veronica Maggio
+- Dem a Watch – Chronixx
+- Trap Queen – Fetty Wap
+- Fancy – Iggy Azalea
+- Prayer in C – Lilly Wood & The Prick
+- Love Never Felt So Good – Michael Jackson
+- Travesuras – Nicky Jam
+- Cheerleader – OMI
+- Lay Me Down – Sam Smith
+- Earned It – The Weeknd
+- Paris – Tove Lo
+- Waiting for Love – Avicii
+- Space Song – Beach House
+- La Gozadera – Gente de Zona
+- Ginza – J Balvin
+- Where Are Ü Now – Jack Ü
+- Alright – Kendrick Lamar
+- El Perdón – Nicky Jam & Enrique Iglesias
+- La Mordidita – Ricky Martin
+- Let It Happen – Tame Impala
+- Die a Happy Man – Thomas Rhett
+- Stressed Out – Twenty One Pilots
+- Never Forget You – Zara Larsson & MNEK
+- Andas en Mi Cabeza – Chino & Nacho
+- Reggaetón Lento (Bailemos) – CNCO
+- Corazón – Daddy Yankee
+- Shaky Shaky – Daddy Yankee
+- Panda – Desiigner
+- Ivy – Frank Ocean
+- Cherry Wine – Hozier
+- Safari – J Balvin
+- Location – Khalid
+- Cold Water – Major Lazer
+- Bad and Boujee – Migos
+- Hasta el Amanecer – Nicky Jam
+- Vente Pa' Ca – Ricky Martin
+- The Last Stand – Sabaton
+- No Lie – Sean Paul
+- Chantaje – Shakira
+- Cool Girl – Tove Lo
+- 17 år – Veronica Maggio
+- Meant to Be – Bebe Rexha & Florida Georgia Line
+- Mayores – Becky G
+- Cola – CamelPhat & Elderbrook
+- Bodak Yellow – Cardi B
+- The Gambler – Chris Stapleton
+- Mask Off – Future
+- Échame la Culpa – Luis Fonsi & Demi Lovato
+- Felices los 4 – Maluma
+- Rockstar – Post Malone
+- Body Like a Back Road – Sam Hunt
+- Mo Bamba – Sheck Wes
+- Lovely – Billie Eilish & Khalid
+- One Kiss – Calvin Harris & Dua Lipa
+- Te Boté – Casper Mágico
+- Dura – Daddy Yankee
+- In My Feelings – Drake
+- Lucid Dreams – Juice WRLD
+- Rainbow – Kacey Musgraves
+- Beautiful Crazy – Luke Combs
+- Whiskey Glasses – Morgan Wallen
+- X (Equis) – Nicky Jam & J Balvin
+- Calma – Pedro Capó
+- Sunflower (Spider-Man: Into the Spider-Verse) – Post Malone & Swae Lee
+- Sobredosis – Romeo Santos
+- Malamente – Rosalía
+- Clandestino – Shakira & Maluma
+- Ruin My Life – Zara Larsson
+- China – Anuel AA
+- Con Calma – Daddy Yankee
+- Tusa – Karol G
+- Svag – Victor Leksell
+- Physical – Dua Lipa
+- Head & Heart – Joel Corry
+- Bichota – Karol G
+- Hawái – Maluma
+- Midnight Sky – Miley Cyrus
+- Essence – Wizkid
+- Wasted on You – Morgan Wallen
+- Seventeen Going Under – Sam Fender
+- Me Porto Bonito – Bad Bunny
+- Rich Flex – Drake & 21 Savage
+- Cry for Me – Ghost
+- Provenza – Karol G
+- You Proof – Morgan Wallen
+- Bad Habit – Steve Lacy
+- Snooze – SZA
+- Bzrp Music Sessions #53 – Bizarrap & Shakira
+- Ella Baila Sola – Eslabon Armado & Peso Pluma
+- Need a Favor – Jelly Roll
+- Rich Men North of Richmond – Oliver Anthony
+- Cowboys Cry Too – Kelsea Ballerini & Noah Kahan
 
 ## Not found on Spotify
 
@@ -50,20 +868,119 @@ Taken out of the catalogue. Add one back with the right title and artist (and "i
 - Vigil – Sam Hulick: no recording with this title by this artist.
 - Build That Wall – Darren Korb: no recording with this title by this artist.
 - Walk the Line – Johnny Cash: 1956, country: no recording with this title by this artist.
-- Anarchy in the U.K. – Sex Pistols: 1976, punk: no recording with this title by this artist.
-- Boogie Wonderland – Earth, Wind & Fire: 1979, disco: no recording with this title by this artist.
-- Staten och kapitalet – Ebba Grön: 1981, punk: no recording with this title by this artist.
-- Diggi-Loo Diggi-Ley – Herreys: 1984, schlager: no recording with this title by this artist.
-- Venus Butterfly – Pernilla Wahlgren: 1988, schlager: no recording with this title by this artist.
-- Vi får väl se – Arvingarna: 1993, schlager: no recording with this title by this artist.
-- Take Me to Your Heaven – Charlotte Nilsson: 1999, schlager: no recording with this title by this artist.
-- Alcastar – Magnus Uggla: 2006, schlager: no recording with this title by this artist.
+- Anarchy in the U.K. – Sex Pistols (catalogue): 1976, punk: no recording with this title by this artist.
+- Boogie Wonderland – Earth, Wind & Fire (catalogue): 1979, disco: no recording with this title by this artist.
+- Staten och kapitalet – Ebba Grön (catalogue): 1981, punk: no recording with this title by this artist.
 - Gods of War – Sabaton: 2008, metal: no recording with this title by this artist.
 - Hold Yuh – Gyptian: 2010, reggae: no recording with this title by this artist.
 - Thinking About You – Frank Ocean: 2012, rnb: no recording with this title by this artist.
-- One Kiss – Calvin Harris & Dua Lipa: 2018, dance: no recording with this title by this artist.
+- One Kiss – Calvin Harris & Dua Lipa (catalogue): 2018, dance: no recording with this title by this artist.
 - Seven – Måneskin: 2021, rock: no recording with this title by this artist.
 - Bzrp Music Sessions, Vol. 53 – Bizarrap & Shakira: 2023, latin: no recording with this title by this artist.
+- Dags igen att vara kära – Staffan Broms: 1959, schlager: no recording with this title by this artist.
+- Underbar, så underbar – Inger Berggren: 1960, schlager: no recording with this title by this artist.
+- Alexander – Mona Grain: 1960, schlager: no recording with this title by this artist.
+- Spela på regnbågen – Lars Lönndahl: 1961, schlager: no recording with this title by this artist.
+- Vårvinter – Lill-Babs: 1961, schlager: no recording with this title by this artist.
+- Ett litet rött paket – Lill-Babs: 1962, schlager: no recording with this title by this artist.
+- Twist till menuett – Carli Tornehave: 1963, schlager: no recording with this title by this artist.
+- T'en va pas – Esther Ofarim: 1963, schlager: no recording with this title by this artist.
+- Te' dans med Karl-Erik – Sven-Ingvars: 1963, schlager: no recording with this title by this artist.
+- Ann-Caroline – Lasse Berghagen: 1965, schlager: no recording with this title by this artist.
+- Gamle Svarten – Lasse Berghagen: 1966, schlager: no recording with this title by this artist.
+- Om du var min – Sven-Ingvars: 1966, schlager: no recording with this title by this artist.
+- Il doit faire beau là-bas – Noëlle Cordier: 1967, schlager: no recording with this title by this artist.
+- En valsfan – Östen Warnerbring: 1967, schlager: no recording with this title by this artist.
+- Som en dröm – Östen Warnerbring: 1967, schlager: no recording with this title by this artist.
+- Ren vals – Rolf Berg: 1967, schlager: no recording with this title by this artist.
+- Vid en sjö i Värmland – Sven-Ingvars: 1967, schlager: no recording with this title by this artist.
+- Knock, Knock (Who's There?) – Mary Hopkin: 1970, schlager: no recording with this title by this artist.
+- Diese Welt – Katja Ebstein: 1971, schlager: no recording with this title by this artist.
+- Sån e' du sån e' jag – Östen Warnerbring: 1972, schlager: no recording with this title by this artist.
+- Sommaren som aldrig säger nej – Malta (catalogue): 1973, schlager: no recording with this title by this artist.
+- En enda jord – Lena Ericsson: 1974, schlager: no recording with this title by this artist.
+- Sången lär ha vingar – Gimmicks: 1975, schlager: no recording with this title by this artist.
+- Un, deux, trois – Catherine Ferry: 1976, schlager: no recording with this title by this artist.
+- Toi, la musique et moi – Mary Christy: 1976, schlager: no recording with this title by this artist.
+- Sommaren -65 – Landslaget: 1977, schlager: no recording with this title by this artist.
+- It's Nice to Be in Love Again – The Swarbriggs Plus Two: 1977, schlager: no recording with this title by this artist.
+- L'amour ça fait chanter la vie – Jean Vallée: 1978, schlager: no recording with this title by this artist.
+- Il y aura toujours des violons – Joël Prévost: 1978, schlager: no recording with this title by this artist.
+- Dröm är dröm och saga saga – Lill Lindfors: 1978, schlager: no recording with this title by this artist.
+- Det känns som jag vandrar fram – Ola+3: 1979, schlager: no recording with this title by this artist.
+- Ge mig en sommardag – Lasse Holm: 1980, schlager: no recording with this title by this artist.
+- Love Enough for Two – Prima Donna: 1980, schlager: no recording with this title by this artist.
+- Humanahum – Jean Gabilou: 1981, schlager: no recording with this title by this artist.
+- Skänk mig ett leende – Vikingarna: 1981, schlager: no recording with this title by this artist.
+- Amour on t'aime – Arlette Zola: 1982, schlager: no recording with this title by this artist.
+- Månsken i augusti – Lasse Stefanz: 1982, schlager: no recording with this title by this artist.
+- Någonting har hänt – Lena Ericsson: 1982, schlager: no recording with this title by this artist.
+- Hey hi ho – Liza Öhman: 1982, schlager: no recording with this title by this artist.
+- Chai – Ofra Haza: 1983, schlager: no recording with this title by this artist.
+- Kvinnan i mitt liv – Hasse Andersson: 1984, schlager: no recording with this title by this artist.
+- Ta min hand – Dan Tillberg: 1985, schlager: no recording with this title by this artist.
+- Fly Me Away – Kikki Danielsson: 1985, schlager: no recording with this title by this artist.
+- Minns du Hollywood – Kikki Danielsson: 1985, schlager: no recording with this title by this artist.
+- Canneloni Macaroni – Lasse Holm & Annette Kullenberg: 1985, schlager: no recording with this title by this artist.
+- Piccadilly Circus – Pernilla Wahlgren: 1985, schlager: no recording with this title by this artist.
+- Pas pour moi – Daniela Simons: 1986, schlager: no recording with this title by this artist.
+- Det är vi ändå – Lasse Holm: 1986, schlager: no recording with this title by this artist.
+- L'Amour de ma vie – Sherisse Laurence: 1986, schlager: no recording with this title by this artist.
+- Ett andetag ifrån – Tommy Körberg: 1986, schlager: no recording with this title by this artist.
+- Leva livet – Lotta Engberg: 1987, schlager: no recording with this title by this artist.
+- Ne partez pas sans moi – Céline Dion: 1988, schlager: no recording with this title by this artist.
+- Ka' du se hva' jeg sa' – Hot Eyes: 1988, schlager: no recording with this title by this artist.
+- Venus Butterfly – Pernilla Wahlgren: 1988, schlager: no recording with this title by this artist.
+- Why Do I Always Get It Wrong – Live Report: 1989, schlager: no recording with this title by this artist.
+- C'est le dernier qui a parlé qui a raison – Amina: 1991, schlager: no recording with this title by this artist.
+- Kan – Duo Datz: 1991, schlager: no recording with this title by this artist.
+- Oh Mama – Lasse Stefanz: 1991, schlager: no recording with this title by this artist.
+- Dansa i månsken – Lotta & Anders Engbergs orkester: 1991, schlager: no recording with this title by this artist.
+- Copacabana – Lotta Engberg: 1991, schlager: no recording with this title by this artist.
+- Det finns en morgondag – Thorleifs: 1991, schlager: no recording with this title by this artist.
+- Ett liv med dej – Towe Jaarnek: 1991, schlager: no recording with this title by this artist.
+- Little Child – Mary Spiteri: 1992, schlager: no recording with this title by this artist.
+- Moi, tout simplement – Annie Cotton: 1993, schlager: no recording with this title by this artist.
+- Vi får väl se – Arvingarna: 1993, schlager: no recording with this title by this artist.
+- Den vackraste – Thorleifs: 1993, schlager: no recording with this title by this artist.
+- Kom och värm dig – Wizex: 1993, schlager: no recording with this title by this artist.
+- Jag ger dig allt – Jessica G. Pilnäs: 1995, schlager: no recording with this title by this artist.
+- Där en ängel hälsat på – N-Mix: 1997, schlager: no recording with this title by this artist.
+- Ingen annan väg – B.I.G.: 1998, schlager: no recording with this title by this artist.
+- Julia – Myrra Malmberg: 1998, schlager: no recording with this title by this artist.
+- Stjärna på himmelen – Drömhus: 1999, schlager: no recording with this title by this artist.
+- Ring ring (bara du slog en signal) – ABBA: 1973, schlager: no recording with this title by this artist.
+- Rock Bottom – Lynsey De Paul: 1977, schlager: no recording with this title by this artist.
+- A-Ba-Ni-Bi – Izhar Cohen: 1978, schlager: no recording with this title by this artist.
+- Gubbarna i parken – Markoolio: 1999, schlager: no recording with this title by this artist.
+- Journey to Jerusalem – Kudüs'e Seyahat – Sürpriz: 1999, schlager: no recording with this title by this artist.
+- Kärlekens tunga – Markoolio: 2000, schlager: no recording with this title by this artist.
+- Die for You – Antique: 2001, schlager: no recording with this title by this artist.
+- Sommarparty – Markoolio: 2001, schlager: no recording with this title by this artist.
+- I går, i dag – Sanna Nielsen: 2001, schlager: no recording with this title by this artist.
+- Everybody – Tanel Padar, Dave Benton and 2XL: 2001, schlager: no recording with this title by this artist.
+- Tröstlös – Benny Anderssons Orkester: 2004, schlager: no recording with this title by this artist.
+- Kärlek är för alla – Nanne Grönvall: 2004, schlager: no recording with this title by this artist.
+- Hej, hej, vi ses (Hej då) – Brolle: 2005, schlager: no recording with this title by this artist.
+- Mr Hit – Linda Bengtzing: 2006, schlager: no recording with this title by this artist.
+- Vår bästa tid är nu – Benny Anderssons Orkester: 2007, schlager: no recording with this title by this artist.
+- Shake It Up Şekerim – Kenan Doğulu: 2007, schlager: no recording with this title by this artist.
+- Bröder – Linda Bengtzing: 2007, schlager: no recording with this title by this artist.
+- Unsubstantial Blues – Magdi Rúzsa: 2007, schlager: no recording with this title by this artist.
+- Snälla snälla – Carola: 2008, schlager: no recording with this title by this artist.
+- Älska mig – Charlotte Perrelli: 2008, schlager: no recording with this title by this artist.
+- Bara hålla om dig – Jenny Silver: 2010, schlager: no recording with this title by this artist.
+- Party for Everybody – Buranovskiye Babushki: 2012, schlager: no recording with this title by this artist.
+- Om sanningen ska fram – Eric Saade: 2013, schlager: no recording with this title by this artist.
+- Jag är fri (Manne Leam Frijje) – Jon Henrik Fjällgren: 2015, schlager: no recording with this title by this artist.
+- A Million Voices – Polina Gagarina: 2015, schlager: no recording with this title by this artist.
+- Hollow – Robin Bengtsson: 2017, schlager: no recording with this title by this artist.
+- Stefania – Kalush Orchestra: 2022, schlager: no recording with this title by this artist.
+
+## Deck songs that may have the wrong recording
+
+Their Spotify page names another artist. Check the id by hand (open.spotify.com/track/<id>).
+
 
 ## Year differs from Spotify
 
@@ -135,13 +1052,13 @@ The catalogue year was kept. Spotify is often wrong (it dates songs by album), b
 - Strange Fruit – Billie Holiday (catalogue): the catalogue says 1939; the recording used is from 1956 (Lady Sings The Blues).
 - Hound Dog – Big Mama Thornton (catalogue): the catalogue says 1953; the recording used is from 1966 (In Europe).
 - Shake, Rattle and Roll – Big Joe Turner (catalogue): the catalogue says 1954; the recording used is from 1957 (Rock & Roll).
-- Love Me Tender – Elvis Presley (catalogue): the catalogue says 1956; the recording used is from 1958 (Elvis' Golden Records).
+- Love Me Tender – Elvis Presley (love): the catalogue says 1956; the recording used is from 1958 (Elvis' Golden Records).
 - Diana – Paul Anka (catalogue): the catalogue says 1957; the recording used is from 1966 (Sings His Favorites).
 - Volare (Nel blu dipinto di blu) – Domenico Modugno (catalogue): the catalogue says 1958; the recording used is from 2001 (Encore).
 - Dream Lover – Bobby Darin (catalogue): the catalogue says 1959; the recording used is from 2007 (Sing & Swing with Bobby Darin).
-- Ack Värmeland, du sköna – Jan Johansson (catalogue): the catalogue says 1964; the recording used is from 1968 (Musik genom fyra sekler).
-- Hej clown – Jan Malmsjö (catalogue): the catalogue says 1969; the recording used is from 1971 (Hej clown).
-- S.O.S. – ABBA (catalogue): the catalogue says 1975, Spotify's earliest release is 1992 (Plays Abba Hits).
+- Ack Värmeland, du sköna – Jan Johansson (swedish): the catalogue says 1964; the recording used is from 1968 (Musik genom fyra sekler).
+- Hej clown – Jan Malmsjö (swedish): the catalogue says 1969; the recording used is from 1971 (Hej clown).
+- S.O.S. – ABBA (swedish): the catalogue says 1975, Spotify's earliest release is 1992 (Plays Abba Hits).
 - Got to Give It Up – Marvin Gaye (catalogue): the catalogue says 1977; the recording used is from 2008 (Favorites).
 - Crazy Train – Ozzy Osbourne (catalogue): the catalogue says 1980; the recording used is from 2002 (The Osbourne Family Album (Clean Version)).
 - On the Road Again – Willie Nelson (catalogue): the catalogue says 1980; the recording used is from 1988 (Willie Nelson The Collection).
@@ -150,37 +1067,501 @@ The catalogue year was kept. Spotify is often wrong (it dates songs by album), b
 - Blue Monday – New Order (catalogue): the catalogue says 1983; the recording used is from 1987 (Substance).
 - Back to Life (However Do You Want Me) – Soul II Soul (catalogue): the catalogue says 1989; the recording used is from 1995 (Club Classics Vol. One).
 - Friends in Low Places – Garth Brooks (catalogue): the catalogue says 1990; the recording used is from 2014 (All Time Legends of Country Music).
-- Show Me Love – Robin S. (catalogue): the catalogue says 1990, Spotify's earliest release is 1993 (Show Me Love).
-- Fångad av en stormvind – Carola (catalogue): the catalogue says 1991, Spotify's earliest release is 1983 (Carola Gospel Concert).
-- Nothing Else Matters – Metallica (catalogue): the catalogue says 1991, Spotify's earliest release is 2021 (Metallica (Remastered Deluxe Box Set)).
-- California Love – 2Pac (catalogue): the catalogue says 1995, Spotify's earliest release is 1998 (Greatest Hits).
-- Mr. Boombastic – Shaggy (catalogue): the catalogue says 1995, Spotify's earliest release is 2019 (Oldies Ragga Dancehall, Vol. 2).
-- Man! I Feel Like a Woman! – Shania Twain (catalogue): the catalogue says 1999, Spotify's earliest release is 1997 (Come On Over (International Version)).
-- Lassie – Ainbusk (catalogue): the catalogue says 2002, Spotify's earliest release is 1993 (Ainbusk Singers).
-- Primo Victoria – Sabaton (catalogue): the catalogue says 2005, Spotify's earliest release is 2010 (Primo Victoria (Re-Armed)).
-- Kids – MGMT (catalogue): the catalogue says 2007, Spotify's earliest release is 2005 (Oracular Spectacular).
-- With Every Heartbeat – Robyn (catalogue): the catalogue says 2007, Spotify's earliest release is 2005 (With Every Heartbeat).
-- Don't Start Now – Dua Lipa (catalogue): the catalogue says 2019, Spotify's earliest release is 2021 (Future Nostalgia (The Moonlight Edition)).
+- Show Me Love – Robin S. (party): the catalogue says 1990; the recording used is from 1993 (Show Me Love).
+- Fångad av en stormvind – Carola (swedish): the catalogue says 1991; the recording used is from 2011 (Carola Gospel Concert).
+- Nothing Else Matters – Metallica (catalogue): the catalogue says 1991; the recording used is from 2021 (Metallica (Remastered Deluxe Box Set)).
+- California Love – 2Pac (summer): the catalogue says 1995; the recording used is from 1998 (Greatest Hits).
+- Mr. Boombastic – Shaggy (summer): the catalogue says 1995; the recording used is from 2019 (Oldies Ragga Dancehall, Vol. 2).
+- Lassie – Ainbusk (swedish): the catalogue says 2002; the recording used is from 1993 (Ainbusk Singers).
+- Primo Victoria – Sabaton (catalogue): the catalogue says 2005; the recording used is from 2010 (Primo Victoria (Re-Armed)).
+- Don't Start Now – Dua Lipa (party): the catalogue says 2019; the recording used is from 2021 (Future Nostalgia (The Moonlight Edition)).
+- Stardust – Hoagy Carmichael (catalogue): the catalogue says 1927; the recording used is from 1989 (Stardust & Much More).
+- West End Blues – Louis Armstrong (catalogue): the catalogue says 1928; the recording used is from 1994 (Essence of Armstrong).
+- Ain't Misbehavin' – Fats Waller (catalogue): the catalogue says 1929; the recording used is from 1989 (Fats Waller Misbehavin' Badly On V).
+- Mood Indigo – Duke Ellington (catalogue): the catalogue says 1930; the recording used is from 1951 (Masterpieces By Ellington (Uncut Concert Arrangements)).
+- I Got Rhythm – Ethel Merman (catalogue): the catalogue says 1930; the recording used is from 1958 (Ethel: A Musical Autobiography).
+- Minnie the Moocher – Cab Calloway (catalogue): the catalogue says 1931; the recording used is from 1940 (The Hi-De-Ho Man).
+- It Don't Mean a Thing (If It Ain't Got That Swing) – Duke Ellington (catalogue): the catalogue says 1932; the recording used is from 1963 (The Great Reunion).
+- Summertime – Billie Holiday (catalogue): the catalogue says 1936; the recording used is from 2011 (Total George Gershwin, Vol. 8).
+- A-Tisket, A-Tasket – Ella Fitzgerald (catalogue): the catalogue says 1938; the recording used is from 2026 (Music Legends Ella Fitzgerald : The Queen of Jazz).
+- Body and Soul – Coleman Hawkins (catalogue): the catalogue says 1939; the recording used is from 1996 (Body & Soul).
+- In the Mood – Glenn Miller (catalogue): the catalogue says 1939; the recording used is from 1983 (In The Digital Mood).
+- Moonlight Serenade – Glenn Miller (catalogue): the catalogue says 1939; the recording used is from 1990 (Forever).
+- God Bless the Child – Billie Holiday (catalogue): the catalogue says 1941; the recording used is from 1956 (Lady Sings The Blues).
+- Take the "A" Train – Duke Ellington (catalogue): the catalogue says 1941; the recording used is from 1961 (First Time! The Count Meets The Duke).
+- Chattanooga Choo Choo – Glenn Miller (catalogue): the catalogue says 1941; the recording used is from 1983 (In The Digital Mood).
+- Lover Man – Billie Holiday (catalogue): the catalogue says 1945; the recording used is from 1958 (Lover Man).
+- Salt Peanuts – Dizzy Gillespie (catalogue): the catalogue says 1945; the recording used is from 2006 (Absolutely The Best: Dizzy Gillespie).
+- Bésame Mucho – Trío Los Panchos (catalogue): the catalogue says 1945; the recording used is from 1960 (Historia De Un Amor).
+- Ornithology – Charlie Parker (catalogue): the catalogue says 1946; the recording used is from 1966 (Ornithology).
+- Night and Day – Frank Sinatra (catalogue): the catalogue says 1946; the recording used is from 1962 (Sinatra & Strings).
+- Round Midnight – Thelonious Monk (catalogue): the catalogue says 1947; the recording used is from 1951 (Genius Of Modern Music, Vol. 1).
+- I'm So Lonesome I Could Cry – Hank Williams (catalogue): the catalogue says 1949; the recording used is from 2010 (Top 5 - Hank Williams - EP).
+- La vie en rose – Louis Armstrong (catalogue): the catalogue says 1950; the recording used is from 2003 (BD Music Presents Louis Armstrong).
+- Mona Lisa – Nat King Cole (catalogue): the catalogue says 1950; the recording used is from 1954 (Unforgettable).
+- Tennessee Waltz – Patti Page (catalogue): the catalogue says 1950; the recording used is from 1952 (Tennessee Waltz).
+- Petite Fleur – Sidney Bechet (catalogue): the catalogue says 1952; the recording used is from 1997 (Les Années Bechet).
+- Satin Doll – Duke Ellington (catalogue): the catalogue says 1953; the recording used is from 1987 (Jazz Party).
+- Cielito Lindo – Pedro Infante (catalogue): the catalogue says 1953; the recording used is from 1997 (60 Rancheras Inmortales Vol. 2).
+- My Funny Valentine – Chet Baker (catalogue): the catalogue says 1954; the recording used is from 1956 (Chet Baker Sings).
+- Augustin – Brita Borg (catalogue): the catalogue says 1959; the recording used is from 2013 (The EP-Collection 1957-1963).
+- Är du kär i mej ännu Klas-Göran? – Lill-Babs (catalogue): the catalogue says 1959; the recording used is from 1991 (Gamla fina låtar 3).
+- En gång i Stockholm – Monica Zetterlund (catalogue): the catalogue says 1963; the recording used is from 2001 (Monicas Bästa).
+- Säg inte nej, säg kanske – Sven-Ingvars (catalogue): the catalogue says 1963; the recording used is from 1965 (Säg inte nej, säg kanske).
+- Fröken Fräken – Sven-Ingvars (catalogue): the catalogue says 1964; the recording used is from 1990 (På Begäran).
+- Jennie, Jennie – Lasse Berghagen (catalogue): the catalogue says 1975; the recording used is from 1989 (20 av Lars Berghagens bästa).
+- Fångad i en dröm – Björn Skifs (catalogue): the catalogue says 1981; the recording used is from 2010 (Da Capo).
+- Guld och gröna skogar – Hasse Andersson (catalogue): the catalogue says 1982; the recording used is from 2015 (Guld och gröna skogar).
+- En dag – Tommy Nilsson (catalogue): the catalogue says 1989; the recording used is from 2001 (En Samling 1981 - 2001).
+- Som en vind – Edin-Ådahl (catalogue): the catalogue says 1990; the recording used is from 2016 (Schlager - 50 Favoriter).
+- Bara du – Lasse Stefanz (catalogue): the catalogue says 1993; the recording used is from 1984 (Elaine).
+- Gråt inga tårar – Thorleifs (catalogue): the catalogue says 1996; the recording used is from 2018 (Upp till dans 7).
+- De sista ljuva åren – Lasse Stefanz (catalogue): the catalogue says 2000; the recording used is from 2003 (Det här är bara början).
+- Hela världen för mig – Sanna Nielsen (catalogue): the catalogue says 2001; the recording used is from 2008 (Melodifestivalfavoriter).
+- Kom och ta mig – Brandsta City Släckers (catalogue): the catalogue says 2006; the recording used is from 2003 (15 minuter).
+- Shuffla – Samir & Viktor (catalogue): the catalogue says 2016; the recording used is from 2018 (Shuffla).
+- Bada nakna – Samir & Viktor (catalogue): the catalogue says 2018; the recording used is from 2023 (SKÅL).
+- Refrain – Lys Assia (catalogue): the catalogue says 1956; the recording used is from 2005 (Lady in Blue).
+- Dors mon amour – André Claveau (catalogue): the catalogue says 1958; the recording used is from 2009 (Tous Les Tubes).
+- Nel blu, dipinto di blu – Domenico Modugno (catalogue): the catalogue says 1958; the recording used is from 2008 (Nel Blu Dipinto Di Blu).
+- Nya fågelsången – Britt Damberg (catalogue): the catalogue says 1959; the recording used is from 2014 (1957-1963).
+- Sing Little Birdie – Pearl Carr and Teddy Johnson (catalogue): the catalogue says 1959; the recording used is from 1999 (The Magic Of).
+- Een beetje – Teddy Scholten (catalogue): the catalogue says 1959; the recording used is from 2010 (Nostalgie, Deel 2).
+- Looking High, High, High – Bryan Johnson (catalogue): the catalogue says 1960; the recording used is from 2012 (100 Children's Classics).
+- Tom Pillibi – Jacqueline Boyer (catalogue): the catalogue says 1960; the recording used is from 2010 (Tom Pillibi).
+- Alla andra får varann – Östen Warnerbring (catalogue): the catalogue says 1960; the recording used is from 2005 (Svenska Schlagers).
+- Nous aurons demain – Franca di Rienzo (catalogue): the catalogue says 1961; the recording used is from 2013 (Sparkling Memories Vol 5).
+- Nous les amoureux – Jean-Claude Pascal (catalogue): the catalogue says 1961; the recording used is from 1997 (nous les amoureux).
+- April april – Siw Malmkvist (catalogue): the catalogue says 1961; the recording used is from 1999 (Tunna skivor och andra guldkorn).
+- Are You Sure? – The Allisons (catalogue): the catalogue says 1961; the recording used is from 2022 (Are You Sure).
+- Petit bonhomme – Camillo Felgen (catalogue): the catalogue says 1962; the recording used is from 2013 (Sparkling Memories Vol 4).
+- Anneli – Carli Tornehave (catalogue): the catalogue says 1962, Spotify's earliest release is 2002 (Under Ekars Djupa Gronska).
+- Uno per tutte – Emilio Pericoli (catalogue): the catalogue says 1963; the recording used is from 2002 (Solino).
+- Storstadsmelodi – Gerd Söderberg (catalogue): the catalogue says 1963; the recording used is from 2007 (Festivalfavoriter 1).
+- Non ho l'età – Gigliola Cinquetti (catalogue): the catalogue says 1964; the recording used is from 2018 (Non ho l'età).
+- I Love the Little Things – Matt Monro (catalogue): the catalogue says 1964; the recording used is from 2023 (I Love the Little Things).
+- Où sont-elles passées ? – Romuald (catalogue): the catalogue says 1964; the recording used is from 2021 (Où sont-elles passées).
+- Poupée de cire, poupée de son – France Gall (catalogue): the catalogue says 1965; the recording used is from 2018 (Poupée de cire poupée de son).
+- N'avoue jamais – Guy Mardel (catalogue): the catalogue says 1965; the recording used is from 2009 (Best Of Vol.1, Les Succès De Guy Mardel).
+- Annorstädes vals – Ingvar Wixell (catalogue): the catalogue says 1965; the recording used is from 2005 (Svenska Schlagers).
+- I Belong – Kathy Kirby (catalogue): the catalogue says 1965; the recording used is from 1960 (London In White Gloves).
+- Intet er nytt under solen – Åse Kleveland (catalogue): the catalogue says 1966; the recording used is from 2020 (På frihjul).
+- Vinterrosor – Gunnar Wiklund (catalogue): the catalogue says 1966; the recording used is from 1968 (Vi ska gå hand i hand).
+- Merci, Chérie – Udo Jürgens (catalogue): the catalogue says 1966; the recording used is from 2007 (Lieder voller Poesie - ausgewählt und kommentiert von Bastian Sick).
+- If I Could Choose – Sean Dunphy (catalogue): the catalogue says 1967; the recording used is from 1998 (The Irish Showband Collection).
+- Alla har glömt – Towa Carson (catalogue): the catalogue says 1967; the recording used is from 2010 (Big-5 : Towa Carson).
+- Congratulations – Cliff Richard (catalogue): the catalogue says 1968; the recording used is from 1989 (40 Golden Greats).
+- La La La – Massiel (catalogue): the catalogue says 1968; the recording used is from 2018 (Orígenes).
+- Du vet var jag finns – Towa Carson (catalogue): the catalogue says 1968; the recording used is from 2006 (Towas bästa).
+- De troubadour – Lenny Kuhr (catalogue): the catalogue says 1969; the recording used is from 2022 (Eurovision Song Contest 2022).
+- Vivo cantando – Salomé (catalogue): the catalogue says 1969; the recording used is from 2003 (Todo Lo Mejor).
+- All Kinds of Everything – Dana (catalogue): the catalogue says 1970; the recording used is from 2015 (The Collection).
+- Wunder gibt es immer wieder – Katja Ebstein (catalogue): the catalogue says 1970; the recording used is from 2005 (Witkiewicz).
+- Härliga sommardag – Family Four (catalogue): the catalogue says 1972; the recording used is from 1999 (Guldkorn).
+- Säg det med en sång – Lena Andersson (catalogue): the catalogue says 1972; the recording used is from 2003 (Lena Andersson/Musik vi minns).
+- Beg, Steal or Borrow – The New Seekers (catalogue): the catalogue says 1972; the recording used is from 1978 (The New Seekers).
+- I våran värld – Ann-Kristin Hedmark (catalogue): the catalogue says 1973; the recording used is from 2007 (Festivalfavoriter 2).
+- Power to All Our Friends – Cliff Richard (catalogue): the catalogue says 1973; the recording used is from 1989 (40 Golden Greats).
+- Eres tú – Mocedades (catalogue): the catalogue says 1973; the recording used is from 1998 (Coleccion Original: Mocedades).
+- I See a Star – Mouth and MacNeal (catalogue): the catalogue says 1974; the recording used is from 2014 (How Do You Do?).
+- Era – Wess and Dori Ghezzi (catalogue): the catalogue says 1975; the recording used is from 2023 (Returning Home).
+- Save Your Kisses for Me – Brotherhood of Man (catalogue): the catalogue says 1976; the recording used is from 1990 (Save Your Kisses for Me).
+- Johan B. Lund – Svante Thuresson (catalogue): the catalogue says 1977; the recording used is from 2002 (Svensktoppar).
+- Je suis l'enfant soleil – Anne-Marie David (catalogue): the catalogue says 1979; the recording used is from 2005 (Live á Charleroi).
+- Hallelujah – Milk and Honey (catalogue): the catalogue says 1979; the recording used is from 2013 (Not Turning Back).
+- Växeln hallå – Janne Lucas Persson (catalogue): the catalogue says 1980, Spotify's earliest release is 1997 (Hi-Five: Svenska Schlagerhits 2).
+- What's Another Year – Johnny Logan (catalogue): the catalogue says 1980; the recording used is from 2001 (Reach For Me).
+- Theater – Katja Ebstein (catalogue): the catalogue says 1980; the recording used is from 1994 (Wunder gibt es immer wieder).
+- Hit men inte längre – Liza Öhman (catalogue): the catalogue says 1980; the recording used is from 2007 (Festivalfavoriter 2).
+- Johnny Blue – Lena Valaitis (catalogue): the catalogue says 1981; the recording used is from 1994 (Meine größten Erfolge).
+- Si la vie est cadeau – Corinne Hermès (catalogue): the catalogue says 1983; the recording used is from 2015 (Best Of).
+- Se – Karin Glenmark (catalogue): the catalogue says 1983; the recording used is from 2007 (Festivalfavoriter 2).
+- Lady, Lady – Bravo (catalogue): the catalogue says 1984; the recording used is from 2015 (Bravo (Remastered 2015)).
+- Sankta Cecilia – Göran Folkestad & Lotta Pedersen (catalogue): the catalogue says 1984; the recording used is from 2002 (Vem e' de' du vill ha).
+- Rendez-vous – John Ballard (catalogue): the catalogue says 1984; the recording used is from 2007 (Festivalfavoriter 3).
+- Für alle – Wind (catalogue): the catalogue says 1985; the recording used is from 1996 (Mach' mich an).
+- Hold Me Now – Johnny Logan (catalogue): the catalogue says 1987; the recording used is from 2001 (Reach For Me).
+- Gente di mare – Umberto Tozzi and Raf (catalogue): the catalogue says 1987; the recording used is from 2006 (Try To Remember).
+- Laß die Sonne in dein Herz – Wind (catalogue): the catalogue says 1987; the recording used is from 1996 (Mach' mich an).
+- 100% – Lotta Engberg & Triple & Touch (catalogue): the catalogue says 1988; the recording used is from 1994 (100%).
+- Go – Scott Fitzgerald (catalogue): the catalogue says 1988; the recording used is from 2021 (The Wind Beneath My Wings).
+- Vi maler byen rød – Birthe Kjær (catalogue): the catalogue says 1989; the recording used is from 1996 (Montmartre).
+- Somewhere in Europe – Liam Reilly (catalogue): the catalogue says 1990; the recording used is from 2003 (The Greatest Hits of Bagatelle).
+- Varje natt – Lisbet Jagedal (catalogue): the catalogue says 1990; the recording used is from 1995 (Lisbet Jagedal och Pools orkester).
+- Insieme: 1992 – Toto Cutugno (catalogue): the catalogue says 1990; the recording used is from 2010 (Ritratto di Toto Cutugno, Vol. 3).
+- One Step Out of Time – Michael Ball (catalogue): the catalogue says 1992; the recording used is from 2023 (Eurosong Party 2023).
+- We Are All the Winners – Nick Borgen (catalogue): the catalogue says 1993; the recording used is from 2006 (We Are All The Winners).
+- Wir geben 'ne Party – Mekado (catalogue): the catalogue says 1994; the recording used is from 1999 (SAT 1 TEXT Schlager Grand Prix).
+- Skibet skal sejle i nat – Birthe Wilke and Gustav Winckler (catalogue): the catalogue says 1957; the recording used is from 2018 (25 Radio Hits Vol. 1).
+- Juliette & Jonathan – Lotta Engberg (catalogue): the catalogue says 1996; the recording used is from 2007 (Festivalfavoriter 3).
+- Mysterious Woman – Marc Roberts (catalogue): the catalogue says 1997; the recording used is from 2007 (Marc Roberts).
+- Nur die Liebe läßt uns leben – Mary Roos (catalogue): the catalogue says 1972; the recording used is from 1974 (Einfach Das Beste - Mary Roos).
+- Fly on the Wings of Love – Olsen Brothers (catalogue): the catalogue says 2000; the recording used is from 2016 (Fly on the Wings of Love).
+- 7th Wonder – Ira Losco (catalogue): the catalogue says 2002; the recording used is from 2005 (7th Wonder).
+- Runaway – Sahlene (catalogue): the catalogue says 2002; the recording used is from 2004 (It's Been a While).
+- Everyway That I Can – Sertab Erener (catalogue): the catalogue says 2003; the recording used is from 2007 (The Best of Sertab Erener).
+- Ne ver', ne boisia – t.A.T.u. (catalogue): the catalogue says 2003; the recording used is from 2006 (t.A.T.u. - The Best).
+- Sanomi – Urban Trad (catalogue): the catalogue says 2003; the recording used is from 2010 (The Best Of).
+- Talking to You – Jakob Sveistrup (catalogue): the catalogue says 2005; the recording used is from 2025 (Eurovision Hits & Classics).
+- You Are the Only One – Sergey Lazarev (catalogue): the catalogue says 2016; the recording used is from 2018 (THE ONE).
 
 ## Songs per genre ("By genre")
 
-Genres from MusicBrainz/Last.fm tags: 465 songs; hand-set: 189; changed by hand: 0.
+Genres from MusicBrainz/Last.fm tags: 526 songs; hand-set: 1461; changed by hand: 0.
 
 | Genre | 50s | 60s | 70s | 80s | 90s | 00s | 10s | 20s | Total |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| pop | 5 | 12 | 22 | 24 | 24 | 26 | 32 | 23 | 168 |
-| rock | 11 | 21 | 29 | 32 | 22 | 23 | 15 | 3 | 156 |
-| hiphop | 0 | 0 | 1 | 4 | 10 | 14 | 7 | 4 | 40 |
-| rnb | 4 | 3 | 3 | 4 | 5 | 7 | 4 | 3 | 33 |
-| soul | 1 | 11 | 16 | 10 | 5 | 7 | 5 | 1 | 56 |
-| disco | 0 | 0 | 20 | 4 | 0 | 2 | 3 | 1 | 30 |
-| dance | 0 | 0 | 3 | 8 | 14 | 10 | 20 | 5 | 60 |
-| country | 1 | 4 | 4 | 3 | 4 | 3 | 4 | 5 | 28 |
-| metal | 0 | 0 | 4 | 9 | 4 | 10 | 3 | 0 | 30 |
-| indie | 0 | 0 | 0 | 5 | 5 | 8 | 10 | 2 | 30 |
-| schlager | 0 | 2 | 4 | 7 | 2 | 3 | 2 | 1 | 21 |
-| swedishpop | 0 | 0 | 6 | 7 | 7 | 3 | 9 | 1 | 33 |
-| jazz | 10 | 10 | 3 | 1 | 0 | 4 | 0 | 2 | 33 |
-| reggae | 0 | 4 | 9 | 5 | 5 | 4 | 2 | 0 | 29 |
-| latin | 2 | 2 | 1 | 2 | 6 | 3 | 8 | 3 | 28 |
-| punk | 0 | 0 | 7 | 5 | 6 | 8 | 0 | 1 | 27 |
+| pop | 5 | 12 | 24 | 26 | 26 | 30 | 40 | 24 | 187 |
+| rock | 11 | 22 | 31 | 34 | 23 | 25 | 15 | 3 | 164 |
+| hiphop | 0 | 0 | 1 | 4 | 13 | 16 | 8 | 5 | 47 |
+| rnb | 4 | 9 | 4 | 10 | 6 | 11 | 5 | 3 | 52 |
+| soul | 1 | 18 | 25 | 11 | 5 | 6 | 5 | 2 | 73 |
+| disco | 0 | 0 | 32 | 7 | 0 | 4 | 4 | 2 | 49 |
+| dance | 0 | 0 | 4 | 11 | 19 | 15 | 26 | 5 | 80 |
+| country | 5 | 6 | 6 | 3 | 6 | 3 | 4 | 5 | 39 |
+| metal | 0 | 0 | 6 | 19 | 7 | 10 | 4 | 0 | 46 |
+| indie | 0 | 1 | 1 | 8 | 8 | 8 | 11 | 2 | 39 |
+| schlager | 14 | 46 | 36 | 46 | 44 | 55 | 53 | 36 | 330 |
+| swedishpop | 0 | 0 | 9 | 9 | 8 | 4 | 13 | 1 | 44 |
+| jazz | 22 | 15 | 4 | 2 | 0 | 5 | 0 | 2 | 76 |
+| reggae | 0 | 4 | 14 | 6 | 6 | 4 | 2 | 0 | 36 |
+| latin | 3 | 2 | 3 | 4 | 6 | 4 | 10 | 4 | 38 |
+| punk | 0 | 0 | 8 | 5 | 7 | 8 | 0 | 1 | 29 |
+
+## All schlager songs (330 with an id, 1 waiting)
+
+Written because this run had GENRE set. Check that each one belongs here and is the right recording.
+
+- 1956 · Refrain – Lys Assia · [Spotify](https://open.spotify.com/track/4GX1W5Zthu98rjGTrhURnQ)
+- 1957 · La Belle Amour – Paule Desjardins · [Spotify](https://open.spotify.com/track/1pMDLjdoyAOfucSkDWSVJQ)
+- 1957 · Net als toen – Corry Brokken · [Spotify](https://open.spotify.com/track/1g35tiS8hrpnnK8Zb5uOj4)
+- 1957 · Skibet skal sejle i nat – Birthe Wilke and Gustav Winckler · [Spotify](https://open.spotify.com/track/5EFhfGFskfw135MDHCoWTi)
+- 1958 · Dors mon amour – André Claveau · [Spotify](https://open.spotify.com/track/22ouxJVeGaQb5Xjq9hsD4p)
+- 1958 · Giorgio – Lys Assia · [Spotify](https://open.spotify.com/track/743PZb8XjPYjqrbHYnMgJp)
+- 1958 · Lilla stjärna – Alice Babs · [Spotify](https://open.spotify.com/track/5jaPX2VglcZJXghJey87O8)
+- 1958 · Nel blu, dipinto di blu – Domenico Modugno · [Spotify](https://open.spotify.com/track/5zyrEv4F3FaLECI8TOKpFM)
+- 1959 · Augustin – Brita Borg · [Spotify](https://open.spotify.com/track/6LhwESb1iuVdCq5ORd8cC4)
+- 1959 · Augustin – Siw Malmkvist · [Spotify](https://open.spotify.com/track/7jcsBOP7p1VzivcDLHU2Fq)
+- 1959 · Een beetje – Teddy Scholten · [Spotify](https://open.spotify.com/track/3vqf5zi4kA2QT9tlJTaxTW)
+- 1959 · Nya fågelsången – Britt Damberg · [Spotify](https://open.spotify.com/track/4j65tz36vjDqT1nzbSsgjG)
+- 1959 · Oui oui oui oui – Jean Philippe · [Spotify](https://open.spotify.com/track/57QRKgC5dqUqh9LWkuafl7)
+- 1959 · Sing Little Birdie – Pearl Carr and Teddy Johnson · [Spotify](https://open.spotify.com/track/0H0fQmGtdHUPAHlniFhzZd)
+- 1960 · Alla andra får varann – Östen Warnerbring · [Spotify](https://open.spotify.com/track/53Cp39BmHUPNcRD3Sys3Yp)
+- 1960 · Ce soir-là – François Deguelt · [Spotify](https://open.spotify.com/track/6EToPNf4QFVLcNhYMd7eXP)
+- 1960 · Looking High, High, High – Bryan Johnson · [Spotify](https://open.spotify.com/track/7DNRC48KKDFaq38Lt6Iqhg)
+- 1960 · Tom Pillibi – Jacqueline Boyer · [Spotify](https://open.spotify.com/track/5wvvEX3p2QVwiy25dxqbRv)
+- 1961 · April april – Siw Malmkvist · [Spotify](https://open.spotify.com/track/2GKcKDkony8j38dnFi03Tn)
+- 1961 · Are You Sure? – The Allisons · [Spotify](https://open.spotify.com/track/7c0EhQl6v7OXgSMvgiK9WG)
+- 1961 · Nous aurons demain – Franca di Rienzo · [Spotify](https://open.spotify.com/track/4oI6GRJLKLZHPaFlCs8ONs)
+- 1961 · Nous les amoureux – Jean-Claude Pascal · [Spotify](https://open.spotify.com/track/35PWl4T8d2U3a5AboajXXw)
+- 1962 · Anneli – Carli Tornehave · [Spotify](https://open.spotify.com/track/2Q3UUs0ttCkYIyXZAt3Dv0)
+- 1962 · Dis rien – François Deguelt · [Spotify](https://open.spotify.com/track/4W4zNmHR6UkNt56olRJQH5)
+- 1962 · När min vän – Monica Zetterlund · [Spotify](https://open.spotify.com/track/7CmnvK09PHuTnwkQMJO32U)
+- 1962 · Petit bonhomme – Camillo Felgen · [Spotify](https://open.spotify.com/track/5OUvkBngWb5OsVdzJ7qG0a)
+- 1962 · Sol och vår – Inger Berggren · [Spotify](https://open.spotify.com/track/7xVrhpdprtkRTjU1Z3xG7H)
+- 1962 · Un premier amour – Isabelle Aubret · [Spotify](https://open.spotify.com/track/4VAAdIcGdLaVvgmlpk8hIX)
+- 1963 · Dansevise – Grethe and Jørgen Ingmann · [Spotify](https://open.spotify.com/track/3CWOkUTQDvNJ3yZMilSLfP)
+- 1963 · En gång i Stockholm – Monica Zetterlund · [Spotify](https://open.spotify.com/track/07hcAtqiaRRc94E0JqRr9x)
+- 1963 · Storstadsmelodi – Gerd Söderberg · [Spotify](https://open.spotify.com/track/6jW9znePZLaJcuiLdPSz0J)
+- 1963 · Uno per tutte – Emilio Pericoli · [Spotify](https://open.spotify.com/track/4OF9t8dHcIBMip0Vc5hSlk)
+- 1964 · I Love the Little Things – Matt Monro · [Spotify](https://open.spotify.com/track/1nzNaPuwOC4io8SusRKHGp)
+- 1964 · Non ho l'età – Gigliola Cinquetti · [Spotify](https://open.spotify.com/track/7gleC79fn3LcDpv84RZhmx)
+- 1964 · Où sont-elles passées ? – Romuald · [Spotify](https://open.spotify.com/track/3ZQcn4pmKfL3vD2TEbxhat)
+- 1965 · Annorstädes vals – Ingvar Wixell · [Spotify](https://open.spotify.com/track/0LU0YooA3RmmKN7Co26Ruh)
+- 1965 · I Belong – Kathy Kirby · [Spotify](https://open.spotify.com/track/6z6hVTPUQnivlKRPSdy2Sh)
+- 1965 · N'avoue jamais – Guy Mardel · [Spotify](https://open.spotify.com/track/1vPCbI7QPZtU6T42uaeP8w)
+- 1965 · Poupée de cire, poupée de son – France Gall · [Spotify](https://open.spotify.com/track/1nADUWEBc0TpiXYsimFFIj)
+- 1966 · Intet er nytt under solen – Åse Kleveland · [Spotify](https://open.spotify.com/track/7zLlZH4E0Q7oy0aWZQZVqU)
+- 1966 · Merci, Chérie – Udo Jürgens · [Spotify](https://open.spotify.com/track/1KHSnWFJ5a988kM1Kz2daX)
+- 1966 · Monte Carlo – Carli Tornehave · [Spotify](https://open.spotify.com/track/2pcEXoWuTHRrnzGPz6tPgz)
+- 1966 · Nygammal vals – Lill Lindfors & Svante Thuresson · [Spotify](https://open.spotify.com/track/57lotHqsHagUzeQTV4QVoK)
+- 1966 · Vinterrosor – Gunnar Wiklund · [Spotify](https://open.spotify.com/track/4j9jrpz1AGGuu9LTWtNEFU)
+- 1967 · Alla har glömt – Towa Carson · [Spotify](https://open.spotify.com/track/7mu9Zw7oXnEetGg4H15dfw)
+- 1967 · If I Could Choose – Sean Dunphy · [Spotify](https://open.spotify.com/track/6tuuAwDnwffroBlp1jWtLo)
+- 1967 · Puppet on a String – Sandie Shaw · [Spotify](https://open.spotify.com/track/0DSVIkYVu4XU0paoLCEtfh)
+- 1968 · Congratulations – Cliff Richard · [Spotify](https://open.spotify.com/track/1ZfbMOw5VSh5Qqr8hgLCkJ)
+- 1968 · Det börjar verka kärlek, banne mej – Claes-Göran Hederström · [Spotify](https://open.spotify.com/track/0kS3SYZ2PaKNFLVHhRZXpN)
+- 1968 · Du är en vårvind i april – Svante Thuresson · [Spotify](https://open.spotify.com/track/4W5m3NBly3hPz0oyOepGKI)
+- 1968 · Du vet var jag finns – Towa Carson · [Spotify](https://open.spotify.com/track/5rcmguTIDMpSjTeD6z54vr)
+- 1968 · Gå och göm dig, Åke Tråk – Mona Wessman · [Spotify](https://open.spotify.com/track/0rat7Xg9Ppn8pIyizWMSKi)
+- 1968 · La La La – Massiel · [Spotify](https://open.spotify.com/track/6sl95Jm74DXaH9kycPMe3w)
+- 1968 · La Source – Isabelle Aubret · [Spotify](https://open.spotify.com/track/1oQXVT5fsqSS9RDf9GDYvy)
+- 1969 · Boom Bang-a-Bang – Lulu · [Spotify](https://open.spotify.com/track/0MjIl4FHjYj5gX7tr9FG2x)
+- 1969 · De troubadour – Lenny Kuhr · [Spotify](https://open.spotify.com/track/3RvcX49qTFuMl83EFyIcqT)
+- 1969 · Hej clown – Jan Malmsjö · [Spotify](https://open.spotify.com/track/2toHW8aPMluncPne1tXabW)
+- 1969 · Judy min vän – Tommy Körberg · [Spotify](https://open.spotify.com/track/1Z4zGDjmHURFmHAd0OAV2t)
+- 1969 · Un jour, un enfant – Frida Boccara · [Spotify](https://open.spotify.com/track/2ZRdGWD7btsu2jwEEedHoD)
+- 1969 · Vivo cantando – Salomé · [Spotify](https://open.spotify.com/track/6sNBII0cmX3INmNvPgF0Tg)
+- 1970 · All Kinds of Everything – Dana · [Spotify](https://open.spotify.com/track/3SJPRPwpF0MTFKPrshBeKM)
+- 1970 · Wunder gibt es immer wieder – Katja Ebstein · [Spotify](https://open.spotify.com/track/5RwHsUNR6Vrx5fFbgfTxmy)
+- 1971 · En un mundo nuevo – Karina · [Spotify](https://open.spotify.com/track/1gCPAFPtD9BYPCiwoKx4pn)
+- 1971 · Heja mamma – Family Four · [Spotify](https://open.spotify.com/track/6e5dDLnXHWl8uDaLcE9qOF)
+- 1971 · Tjänare kärlek – Family Four · [Spotify](https://open.spotify.com/track/0rKt822IzgPrkv10ssMxTN)
+- 1971 · Un banc, un arbre, une rue – Séverine · [Spotify](https://open.spotify.com/track/74Ipfr3dDy00AshbTXLIHs)
+- 1971 · Vita vidder – Family Four · [Spotify](https://open.spotify.com/track/0xC2WfHIDroVb1FXHsyrLI)
+- 1972 · Après toi – Vicky Leandros · [Spotify](https://open.spotify.com/track/5Qhnqd15fOFzVhidzeveRY)
+- 1972 · Beg, Steal or Borrow – The New Seekers · [Spotify](https://open.spotify.com/track/5qyE3nSkh3KRfLzISfXYDc)
+- 1972 · Härliga sommardag – Family Four · [Spotify](https://open.spotify.com/track/7k2hvWTTXotDZuGc6U0vUp)
+- 1972 · Nur die Liebe läßt uns leben – Mary Roos · [Spotify](https://open.spotify.com/track/2CtedWMNCN7iGGLw9fj8NX)
+- 1972 · Säg det med en sång – Lena Andersson · [Spotify](https://open.spotify.com/track/0jj8k92MWwmTtDCyNRUAR9)
+- 1973 · Eres tú – Mocedades · [Spotify](https://open.spotify.com/track/7bA0d6jzxTTWIBE8o7n41k)
+- 1973 · I våran värld – Ann-Kristin Hedmark · [Spotify](https://open.spotify.com/track/73yZVi1tMCilh84F33wCxl)
+- 1973 · Power to All Our Friends – Cliff Richard · [Spotify](https://open.spotify.com/track/4oJxJpFIGUHlX6limr6rH1)
+- 1973 · Sommaren som aldrig säger nej – Malta · not found yet
+- 1973 · Tu te reconnaîtras – Anne-Marie David · [Spotify](https://open.spotify.com/track/3682WlWtLmx44QNpB6Py4X)
+- 1974 · I See a Star – Mouth and MacNeal · [Spotify](https://open.spotify.com/track/7qsXX1PCCCsGusfjU7gTFu)
+- 1974 · Min kärlekssång till dig – Lasse Berghagen · [Spotify](https://open.spotify.com/track/63b5mhYruR2lTlTngbbO3u)
+- 1974 · Sì – Gigliola Cinquetti · [Spotify](https://open.spotify.com/track/5dlzWtfcpRGfhu8DvNdTo1)
+- 1975 · Bang en boomerang – Svenne & Lotta · [Spotify](https://open.spotify.com/track/2bNy80yqs8WwD76qzafXMx) · also pop, rock
+- 1975 · Ding-a-dong – Teach-In · [Spotify](https://open.spotify.com/track/2nLjp6FvPnI9fFCsDIN3Zk) · also pop
+- 1975 · Era – Wess and Dori Ghezzi · [Spotify](https://open.spotify.com/track/7L2qJZt6iblqJBWb0X2Z1q)
+- 1975 · Jennie, Jennie – Lasse Berghagen · [Spotify](https://open.spotify.com/track/2A5cbaZHGRTp1MSVug5QQs)
+- 1975 · Let Me Be the One – The Shadows · [Spotify](https://open.spotify.com/track/2nnqHLmPIW7MLnggJeGxwR)
+- 1976 · Save Your Kisses for Me – Brotherhood of Man · [Spotify](https://open.spotify.com/track/35RZR5maqncQhkGtIQ7g0a)
+- 1977 · Beatles – Forbes · [Spotify](https://open.spotify.com/track/1LiPcvWAEMC4AMUnHDbppP)
+- 1977 · Johan B. Lund – Svante Thuresson · [Spotify](https://open.spotify.com/track/2vpkZuprf0oJ21y6Uh2zDp)
+- 1977 · L'Oiseau et l'Enfant – Marie Myriam · [Spotify](https://open.spotify.com/track/599jKuI8NJrKEbIQCpibO0)
+- 1978 · Det blir alltid värre framåt natten – Björn Skifs · [Spotify](https://open.spotify.com/track/6HT6bmO9A0zW3xYMxsHfje)
+- 1978 · Miss Decibel – Kikki Danielsson, Lasse Holm & Wizex · [Spotify](https://open.spotify.com/track/7i4I0uQ7S4Ha0xNVJwYfVw)
+- 1979 · Det ligger i luften – Tomas Ledin · [Spotify](https://open.spotify.com/track/7bXyv33f65kA869ALm9gRk)
+- 1979 · Hallelujah – Milk and Honey · [Spotify](https://open.spotify.com/track/0MSj3prJSpFXSAE7sq0us7)
+- 1979 · Je suis l'enfant soleil – Anne-Marie David · [Spotify](https://open.spotify.com/track/6QEKaNlJiSgMI8qwyogFgl)
+- 1979 · Om jag skriver en sång – Eva Dahlgren · [Spotify](https://open.spotify.com/track/0fUZGzdJnXacXPFs6bFPTr)
+- 1979 · Satellit – Ted Gärdestad · [Spotify](https://open.spotify.com/track/10AwlsmVEASSiWORkKcgRo) · also swedishpop
+- 1979 · Su canción – Betty Missiego · [Spotify](https://open.spotify.com/track/2Be86Izdocyz5jLhrQd09k)
+- 1980 · Hit men inte längre – Liza Öhman · [Spotify](https://open.spotify.com/track/3x0xMYBFkmxwEPqjSkfF3K)
+- 1980 · Just nu! – Tomas Ledin · [Spotify](https://open.spotify.com/track/22VQCLz6wmh0fDEMdTaGHj) · also swedishpop
+- 1980 · Theater – Katja Ebstein · [Spotify](https://open.spotify.com/track/0AwEdicbbKKAoB7ft7pJWI)
+- 1980 · Växeln hallå – Janne Lucas Persson · [Spotify](https://open.spotify.com/track/6yg9jXLc9srF9vS4dZ5YOO)
+- 1980 · What's Another Year – Johnny Logan · [Spotify](https://open.spotify.com/track/1HK36bPadNntrM2HYyv6mP)
+- 1981 · Fångad i en dröm – Björn Skifs · [Spotify](https://open.spotify.com/track/07MCuEfiwNdY0RJlMSQvLc)
+- 1981 · God morgon – Sweets 'n Chips · [Spotify](https://open.spotify.com/track/7jjYJjgQdUcPEpOt6UhQXR)
+- 1981 · Johnny Blue – Lena Valaitis · [Spotify](https://open.spotify.com/track/5e6KfjLDK12b19zGnHaDf4)
+- 1981 · Making Your Mind Up – Bucks Fizz · [Spotify](https://open.spotify.com/track/0i4U1Sd2R7MtEKSAHc9i8b)
+- 1981 · Rocky Mountain – Janne Lucas · [Spotify](https://open.spotify.com/track/3OIgvpem36by3oKO27EYNi)
+- 1982 · Dag efter dag – Chips · [Spotify](https://open.spotify.com/track/5HOO74opAw58hYuZ3FIEL0)
+- 1982 · Ein bißchen Frieden – Nicole · [Spotify](https://open.spotify.com/track/0M981FlYgwGQxcb2BNLDKu)
+- 1982 · Hora – Avi Toledano · [Spotify](https://open.spotify.com/track/2CCQCnoPzKP4hlxZcIBfi5)
+- 1983 · Främling – Carola · [Spotify](https://open.spotify.com/track/17zFOtbuquEAAxSttpfWWl)
+- 1983 · Se – Karin Glenmark · [Spotify](https://open.spotify.com/track/2PiJP5mXbJ1CgppXhtmE83)
+- 1983 · Si la vie est cadeau – Corinne Hermès · [Spotify](https://open.spotify.com/track/0vBkS0Cv9TAqgkaUIrnuXx)
+- 1983 · Varför är kärleken röd? – Kikki Danielsson · [Spotify](https://open.spotify.com/track/7Lj6m3aqS443faUNNdfJZm)
+- 1984 · Diggi-Loo Diggi-Ley – Herreys · [Spotify](https://open.spotify.com/track/4NzirQ4BrNkVaPEla2ipG4)
+- 1984 · Lady, Lady – Bravo · [Spotify](https://open.spotify.com/track/3K0rUw4z0khdNg4MiSIHB4)
+- 1984 · Mitt i ett äventyr – Carola · [Spotify](https://open.spotify.com/track/17jKShUIh1IQrmVd3Igf1c)
+- 1984 · Rendez-vous – John Ballard · [Spotify](https://open.spotify.com/track/0uqsioXIoym7qiL9lT0n5H)
+- 1984 · Sankta Cecilia – Göran Folkestad & Lotta Pedersen · [Spotify](https://open.spotify.com/track/5qUj5g3Q0nbGxKqVDDzRS8)
+- 1984 · Terminal 3 – Linda Martin · [Spotify](https://open.spotify.com/track/213A3driYrjBdlYcHkCM1f)
+- 1985 · Bra vibrationer – Kikki Danielsson · [Spotify](https://open.spotify.com/track/3DOZnWsMgMfBu43UpoqnZe)
+- 1985 · Eld och lågor – Göran Folkestad · [Spotify](https://open.spotify.com/track/27ire2ZbbUyK42JuQGucV7)
+- 1985 · Für alle – Wind · [Spotify](https://open.spotify.com/track/4NI6vN6Et8rxGZMIgLyAhL)
+- 1985 · La det swinge – Bobbysocks! · [Spotify](https://open.spotify.com/track/3IgpWvgCqZjqhsiKwzw1Q7)
+- 1986 · Dover-Calais – Style · [Spotify](https://open.spotify.com/track/7CjNo545uPoJl3kYRlaMwL)
+- 1986 · E' de' det här du kallar kärlek? – Lasse Holm & Monica Törnell · [Spotify](https://open.spotify.com/track/5MBBQ7P9AozcQ8lF7So1B3) · also pop, rock
+- 1986 · J'aime la vie – Sandra Kim · [Spotify](https://open.spotify.com/track/5udejWwqkazv4jcidHQioc)
+- 1986 · Kärleken är evig – Lena Philipsson · [Spotify](https://open.spotify.com/track/6A0IZ3A7iGKF9QIOKYHwrF) · also pop
+- 1987 · Fyra Bugg & en Coca Cola – Lotta Engberg · [Spotify](https://open.spotify.com/track/4UuKT9xgMQQUPD3VWRGLJb)
+- 1987 · Gente di mare – Umberto Tozzi and Raf · [Spotify](https://open.spotify.com/track/53nH5n25h89QqNx5GIiXFD)
+- 1987 · Högt över havet – Arja Saijonmaa · [Spotify](https://open.spotify.com/track/4J5KXnvaoSPa7yHrsNnqda)
+- 1987 · Hold Me Now – Johnny Logan · [Spotify](https://open.spotify.com/track/1NoBp6XGAKRFtx0djrWucn)
+- 1987 · Laß die Sonne in dein Herz – Wind · [Spotify](https://open.spotify.com/track/3YyrctrJH5keZGRsxIX2vi)
+- 1987 · När morgonstjärnan brinner – Cyndee Peters · [Spotify](https://open.spotify.com/track/0AVdP9NDfxp0vNjaTqT4pd)
+- 1988 · 100% – Lotta Engberg & Triple & Touch · [Spotify](https://open.spotify.com/track/5OspxAgDSK5gU6HgTt7wHr)
+- 1988 · Go – Scott Fitzgerald · [Spotify](https://open.spotify.com/track/3Wf08J5GOEeydkW2ZzOd7V)
+- 1988 · Om igen – Lena Philipsson · [Spotify](https://open.spotify.com/track/1hFsLOs7uLv99UGkXava4b)
+- 1988 · Stad i ljus – Tommy Körberg · [Spotify](https://open.spotify.com/track/31rDi1kBtE7bUwLW5cWpqO)
+- 1989 · En dag – Tommy Nilsson · [Spotify](https://open.spotify.com/track/4y81ov9ojdBPu5eLhDKxS9) · also pop, rock
+- 1989 · Mitt ibland änglar – Fingerprints · [Spotify](https://open.spotify.com/track/4NcWj2rfYBDVlSswBUMxti)
+- 1989 · Rock Me – Riva · [Spotify](https://open.spotify.com/track/4D15RxzIHzkZJH6zpaLbYL)
+- 1989 · Upp över mina öron – Eriksson-Glenmark · [Spotify](https://open.spotify.com/track/2LeECxc9pVxuHPTxkcSU6f)
+- 1989 · Vi maler byen rød – Birthe Kjær · [Spotify](https://open.spotify.com/track/5R7qlPnCh9qVEtNaHIyPvh)
+- 1990 · Insieme: 1992 – Toto Cutugno · [Spotify](https://open.spotify.com/track/44noNMO0iv87Tds7dwcpQU)
+- 1990 · Som en vind – Edin-Ådahl · [Spotify](https://open.spotify.com/track/7ARlhQ3ZSYg2AngHT9uUWn)
+- 1990 · Somewhere in Europe – Liam Reilly · [Spotify](https://open.spotify.com/track/0Gh3TzuQuHEtZEamtv96LA)
+- 1990 · Varje natt – Lisbet Jagedal · [Spotify](https://open.spotify.com/track/3ttOQ0JG4LOWsr7VifAtZ9)
+- 1990 · White and Black Blues – Joëlle Ursull · [Spotify](https://open.spotify.com/track/663Tj0JStDI8Lb7sZgKD78)
+- 1991 · Fångad av en stormvind – Carola · [Spotify](https://open.spotify.com/track/7yWCxpivUiPsfrxPGU1vhE) · also swedishpop
+- 1992 · I morgon är en annan dag – Christer Björkman · [Spotify](https://open.spotify.com/track/7DqyeESnaKCwDjgmA45UFZ)
+- 1992 · One Step Out of Time – Michael Ball · [Spotify](https://open.spotify.com/track/7dpd5lxsIGY8v6SD1CChsX)
+- 1992 · Som om himlen brann – Lizette Pålsson & Bizazz · [Spotify](https://open.spotify.com/track/3zN9mql7O0p80ekg09pOPt)
+- 1992 · Vad som än händer – Maria Rådsten · [Spotify](https://open.spotify.com/track/5VlIUWGv10Ne1Dud60lB9L)
+- 1992 · Why Me – Linda Martin · [Spotify](https://open.spotify.com/track/3Y81Q8dLI74Mgi1wbXvscv)
+- 1993 · Better the Devil You Know – Sonia · [Spotify](https://open.spotify.com/track/4z5d0yurzA3sM4wmwbEa5f)
+- 1993 · Eloise – Arvingarna · [Spotify](https://open.spotify.com/track/4QZ6hp2CKRaZG5RI9zXQqg)
+- 1993 · I dina ögon – Pernilla Emme · [Spotify](https://open.spotify.com/track/0TmXloczrMDyk19WAMN3CD)
+- 1993 · In Your Eyes – Niamh Kavanagh · [Spotify](https://open.spotify.com/track/7LBBL20GLOtjBJwxgVmzPK)
+- 1993 · We Are All the Winners – Nick Borgen · [Spotify](https://open.spotify.com/track/7K4nPxmgWTNRBN0PnCmfV7)
+- 1994 · Det vackraste jag vet – Gladys del Pilar · [Spotify](https://open.spotify.com/track/056FJW5gK9vfP03LEcueDX)
+- 1994 · Rock 'n' Roll Kids – Paul Harrington and Charlie McGettigan · [Spotify](https://open.spotify.com/track/4qVX2nHuFlVNp6AOVrDBGb)
+- 1994 · Stanna hos mig – Cayenne · [Spotify](https://open.spotify.com/track/18QNCDw0d2KS7caoZSlcO1)
+- 1994 · Stjärnorna – Marie Bergman & Roger Pontare · [Spotify](https://open.spotify.com/track/7fTHmYP5Htt1ooP2P1jOhk)
+- 1994 · To nie ja! – Edyta Górniak · [Spotify](https://open.spotify.com/track/5zuDr7y3zJXbWrGoxzXPGR)
+- 1994 · Wir geben 'ne Party – Mekado · [Spotify](https://open.spotify.com/track/1U7XB0RlYZJXNdtyYnzDTv)
+- 1995 · Det vackraste – Cecilia Vennersten · [Spotify](https://open.spotify.com/track/3JIOkz5QLH2UjSMzeoGCH2)
+- 1995 · Nocturne – Secret Garden · [Spotify](https://open.spotify.com/track/6bk11TH82XrT5QUC1gDw9A)
+- 1995 · Se på mig – Jan Johansen · [Spotify](https://open.spotify.com/track/5E0DPn2m1oAigfof05lKmJ)
+- 1995 · Vuelve conmigo – Anabel Conde · [Spotify](https://open.spotify.com/track/24xF7DIibfXNpAU7gzLAKd)
+- 1996 · Den vilda – One More Time · [Spotify](https://open.spotify.com/track/0TYwFP4MxszHAXAJMYhi3E)
+- 1996 · Driver dagg faller regn – Andreas Lundstedt · [Spotify](https://open.spotify.com/track/4A2fR30sQDjPX785mEnyW0)
+- 1996 · Juliette & Jonathan – Lotta Engberg · [Spotify](https://open.spotify.com/track/1uh9A0lBBKQ5H6CjeidTTd)
+- 1996 · Ooh Aah... Just a Little Bit – Gina G · [Spotify](https://open.spotify.com/track/5KsGeqTJgJMAWuyTZ5WmMn)
+- 1996 · The Voice – Eimear Quinn · [Spotify](https://open.spotify.com/track/6SA7BxY6zh5SaxUBp3tCtb)
+- 1997 · Bara hon älskar mig – Blond · [Spotify](https://open.spotify.com/track/5dEHUYf0NkT1pZeEJOCMsW)
+- 1997 · Dinle – Şebnem Paker and Grup Ethnic · [Spotify](https://open.spotify.com/track/0Q8oCVScG0PfzXa5EnCDdj)
+- 1997 · Love Shine a Light – Katrina and the Waves · [Spotify](https://open.spotify.com/track/7jxGRU3EH0QveYx4bD32i7)
+- 1997 · Missarna – Wille Crafoord · [Spotify](https://open.spotify.com/track/2cnJW9LlHRgJhATHUp3zXR)
+- 1997 · Mysterious Woman – Marc Roberts · [Spotify](https://open.spotify.com/track/4ttOUTe2PEiaACM5DjDWYx)
+- 1998 · Diva – Dana International · [Spotify](https://open.spotify.com/track/4xTKSi7m6jUb1qaOmXn3R6)
+- 1998 · Kärleken är – Jill Johnson · [Spotify](https://open.spotify.com/track/69o3qL8watZsJZJPS6cuuR) · also pop
+- 1998 · The One That I Love – Chiara · [Spotify](https://open.spotify.com/track/1RKPo2MJNWoi2jf2FMWUoL)
+- 1998 · Where Are You? – Imaani · [Spotify](https://open.spotify.com/track/0RZWvRRijaySZKhDHSkzHL)
+- 1999 · All Out of Luck – Selma · [Spotify](https://open.spotify.com/track/4PV7r9bDfwgEZldzOfnirR)
+- 1999 · Det svär jag på – Arvingarna · [Spotify](https://open.spotify.com/track/6doLbYRNNKS4qymx52yzEt)
+- 1999 · Take Me to Your Heaven – Charlotte Perrelli · [Spotify](https://open.spotify.com/track/0Z6y9qCkkfESLiEOuBWhAZ) · also pop, rock
+- 1999 · Tusen och en natt – Charlotte Perrelli · [Spotify](https://open.spotify.com/track/6JIwvW8ioos5KFp0Q0mS3Y)
+- 2000 · Fly on the Wings of Love – Olsen Brothers · [Spotify](https://open.spotify.com/track/5QbZ2liHjmV27XMmRoEquv)
+- 2000 · My Star – Brainstorm · [Spotify](https://open.spotify.com/track/1qn0J3EnF4zqvwoHYHxhgD)
+- 2000 · När jag tänker på i morgon – Friends · [Spotify](https://open.spotify.com/track/42o6R5ribHp2AsT0H80scW)
+- 2000 · När vindarna viskar mitt namn – Roger Pontare · [Spotify](https://open.spotify.com/track/1nSyBcZr8IS9wZcFyvqqE7)
+- 2000 · Se mig – Barbados · [Spotify](https://open.spotify.com/track/150yKPn82eChOgSwg5n8Ro)
+- 2000 · Solo – Alsou · [Spotify](https://open.spotify.com/track/6bSUJwaWBtpwBHXo8XFDwZ)
+- 2001 · Allt som jag ser – Barbados · [Spotify](https://open.spotify.com/track/2fBUqPX8evdebLHFhu47f1)
+- 2001 · Lyssna till ditt hjärta – Friends · [Spotify](https://open.spotify.com/track/4BhEDrbVxPgu13SQFwoDCV)
+- 2001 · Never Ever Let You Go – Rollo & King · [Spotify](https://open.spotify.com/track/7mx6IZujrnfHLBmqcIOxIe)
+- 2002 · 7th Wonder – Ira Losco · [Spotify](https://open.spotify.com/track/6rF1ZmDKZKhEv49l2OrYCl)
+- 2002 · Adrenaline – Méndez · [Spotify](https://open.spotify.com/track/570MSgOGWpri3eG33OePzW)
+- 2002 · Come Back – Jessica Garlick · [Spotify](https://open.spotify.com/track/37add9XFpIHs6kJT0tCjdF)
+- 2002 · I Wanna – Marie N · [Spotify](https://open.spotify.com/track/3zn2Qitng6hYXuQR5NyzMc)
+- 2002 · Never Let It Go – Afro-dite · [Spotify](https://open.spotify.com/track/28ihA2Fp5zRmcmi8hpfWiC)
+- 2002 · Runaway – Sahlene · [Spotify](https://open.spotify.com/track/7aTVCRTfLTp3uHcWsC9GrC)
+- 2002 · Vem é dé du vill ha – Kikki, Bettan & Lotta · [Spotify](https://open.spotify.com/track/6bwf6uoNTBJhZkjt9Ldp2h)
+- 2003 · Everyway That I Can – Sertab Erener · [Spotify](https://open.spotify.com/track/7B2eFoaBjo2kCEh6V81xdx)
+- 2003 · Give Me Your Love – Fame · [Spotify](https://open.spotify.com/track/2B60fzEh2F9Ds6xFtV8LWd)
+- 2003 · Let Your Spirit Fly – Jan Johansen & Pernilla Wahlgren · [Spotify](https://open.spotify.com/track/3cVigQlDWMuwQhiZ6rLeSG)
+- 2003 · Ne ver', ne boisia – t.A.T.u. · [Spotify](https://open.spotify.com/track/4MuQWNaW51V9LRocFQUZRU)
+- 2003 · Not a Sinner Nor a Saint – Alcazar · [Spotify](https://open.spotify.com/track/3TiDEQ1Hm9QuOGSBGI5V9c) · also pop, dance
+- 2003 · Sanomi – Urban Trad · [Spotify](https://open.spotify.com/track/788II2WAQ8lOuW1CSQ9oHp)
+- 2004 · Det gör ont – Lena Philipsson · [Spotify](https://open.spotify.com/track/51md9KzX92LQh84mUsaPPD) · also pop, swedishpop
+- 2004 · La dolce vita – After Dark · [Spotify](https://open.spotify.com/track/58hpmrSel96Cq7eEa9h8Ro)
+- 2004 · Lane moje – Željko Joksimović and Ad-Hoc Orchestra · [Spotify](https://open.spotify.com/track/3Z5hKQfUtSkr4XLMXDB3IV)
+- 2004 · Min kärlek – Shirley Clamp · [Spotify](https://open.spotify.com/track/5dpkOqj8pVFn3nS8OvMJNG)
+- 2004 · Shake It – Sakis Rouvas · [Spotify](https://open.spotify.com/track/4qciobCg4w2xgsEcvgpKkc)
+- 2004 · Wild Dances – Ruslana · [Spotify](https://open.spotify.com/track/1Lav2Z3RKu71MJLIjQz4dQ)
+- 2005 · Alcastar – Alcazar · [Spotify](https://open.spotify.com/track/2LddNzZhP2WlY7J5qrRD2N)
+- 2005 · Boonika bate doba – Zdob și Zdub · [Spotify](https://open.spotify.com/track/4KIoPhF6nBKgLJ5NZFQne5)
+- 2005 · Håll om mig – Nanne Grönvall · [Spotify](https://open.spotify.com/track/1ncViFeYXhivtuPumssvmZ)
+- 2005 · Las Vegas – Martin Stenmarck · [Spotify](https://open.spotify.com/track/4ENmFSJSFaoMhvazzcnBjS)
+- 2005 · Let Me Try – Luminița Anghel and Sistem · [Spotify](https://open.spotify.com/track/49ajK5Ih7mz9OxX6se0f4v)
+- 2005 · Talking to You – Jakob Sveistrup · [Spotify](https://open.spotify.com/track/60UDxrMcA88r1gwfHAugTh)
+- 2006 · Evighet – Carola · [Spotify](https://open.spotify.com/track/6XGIQNU8VmOBRIdL5OBYKp)
+- 2006 · Lejla – Hari Mata Hari · [Spotify](https://open.spotify.com/track/1G6iF2vSgyNEXux1sp7IZ8)
+- 2006 · Never Let You Go – Dima Bilan · [Spotify](https://open.spotify.com/track/6QEKQt2NaSwipYV0fsspYA)
+- 2006 · Sing for Me – Andreas Johnson · [Spotify](https://open.spotify.com/track/03vteAFjN5267GCpKBeN0I) · also pop, rock
+- 2006 · Temple of Love – BWO · [Spotify](https://open.spotify.com/track/1cw6VQ7t4Wq4bIVKaLU768)
+- 2007 · A Little Bit of Love – Andreas Johnson · [Spotify](https://open.spotify.com/track/6wmwHJUE0tpPulaOO2KGhz)
+- 2007 · Cara Mia – Måns Zelmerlöw · [Spotify](https://open.spotify.com/track/4vxn2p4GbiFhnVsIASACrf) · also pop
+- 2007 · Molitva – Marija Šerifović · [Spotify](https://open.spotify.com/track/39GcV1Ojhh9aK6K0vIQ0Wo)
+- 2007 · The Worrying Kind – The Ark · [Spotify](https://open.spotify.com/track/5zIxRPGxiOBNRDBu2Upk4i) · also rock
+- 2008 · Baby Goodbye – E.M.D. · [Spotify](https://open.spotify.com/track/4Vg4aicJ6wzbhdpDh1Nq8L) · also pop
+- 2008 · Believe – Dima Bilan · [Spotify](https://open.spotify.com/track/6CsfxNniYjUZlIPs5CwBJn)
+- 2008 · Empty Room – Sanna Nielsen · [Spotify](https://open.spotify.com/track/22GUo3v9Jh4dziy5scPDig)
+- 2008 · Hero – Charlotte Perrelli · [Spotify](https://open.spotify.com/track/58nr9yCQaNSAnJNpu76ieP) · also pop, disco
+- 2008 · Lay Your Love On Me – BWO · [Spotify](https://open.spotify.com/track/1nVBVZfsn3VokG8fIhbEuB)
+- 2008 · Secret Combination – Kalomira · [Spotify](https://open.spotify.com/track/2GBd4FJssKzkia5nLnuiE8)
+- 2008 · Shady Lady – Ani Lorak · [Spotify](https://open.spotify.com/track/0DHet9TdSsdouIbOjvLf3m)
+- 2009 · Always – Aysel and Arash · [Spotify](https://open.spotify.com/track/2NfOCSmi4iM3gFYobwME1O)
+- 2009 · Fairytale – Alexander Rybak · [Spotify](https://open.spotify.com/track/37lYrZzmbRiEySPGkiGjXA)
+- 2009 · Is It True? – Yohanna · [Spotify](https://open.spotify.com/track/1C4VC8ZeR2eAzxfKs9PBbv)
+- 2009 · La voix – Malena Ernman · [Spotify](https://open.spotify.com/track/7Kz4f9CgtAfbmPBMX5q2ZV)
+- 2009 · Snälla, snälla – Caroline af Ugglas · [Spotify](https://open.spotify.com/track/0PlYTE6LRH34RCQFggqmzd)
+- 2010 · Keep On Walking – Salem Al Fakir · [Spotify](https://open.spotify.com/track/485RAkVJ0pbneJk8yQwFq6)
+- 2010 · Manboy – Eric Saade · [Spotify](https://open.spotify.com/track/4ut7uc5pTPixey8zomS5Ah) · also pop
+- 2010 · Playing with Fire – Paula Seling and Ovi · [Spotify](https://open.spotify.com/track/0m3mkj4WTHkfrmHB6toUIK)
+- 2010 · Satellite – Lena · [Spotify](https://open.spotify.com/track/2UjNsh4ipNrmog6wdS2JVv)
+- 2010 · This Is My Life – Anna Bergendahl · [Spotify](https://open.spotify.com/track/5Hdi8Nr6VtgSCHdG7VXcX5)
+- 2010 · We Could Be the Same – Manga · [Spotify](https://open.spotify.com/track/19BkfCQ8jcAlb33zf7jzVa)
+- 2011 · In the Club – Danny Saucedo · [Spotify](https://open.spotify.com/track/3GbgOBpbw71zpy7lCnU6N6)
+- 2011 · Madness of Love – Raphael Gualazzi · [Spotify](https://open.spotify.com/track/6yrCcmE0CiQr0tc4pVy4Rw)
+- 2011 · Oh My God! – The Moniker · [Spotify](https://open.spotify.com/track/1Uy045RBKXiMRDzE5jysip)
+- 2011 · Popular – Eric Saade · [Spotify](https://open.spotify.com/track/64WR5TPXZZ2wsWYA3enKfK) · also pop
+- 2011 · Running Scared – Ell and Nikki · [Spotify](https://open.spotify.com/track/68852t5sKz5d1LoCMv7SGD)
+- 2012 · Amazing – Danny Saucedo · [Spotify](https://open.spotify.com/track/33qw98yPnShEQMoF72ORUa) · also pop, dance
+- 2012 · Euphoria – Loreen · [Spotify](https://open.spotify.com/track/2knr7ikPt4l7bk92qS4ZXW) · also pop, dance, swedishpop
+- 2012 · Nije ljubav stvar – Željko Joksimović · [Spotify](https://open.spotify.com/track/0XPSz3tEODnQtWoPrhVwAr)
+- 2012 · Soldiers – Ulrik Munther · [Spotify](https://open.spotify.com/track/0UrUD5HVNYhppiH3RwzCBJ)
+- 2013 · Gravity – Zlata Ognevich · [Spotify](https://open.spotify.com/track/0d3CHhMj2veGNsFJ8bpeT2)
+- 2013 · Heartbreak Hotel – Yohio · [Spotify](https://open.spotify.com/track/2J1FDNZmgNntWxARtd2xRy)
+- 2013 · Hold Me – Farid Mammadov · [Spotify](https://open.spotify.com/track/2Xfav1hvYvP7pBAumIQLxC)
+- 2013 · Only Teardrops – Emmelie de Forest · [Spotify](https://open.spotify.com/track/3yRwgprKX3If2zcuGfKFBu)
+- 2013 · Tell the World I'm Here – Ulrik Munther · [Spotify](https://open.spotify.com/track/6wRGbtIJsIPt71aC0bQlra)
+- 2013 · You – Robin Stjernberg · [Spotify](https://open.spotify.com/track/30nf9FXigeYnKcD8u4Yo7r) · also pop
+- 2014 · Blame It on the Disco – Alcazar · [Spotify](https://open.spotify.com/track/3HiwuIgvI5ccIEkAbbXWpI)
+- 2014 · Busy Doin' Nothin' – Ace Wilder · [Spotify](https://open.spotify.com/track/1zSXQIah3KQsjvo5sRNRq7) · also pop, dance
+- 2014 · Calm After the Storm – The Common Linnets · [Spotify](https://open.spotify.com/track/6C2GZHFFO8uXuMYCHiW5Y4)
+- 2014 · Rise Like a Phoenix – Conchita Wurst · [Spotify](https://open.spotify.com/track/1ijX03QOR6a1wI322HifSV)
+- 2014 · Undo – Sanna Nielsen · [Spotify](https://open.spotify.com/track/3XhlY1x0LcIyHpZJB1g6WS) · also pop
+- 2015 · Don't Stop Believing – Mariette · [Spotify](https://open.spotify.com/track/3eqj8tf4Pk2ZLgDyruFABr)
+- 2015 · Grande amore – Il Volo · [Spotify](https://open.spotify.com/track/4hWQaCHO3k3bTYi8AozKTE)
+- 2015 · Heroes – Måns Zelmerlöw · [Spotify](https://open.spotify.com/track/4ciaNqHWA2IzHphZaVRzHI) · also pop, dance, swedishpop
+- 2016 · 1944 – Jamala · [Spotify](https://open.spotify.com/track/1AZQTUs1FPy7YHH8aad3dA)
+- 2016 · Don't Worry – Ace Wilder · [Spotify](https://open.spotify.com/track/2JzVLnk3S8pVxW8qM0dsJ2)
+- 2016 · Human – Oscar Zia · [Spotify](https://open.spotify.com/track/5AQhraSIBzrWBIuiGpPl7v)
+- 2016 · If I Were Sorry – Frans · [Spotify](https://open.spotify.com/track/6oDkCmfVcSd9NXAKk1b4Ll) · also pop
+- 2016 · Sound of Silence – Dami Im · [Spotify](https://open.spotify.com/track/2b9czDPSLTI88694CIqCy3)
+- 2016 · You Are the Only One – Sergey Lazarev · [Spotify](https://open.spotify.com/track/7ANprWfKB8UoNggroXtfUv)
+- 2017 · Amar pelos dois – Salvador Sobral · [Spotify](https://open.spotify.com/track/68HpTFETy6D25IR3G0gKtG)
+- 2017 · Beautiful Mess – Kristian Kostov · [Spotify](https://open.spotify.com/track/5YCqzqb6yN6TsMOHb4FSVw)
+- 2017 · En värld full av strider (Eatneme gusnie jeenh dåaroeh) – Jon Henrik Fjällgren feat. Aninia · [Spotify](https://open.spotify.com/track/6EbzYIiVoxMeYig8e5pm1T)
+- 2017 · Hey Mamma – SunStroke Project · [Spotify](https://open.spotify.com/track/7EfS0QO3m5tZlKZEzcvWaG)
+- 2017 · Hold On – Nano · [Spotify](https://open.spotify.com/track/7AV1aKgjWhjvYS5k8AqmUj)
+- 2017 · I Can't Go On – Robin Bengtsson · [Spotify](https://open.spotify.com/track/715cD5vOTffsOR3MnNYveJ)
+- 2018 · Dance You Off – Benjamin Ingrosso · [Spotify](https://open.spotify.com/track/3vTjWoUhHFbZa8bSDWuEW0)
+- 2018 · Every Single Day – Felix Sandman · [Spotify](https://open.spotify.com/track/3vn8mkGNl62j3Amny9vcwT)
+- 2018 · Fuego – Eleni Foureira · [Spotify](https://open.spotify.com/track/6oqLlWsrJCtekMoT8WWlhw)
+- 2018 · My Turn – John Lundvik · [Spotify](https://open.spotify.com/track/2g2fTz4wEnrDWin9eMtrGI)
+- 2018 · Nobody but You – Cesár Sampson · [Spotify](https://open.spotify.com/track/41gxXNTTz6LNVY2LIKoRHn)
+- 2018 · Toy – Netta · [Spotify](https://open.spotify.com/track/7vuTcvFnvlqWlWb4u60nvY)
+- 2019 · Arcade – Duncan Laurence · [Spotify](https://open.spotify.com/track/3Yyj76BeYt3QIffwKpRuKL)
+- 2019 · Hold You – Hanna Ferm & Liamoo · [Spotify](https://open.spotify.com/track/7vwTqBs5KVRlwR2374P9bS)
+- 2019 · On My Own – Bishara · [Spotify](https://open.spotify.com/track/4OK08Dv1YtamKWfOqZnMjV)
+- 2019 · Scream – Sergey Lazarev · [Spotify](https://open.spotify.com/track/2mWj2pfAgQMM8fuZwxxiHu)
+- 2019 · Soldi – Mahmood · [Spotify](https://open.spotify.com/track/4szQkW1CDHqbRZGltXJdd3)
+- 2019 · Too Late for Love – John Lundvik · [Spotify](https://open.spotify.com/track/6kIdjk3D8XxA2UafE0THGK)
+- 2020 · Bulletproof – Dotter · [Spotify](https://open.spotify.com/track/4RcEx6TvICENelSh3O7gvu)
+- 2020 · Kingdom Come – Anna Bergendahl · [Spotify](https://open.spotify.com/track/0ZoxdGmVIGzxUSi6nkQ98G)
+- 2020 · Move – The Mamas · [Spotify](https://open.spotify.com/track/19LiotxKSVs7FeVMEdHz63) · also soul
+- 2021 · Every Minute – Eric Saade · [Spotify](https://open.spotify.com/track/7t3VznmzfrDXFyexb2wA0q)
+- 2021 · In the Middle – The Mamas · [Spotify](https://open.spotify.com/track/6qnvjsMmlxf4TPfbD53ybj)
+- 2021 · Tout l'univers – Gjon's Tears · [Spotify](https://open.spotify.com/track/6hoZwRmLHvUMdQDZGY43Mq)
+- 2021 · Voices – Tusse · [Spotify](https://open.spotify.com/track/5zxZ7M4RgWZUHlMEwac8vt)
+- 2021 · Voilà – Barbara Pravi · [Spotify](https://open.spotify.com/track/0UVlOQ3EEiTVOctUOnJ00w)
+- 2022 · Bigger Than The Universe – Anders Bagge · [Spotify](https://open.spotify.com/track/4O1FGUf2xndvsmtMQtHZNp)
+- 2022 · Hold Me Closer – Cornelia Jakobs · [Spotify](https://open.spotify.com/track/697bFWgzBRm6bmnYWd8GyD)
+- 2022 · In i dimman – Medina · [Spotify](https://open.spotify.com/track/5v5cNnwvtntSGSDR3BSVwq)
+- 2022 · SloMo – Chanel · [Spotify](https://open.spotify.com/track/0T71AvVXY4RB65tvdIyzdO)
+- 2022 · Space Man – Sam Ryder · [Spotify](https://open.spotify.com/track/3nhGk6VnrDHy67pXvMhdPa)
+- 2023 · Air – Marcus & Martinus · [Spotify](https://open.spotify.com/track/7DBQIEXuFIXMWNAWyGsTTm)
+- 2023 · Cha Cha Cha – Käärijä · [Spotify](https://open.spotify.com/track/5RX8T3EoTuXcybAxe6oPAw)
+- 2023 · Six Feet Under – Smash Into Pieces · [Spotify](https://open.spotify.com/track/5DYCuzBPf13q0QZwQvjYzi)
+- 2023 · Tattoo – Loreen · [Spotify](https://open.spotify.com/track/1DmW5Ep6ywYwxc2HMT5BG6) · also pop, dance, swedishpop
+- 2023 · Unicorn – Noa Kirel · [Spotify](https://open.spotify.com/track/6dUregFbvUNqHP5nphqesK)
+- 2024 · Heroes Are Calling – Smash Into Pieces · [Spotify](https://open.spotify.com/track/4P95NVkHsLm95s8Pb9buPs)
+- 2024 · Que Sera – Medina · [Spotify](https://open.spotify.com/track/4kqkGUxHHAqJMtpsHMvLTQ)
+- 2024 · Rim Tim Tagi Dim – Baby Lasagna · [Spotify](https://open.spotify.com/track/5TswDbxMnxptgFTf6ZxvXQ)
+- 2024 · Teresa & Maria – Alyona Alyona and Jerry Heil · [Spotify](https://open.spotify.com/track/7n3Czk07KugPQOWuqCHDmF)
+- 2024 · The Code – Nemo · [Spotify](https://open.spotify.com/track/1EjIXKhNHI00ZLMRpS8iz8)
+- 2024 · Unforgettable – Marcus & Martinus · [Spotify](https://open.spotify.com/track/5L8C1PZGCpZf8STcN79H5j) · also pop
+- 2025 · Bara bada bastu – KAJ · [Spotify](https://open.spotify.com/track/2gThkoApt6B7ajBWZRLAVv)
+- 2025 · Believe Me – Greczula · [Spotify](https://open.spotify.com/track/6CshHyQHSzQhwaadpBQhH1)
+- 2025 · Espresso Macchiato – Tommy Cash · [Spotify](https://open.spotify.com/track/4zpNfuWJA3K4d9TS4qnOIB)
+- 2025 · New Day Will Rise – Yuval Raphael · [Spotify](https://open.spotify.com/track/1H5GUNNCrurtyoOKbS2tT8)
+- 2025 · Revolution – Måns Zelmerlöw · [Spotify](https://open.spotify.com/track/1xYhFfJInHS8hsGfrJW4lI)
+- 2025 · Wasted Love – JJ · [Spotify](https://open.spotify.com/track/321yySUTzRXUbzkRTeTzDB)
+- 2026 · Bangaranga – Dara · [Spotify](https://open.spotify.com/track/6SvlfrQYzUsW5UQUpUpy26)
+- 2026 · Choke Me – Alexandra Căpitănescu · [Spotify](https://open.spotify.com/track/0itI8ykSUDp4dfwiHY6fnw)
+- 2026 · Half of Me – Greczula · [Spotify](https://open.spotify.com/track/5cMsL1wGrHYivlEZ7SKQbV)
+- 2026 · Michelle – Noam Bettan · [Spotify](https://open.spotify.com/track/22g4vKHFze17AV7vnequhG)
+- 2026 · My System – Felicia · [Spotify](https://open.spotify.com/track/1XmLPHkuv95o5NUodggzfv)
+- 2026 · Viva L'amor – Medina · [Spotify](https://open.spotify.com/track/7AfJuBQaZQxmKDofbP73TT)
+
+Not found on Spotify at all (any genre): 144, listed above.

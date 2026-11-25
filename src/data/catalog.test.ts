@@ -6,6 +6,10 @@ import { songKey } from '../spotify/personalDeck';
 const SPOTIFY_ID = /^[0-9A-Za-z]{22}$/;
 
 describe('the song catalogue', () => {
+  it('only holds songs with a Spotify id (new songs wait in scripts/candidates.json)', () => {
+    expect(CATALOG_ROWS.filter((r) => !r.id).map((r) => r.title)).toEqual([]);
+  });
+
   it('has valid rows', () => {
     const genres = new Set(SEARCH_GENRE_DEFS.map((g) => g.id));
     for (const r of CATALOG_ROWS) {
@@ -14,7 +18,7 @@ describe('the song catalogue', () => {
       expect(r.artist.trim(), name).not.toBe('');
       expect(r.year, name).toBeGreaterThanOrEqual(1900);
       expect(r.year, name).toBeLessThanOrEqual(new Date().getFullYear());
-      if (r.id !== null) expect(r.id, name).toMatch(SPOTIFY_ID);
+      expect(r.id, name).toMatch(SPOTIFY_ID);
       for (const g of r.genres) expect(genres.has(g), `${name}: ${g}`).toBe(true);
     }
   });

@@ -2,10 +2,12 @@ import { describe, expect, it } from 'vitest';
 import { FACT_ROWS, writtenFact } from './facts';
 import { FACTS_SV } from './facts.sv';
 import { CATALOG_ROWS as ALL } from './catalog';
+import CANDIDATES from '../../scripts/candidates.json';
 
 describe('written facts', () => {
-  it('every fact belongs to a song in the catalogue', () => {
-    const songs = new Set(ALL.map((s) => `${s.title} / ${s.artist}`));
+  // A song whose Spotify id turned out wrong waits in scripts/candidates.json; its fact waits with it.
+  it('every fact belongs to a song in the catalogue or among the candidates', () => {
+    const songs = new Set([...ALL, ...CANDIDATES].map((s) => `${s.title} / ${s.artist}`));
     const orphans = FACT_ROWS.map(([title, artist]) => `${title} / ${artist}`).filter((k) => !songs.has(k));
     expect(orphans).toEqual([]);
   });
