@@ -272,6 +272,15 @@ async function main(): Promise<void> {
   const notContest = (r: { title: string; genres: string[] }) => GENRE === 'schlager' && r.genres.includes('schlager') && !contestTitles.has(songKey(r.title, '').split('|')[0]);
   const songs = JSON.parse(readFileSync(SONGS_FILE, 'utf8')) as { title: string; artist: string; genres: string[] }[];
   const retag = [...songs, ...candidates].filter(notContest);
+  // And every contest song has schlager, also one that was already in the game under another genre (Waterloo).
+  // SCHLAGER_ONLY=1 makes schlager its only genre.
+  const contest = index(ranked.filter((s) => s.via !== 'genre'));
+  const onlySchlager = process.env.SCHLAGER_ONLY === '1';
+  const tag = GENRE !== 'schlager' ? [] : [...songs, ...candidates].filter((r) => contest.has(songKey(r.title, r.artist)) && (onlySchlager ? r.genres.join() !== 'schlager' : !r.genres.includes('schlager')));
+  if (tag.length) {
+    console.log(`\n${tag.length} contest songs ${onlySchlager ? 'get schlager as their only genre' : 'get the schlager tag'}${process.env.APPLY === '1' ? '' : ' (with APPLY=1)'}:`);
+    for (const r of tag) console.log(`  ${r.title} – ${r.artist} (${r.genres.join(', ') || 'no genre'})`);
+  }
   if (retag.length) {
     console.log(`\n${retag.length} songs tagged schlager were not in the Eurovision or Melodifestivalen top 3, nor a Swedish entry${process.env.APPLY === '1' ? ' and lose the tag' : ' (APPLY=1 takes the tag away; one with no other genre is set aside)'}:`);
     for (const r of retag) console.log(`  ${r.title} – ${r.artist}`);
@@ -279,6 +288,7 @@ async function main(): Promise<void> {
 
   if (process.env.APPLY === '1') {
     for (const r of retag) r.genres = r.genres.filter((g) => g !== 'schlager');
+    for (const r of tag) r.genres = onlySchlager ? ['schlager'] : ['schlager', ...r.genres];
     const skipped = candidates.filter((r) => retag.includes(r) && !r.genres.length);
     const keep = candidates.filter((r) => !skipped.includes(r));
     keep.push(...fresh.map((s) => ({ title: s.title, artist: s.artist, year: s.year, genres: [GENRE] })));
@@ -289,7 +299,7 @@ async function main(): Promise<void> {
       writeFileSync(SKIPPED_FILE, lines([...before, ...skipped.map((r) => ({ ...r, genres: ['schlager'], why: 'not found in Melodifestivalen or Eurovision' }))]));
       console.log(`Set ${skipped.length} candidates aside in scripts/skipped.json.`);
     }
-    if (retag.some((r) => songs.includes(r as never))) writeFileSync(SONGS_FILE, lines(songs));
+    if ([...retag, ...tag].some((r) => songs.includes(r as never))) writeFileSync(SONGS_FILE, lines(songs));
     console.log(`Added ${fresh.length} songs to scripts/candidates.json.`);
   }
 }
